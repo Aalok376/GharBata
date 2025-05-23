@@ -2,7 +2,7 @@ import React, { useState } from "react"; // Importing necessary hooks from React
 import { Link } from "react-router-dom"; // React Router links
 // Define the Login component
 
-const Login=()=>{
+const Technician_Login=()=>{
       // useState hooks to manage input values and error messages
       const[email,setEmail]=useState('');    // Stores the email input value
       const[password,setPassword]=useState('');// Stores the password input value
@@ -73,14 +73,14 @@ const Login=()=>{
                         type="submit" // Submits the form
                         className="w-full bg-orange-500 hover:bg-orange-700 text-white p-2 rounded"
                         >
-                            Login
+                            Login As Technician
                         </button>
                      </form>
                      {/*React Router Links*/}
                      <div className="mt-4 text-center text-sm text-gray-700">
                         <p>
                             Don't have an account?{''}
-                             <Link to="/signup" className="text-orange-600 hover:underline">
+                             <Link to="/technician_signup" className="text-orange-600 hover:underline">
                              Sign up
                              </Link>
                         </p>
@@ -96,4 +96,4 @@ const Login=()=>{
 
 };
 // Export the component so it can be used in other parts of your app
-export default Login;
+export default Technician_Login;
