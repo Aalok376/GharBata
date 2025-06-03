@@ -1,93 +1,88 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import {FaHome,FaUserPlus,FaSignInAlt,FaPhoneAlt} from "react-icons/fa";
+import React, { useState } from "react"
+import { Link } from "react-router-dom"
+import styled from "styled-components"
+import {FaUserPlus,FaWrench } from "react-icons/fa"
 
-const Navbar=()=>{
-    const[isSignUpOpen,setIsSignUpOpen]=useState(false);
-    const [isLoginOpen,setIsLoginOpen]=useState(false);
-    return(
-        <nav className="bg-blue-900 text-white p-4 shadow-md sticky top-0 z-50">
-            <div className="container mx-auto flex justify-between items-center">
-                {/*Left side:Logo*/}
-                <div className="text-2xl font-bold"> 
-                    <Link to='/'>GharBata</Link>
-                </div>
-                {/*Right side:Navigation Links*/}
-                <div className="flex items-center space-x-6 ">
-                    <Link to='/' className='flex items-center gap-1 hover:text-gray-200'>
-                    <FaHome/>
-                    Home
-                    </Link>
-                    {/*SignUp Dropdown */}
-                    <div 
-                    className="relative"
-                    onMouseEnter={()=>setIsSignUpOpen(true)}
-                    onMouseLeave={()=>setIsSignUpOpen(false)}
-                    >
-                        <button className="flex items-center gap-1 hover:text-gray-200 focus:outline-none cursor-pointer">
-                            <FaUserPlus/>
-                            SignUp
-                            </button>
-                      
-                            <div
-                             className={`absolute right-0 mt-2 w-40 bg-white text-gray-800 rounded-md shadow-lg z-10  transition-all duration-300 ${
-                                isSignUpOpen ? "opacity-100 visible" : "opacity-0 invisible"
-                            }`}>
-                                <Link
-                                to="/client_signup"
-                                className="block px-4 py-2 hover:bg-blue-100"
-                                >
-                                    User
-                                </Link>
-                                <Link 
-                                to="/technician_signup"
-                                className="block px-4 py-2 hover:bg-blue-100"
-                                >
-                                    Technician
-                                </Link>
-                            </div>
-                        
-                    </div>
-                    {/* Login Dropdown */}
-                    <div
-                    className="relative"
-                    onMouseEnter={()=>setIsLoginOpen(true)}
-                    onMouseLeave={()=>setIsLoginOpen(false)}
-                    >
-                        <button className="flex items-center gap-1 hover:text-gray-200 focus:outline-none cursor-pointer">
-                            <FaSignInAlt/>
-                            Login
-                        </button>
-                        
-                            <div 
-                            className={`absolute right-0 mt-2 w-40 bg-white text-gray-800 rounded-md shadow-lg z-10 transition-all duration-300 ${
-                                isLoginOpen ? "opacity-100 visible":"opacity-0 invisible"
-                            }`}>
-                                <Link
-                                to="/client_login"
-                                className="block px-4 py-2 hover:bg-blue-100"
-                                >
-                                    User
-                                </Link>
-                                <Link
-                                to="/technician_login"
-                                className="block px-4 py-2 hover:bg-blue-100"
-                                >
-                                    Technician
-                                </Link>
 
-                            </div>
-                        
-                    </div>
-                    <Link
-                     to="/contact" 
-                     className="flex items-center gap-1 hover:text-gray-200">
-                        <FaPhoneAlt/>
-                        Contact Us
-                        </Link>
-                </div>
-            </div>
-        </nav>
-    );
-};
-export default Navbar;
+import Overlay from "./overlay"
+import ServiceCard from "./serviceCard"
+import Steps from "./steps"
+import SignUpBtn from "./SignUpButton"
+
+const Navbar = () => {
+    const [isOpen, setisOpen] = useState(false)
+    return (
+        <HeaderComp>
+            <NavBar>
+                <LoGo><Link to='/'>GharBata</Link></LoGo>
+                <NavLink>
+                    <li><NavLinks to="#services">Services</NavLinks></li>
+                    <li><NavLinks to="#how-it-works">How It Works</NavLinks></li>
+                    <li><NavLinks to="#contact">Contact</NavLinks></li>
+                </NavLink>
+                <SignUpBtn/>
+            </NavBar>
+        </HeaderComp>
+    )
+}
+
+const HeaderComp = styled.div` 
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            transition: all 0.3s ease;
+`
+
+const NavBar = styled.div`
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            `
+
+const LoGo = styled.div`
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;`
+
+const NavLink = styled.ul`
+            display: flex;
+            list-style: none;
+            gap: 2rem;`
+
+const NavLinks = styled(Link)`
+            text-decoration: none;
+            color: #4a5568;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            position: relative;
+
+            &:hover {
+            color: #667eea;
+            }
+
+            &::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            }
+
+            &:hover::after {
+            width: 100%;
+            }
+`
+
+export default Navbar
