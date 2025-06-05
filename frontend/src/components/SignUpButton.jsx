@@ -1,6 +1,5 @@
 import React,{useState}from "react"
 import { FaUserPlus, FaWrench } from "react-icons/fa"
-import { Link } from "react-router-dom"
 import styled from "styled-components"
 
 const NavButton = styled.div`

@@ -1,16 +1,10 @@
 import React, { useState } from "react"
 import { Link } from "react-router-dom"
 import styled from "styled-components"
-import {FaUserPlus,FaWrench } from "react-icons/fa"
 
-
-import Overlay from "./overlay"
-import ServiceCard from "./serviceCard"
-import Steps from "./steps"
 import SignUpBtn from "./SignUpButton"
 
 const Navbar = () => {
-    const [isOpen, setisOpen] = useState(false)
     return (
         <HeaderComp>
             <NavBar>
@@ -37,7 +31,7 @@ const HeaderComp = styled.div`
 `
 
 const NavBar = styled.div`
-            max-width: 1200px;
+            max-width: 1300px;
             margin: 0 auto;
             padding: 0 20px;
             display: flex;
@@ -82,6 +76,10 @@ const NavLinks = styled(Link)`
 
             &:hover::after {
             width: 100%;
+            }
+
+            @media (max-width: 768px) {
+                    display:none;
             }
 `
 

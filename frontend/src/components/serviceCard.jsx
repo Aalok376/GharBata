@@ -62,24 +62,6 @@ const ServiceFeaturesWrapper = styled.ul`
             font-weight: bold;
             }
 `
-const StyledLink=styled(Link)`
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 50px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-
-            &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-            }
-`
 
 const ServiceCard = ({ icon, header, description, services }) => {
     const ListItems = services.map(service => (
@@ -92,7 +74,6 @@ const ServiceCard = ({ icon, header, description, services }) => {
             <h3>{header}</h3>
             <p>{description}</p>
             <ServiceFeaturesWrapper>{ListItems}</ServiceFeaturesWrapper>
-            <StyledLink to="#book" class="btn btn-primary">Book Now</StyledLink>
         </ServiceCardWrapper>
 
     )
