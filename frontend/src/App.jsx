@@ -5,6 +5,7 @@ import Client_Signup from './pages/Client_Signup';
 import Technician_Signup from './pages/Technician_Signup';
 import Technician_Login from './pages/Technician_Login';
 import HomePageFunc from './pages/homePage';
+import ClientPage from './pages/professionalPage';
 
 
 
@@ -12,7 +13,7 @@ function App(){
   return (
     <Router>
       <Routes>
-        <Route path='/' element={<HomePageFunc/>}/>
+        <Route path='/' element={<ClientPage/>}/>
         <Route path='/client_login' element={<Client_Login/>}/>
         <Route path='/client_signup' element={<Client_Signup/>}/>
         <Route path='/technician_login' element={<Technician_Login/>}/>
