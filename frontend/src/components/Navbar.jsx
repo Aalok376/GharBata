@@ -1,3 +1,4 @@
+
 import React, { useState } from "react"
 import { Link } from "react-router-dom"
 import styled from "styled-components"
@@ -84,3 +85,50 @@ const NavLinks = styled(Link)`
 `
 
 export default Navbar
+{/*
+import React from "react"
+import { Link } from "react-router-dom"
+import SignUpBtn from "./SignUpButton"
+
+const Navbar = () => {
+  return (
+    <header className="fixed top-0 w-full bg-white bg-opacity-95 backdrop-blur-md z-[1000] transition-all duration-300 ease-in-out">
+      <div className="max-w-[1300px] mx-auto px-5 flex justify-between items-center">
+        <div className="text-2xl font-extrabold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
+          <Link to="/">GharBata</Link>
+        </div>
+        <ul className="hidden md:flex list-none gap-8">
+          <li>
+            <Link
+              to="#services"
+              className="text-gray-700 font-medium relative transition-colors duration-300 hover:text-indigo-500 after:content-[''] after:absolute after:bottom-[-5px] after:left-0 after:w-0 after:h-[2px] after:bg-gradient-to-r after:from-indigo-500 after:to-purple-600 after:transition-all after:duration-300 hover:after:w-full"
+            >
+              Services
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="#how-it-works"
+              className="text-gray-700 font-medium relative transition-colors duration-300 hover:text-indigo-500 after:content-[''] after:absolute after:bottom-[-5px] after:left-0 after:w-0 after:h-[2px] after:bg-gradient-to-r after:from-indigo-500 after:to-purple-600 after:transition-all after:duration-300 hover:after:w-full"
+            >
+              How It Works
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="#contact"
+              className="text-gray-700 font-medium relative transition-colors duration-300 hover:text-indigo-500 after:content-[''] after:absolute after:bottom-[-5px] after:left-0 after:w-0 after:h-[2px] after:bg-gradient-to-r after:from-indigo-500 after:to-purple-600 after:transition-all after:duration-300 hover:after:w-full"
+            >
+              Contact
+            </Link>
+          </li>
+        </ul>
+        <SignUpBtn />
+      </div>
+    </header>
+  )
+}
+
+export default Navbar;
+*/}
+

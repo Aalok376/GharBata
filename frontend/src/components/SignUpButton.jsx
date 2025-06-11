@@ -1,3 +1,4 @@
+
 import React,{useState}from "react"
 import { FaUserPlus, FaWrench } from "react-icons/fa"
 import styled from "styled-components"
@@ -92,4 +93,104 @@ const SignUpBtn = () => {
     )
 }
 
-export default SignUpBtn
+export default SignUpBtn;
+
+{/*
+import React, { useState } from "react";
+import { FaUserPlus, FaWrench } from "react-icons/fa";
+
+const SignUpBtn = () => {
+  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
+
+  return (
+    <div className="relative inline-block gap-4 align-middle">
+      <button
+        onClick={() => setIsSignUpOpen((prev) => !prev)}
+        className="
+          px-6 py-3
+          rounded-full
+          font-semibold
+          cursor-pointer
+          transition-all duration-300
+          border-2 border-indigo-500 text-indigo-500
+          bg-transparent
+          hover:bg-indigo-500 hover:text-white
+          transform hover:-translate-y-0.5
+          inline-block
+        "
+      >
+        Sign In {isSignUpOpen ? "true" : "false"}
+      </button>
+
+      <div
+        className={`
+          absolute right-0 mt-3 w-48
+          bg-white rounded-xl shadow-xl
+          border border-gray-200
+          overflow-hidden
+          transition-all duration-300 ease-out
+          origin-top-right
+          z-50
+          ${
+            isSignUpOpen
+              ? "opacity-100 visible scale-100 translate-y-0"
+              : "opacity-0 invisible scale-95 -translate-y-2"
+          }
+        `}
+      >
+     
+        <div className="absolute -top-2 right-4 w-4 h-4 bg-white border-l border-t border-gray-200 rotate-45"></div>
+
+      
+        <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+          <p className="text-sm font-medium text-gray-700">Choose Account Type</p>
+        </div>
+
+        
+        <div className="py-2">
+          <button
+            className="
+              w-full flex items-center gap-3 px-4 py-3
+              text-gray-700 hover:bg-blue-50 hover:text-blue-600
+              transition-colors duration-150
+              text-left group
+            "
+          >
+            <div className="p-1.5 rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors">
+              <FaUserPlus size={16} className="text-blue-600" />
+            </div>
+            <div>
+              <div className="font-medium">As Client</div>
+              <div className="text-xs text-gray-500">
+                Book services & manage orders
+              </div>
+            </div>
+          </button>
+
+          <button
+            className="
+              w-full flex items-center gap-3 px-4 py-3
+              text-gray-700 hover:bg-green-50 hover:text-green-600
+              transition-colors duration-150
+              text-left group
+            "
+          >
+            <div className="p-1.5 rounded-lg bg-green-100 group-hover:bg-green-200 transition-colors">
+              <FaWrench size={16} className="text-green-600" />
+            </div>
+            <div>
+              <div className="font-medium">As Technician</div>
+              <div className="text-xs text-gray-500">
+                Provide services & earn money
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SignUpBtn;
+*/}
+

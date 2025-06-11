@@ -4,24 +4,15 @@ import Client_Login from './pages/Client_Login';
 import Client_Signup from './pages/Client_Signup';
 import Technician_Signup from './pages/Technician_Signup';
 import Technician_Login from './pages/Technician_Login';
-<<<<<<< HEAD
+
 import HomePageFunc from './pages/homePage';
-=======
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
->>>>>>> 39f8bcf (incomplete footer check garata kei improve garnu parxa footer ma)
 
 
 
 function App(){
   return (
     <Router>
-<<<<<<< HEAD
-=======
-      <Navbar/>
 
-     
->>>>>>> 39f8bcf (incomplete footer check garata kei improve garnu parxa footer ma)
       <Routes>
         <Route path='/' element={<HomePageFunc/>}/>
         <Route path='/client_login' element={<Client_Login/>}/>
@@ -32,7 +23,7 @@ function App(){
         
   
       </Routes>
-       <Footer />
+     
 
     </Router>
     

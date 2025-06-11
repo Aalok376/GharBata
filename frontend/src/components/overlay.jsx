@@ -1,3 +1,4 @@
+
 import React from "react"
 
 const Overlay=({onClose,children})=>{
@@ -13,7 +14,7 @@ const Overlay=({onClose,children})=>{
 }
 
 const overlayStyle = {
-  position: 'fixed',
+  position: '',
   top: 0,
   left: 0,
   right: 0,
@@ -34,3 +35,25 @@ const modalStyle = {
 }
 
 export default Overlay
+{/*
+import React from "react";
+
+const Overlay = ({ onClose, children }) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000]">
+      <div className="bg-black bg-opacity-50 p-6 rounded-lg min-w-[300px] relative">
+        {children}
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-white font-bold"
+        >
+          X
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Overlay;
+*/}
+

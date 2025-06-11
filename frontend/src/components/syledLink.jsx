@@ -1,3 +1,4 @@
+
 import React from "react"
 import { Link } from "react-router-dom"
 import styled from 'styled-components'
@@ -34,3 +35,55 @@ const StyledLinkFunc = ({ dynamicId, text, ...rest }) => {
 }
 
 export default StyledLinkFunc
+
+{/*
+import React from "react"
+import { Link } from "react-router-dom"
+
+const StyledLinkFunc = ({ dynamicId, text, fullwidth, fontSize, padding, align, ...rest }) => {
+  // Build classes dynamically based on props
+  const baseClasses = `
+    inline-block
+    rounded-full
+    font-semibold
+    cursor-pointer
+    transition
+    duration-300
+    ease-in-out
+    bg-gradient-to-r
+    from-indigo-500
+    to-purple-700
+    text-white
+    shadow-md
+    hover:shadow-lg
+    hover:-translate-y-0.5
+    hover:shadow-indigo-400
+  `
+
+  const widthClass = fullwidth ? "w-full" : "w-auto"
+  const textAlignClass = align === "left" ? "text-left" : align === "right" ? "text-right" : "text-center"
+  const paddingClass = padding
+    ? "" // We will handle custom padding inline style below
+    : "py-2 px-4" // default padding
+
+  // For fontSize and padding if provided as custom values, use inline styles
+  const style = {
+    fontSize: fontSize || undefined,
+    padding: padding || undefined,
+  }
+
+  return (
+    <Link
+      to={dynamicId}
+      className={`${baseClasses} ${widthClass} ${textAlignClass} ${paddingClass}`}
+      style={style}
+      {...rest}
+    >
+      {text}
+    </Link>
+  )
+}
+
+export default StyledLinkFunc;
+*/}
+
