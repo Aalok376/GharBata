@@ -1,6 +1,7 @@
 import React from "react"
 import { Link } from "react-router-dom"
 import styled from 'styled-components'
+import StyledLinkFunc from "./syledLink"
 
 const ServiceCardWrapper = styled.div`
             background: white;
@@ -74,6 +75,7 @@ const ServiceCard = ({ icon, header, description, services }) => {
             <h3>{header}</h3>
             <p>{description}</p>
             <ServiceFeaturesWrapper>{ListItems}</ServiceFeaturesWrapper>
+            <StyledLinkFunc dynamicId={'bookservices'} text={'Book Now'}></StyledLinkFunc>
         </ServiceCardWrapper>
 
     )

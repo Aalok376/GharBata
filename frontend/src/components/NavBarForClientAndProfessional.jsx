@@ -1,31 +1,40 @@
-import React from "react"
+import React,{useEffect} from "react"
 import styled from "styled-components"
 
-const ClientNavbar = () => {
-    return (
-       <TopNavBar>
-        <NavbarLeft>
-            <Menu_Toggle>☰</Menu_Toggle>
-            <NavbarLogo>GharBata</NavbarLogo>
-        </NavbarLeft>
-        <NavbarRight>
-            <NotiBtn>🔔
-                <NotiBadge>3</NotiBadge>
-            </NotiBtn>
 
-            <UserProfile>
-                <UserAvatar>A</UserAvatar>
-                <UserInfo>
-                    <UserName>Aalok Yadav ku logo</UserName>
-                    <UserStatus>Available</UserStatus>
-                </UserInfo>
-            </UserProfile>
-        </NavbarRight>
-       </TopNavBar>
+const ClientNavbar = ({isOpen,setIsOpen}) => {
+
+    useEffect(() => {
+        document.body.style.overflow = isOpen ? 'hidden' : ''
+    }, [isOpen])
+
+    const toggleSidebar = () => {
+        setIsOpen(prev => !prev)
+    }
+    return (
+        <TopNavBar>
+            <NavbarLeft>
+                <Menu_Toggle onClick={toggleSidebar}>☰</Menu_Toggle>
+                <NavbarLogo>GharBata</NavbarLogo>
+            </NavbarLeft>
+            <NavbarRight>
+                <NotiBtn>🔔
+                    <NotiBadge>3</NotiBadge>
+                </NotiBtn>
+
+                <UserProfile>
+                    <UserAvatar>A</UserAvatar>
+                    <UserInfo>
+                        <UserName>Aalok Yadav ku logo</UserName>
+                        <UserStatus>Available</UserStatus>
+                    </UserInfo>
+                </UserProfile>
+            </NavbarRight>
+        </TopNavBar>
     )
 }
 
-const TopNavBar=styled.div`
+const TopNavBar = styled.div`
             position: fixed;
             top: 0;
             left: 0;
@@ -41,12 +50,12 @@ const TopNavBar=styled.div`
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             z-index: 1000;`
 
-const NavbarLeft=styled.div` 
+const NavbarLeft = styled.div` 
             display: flex;
             align-items: center;
             gap: 1rem;`
 
-const Menu_Toggle=styled.button` 
+const Menu_Toggle = styled.button` 
             display: none;
             background: none;
             border: none;
@@ -59,21 +68,26 @@ const Menu_Toggle=styled.button`
             
             &:hover {
             background: rgba(30, 60, 114, 0.1);
-        }`
+            }
+            
+            @media (max-width: 768px){
+                            display: block;
+            }
+        `
 
-const NavbarLogo=styled.div`  
+const NavbarLogo = styled.div`  
             font-size: 1.5rem;
             font-weight: 700;
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;`
 
-const NavbarRight=styled.div` 
+const NavbarRight = styled.div` 
             display: flex;
             align-items: center;
             gap: 1.5rem;`
 
-const NotiBtn=styled.button`  
+const NotiBtn = styled.button`  
             position: relative;
             background: none;
             border: none;
@@ -88,7 +102,7 @@ const NotiBtn=styled.button`
             background: rgba(30, 60, 114, 0.1);
         }`
 
-const NotiBadge=styled.span` 
+const NotiBadge = styled.span` 
             position: absolute;
             top: 0;
             right: 0;
@@ -102,7 +116,7 @@ const NotiBadge=styled.span`
             align-items: center;
             justify-content: center;`
 
-const UserProfile=styled.div` 
+const UserProfile = styled.div` 
             display: flex;
             align-items: center;
             gap: 0.75rem;
@@ -115,7 +129,7 @@ const UserProfile=styled.div`
             background: rgba(30, 60, 114, 0.1);
         }`
 
-const UserAvatar=styled.div` 
+const UserAvatar = styled.div` 
             width: 35px;
             height: 35px;
             border-radius: 50%;
@@ -127,16 +141,21 @@ const UserAvatar=styled.div`
             font-weight: 600;
             font-size: 0.9rem;`
 
-const UserInfo=styled.div`
+const UserInfo = styled.div`
             display: flex;
-            flex-direction: column;`
+            flex-direction: column;
+            
+            @media (max-width: 768px) {
+                            display: none;
+            }                 
+            `
 
-const UserName=styled.div` 
+const UserName = styled.div` 
             font-weight: 600;
             font-size: 0.9rem;
             color: #333;`
 
-const UserStatus=styled.div` 
+const UserStatus = styled.div` 
             font-size: 0.75rem;
             color: #2ecc71;`
 
