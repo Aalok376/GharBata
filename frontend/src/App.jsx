@@ -5,14 +5,13 @@ import Client_Signup from './pages/Client_Signup';
 import Technician_Signup from './pages/Technician_Signup';
 import Technician_Login from './pages/Technician_Login';
 
-import HomePageFunc from './pages/homePage';
 
 
 
 function App(){
   return (
     <Router>
-
+     
       <Routes>
         <Route path='/' element={<HomePageFunc/>}/>
         <Route path='/client_login' element={<Client_Login/>}/>
@@ -23,7 +22,7 @@ function App(){
         
   
       </Routes>
-     
+    
 
     </Router>
     
