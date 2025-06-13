@@ -1,6 +1,7 @@
 
 import React, { useState } from "react"
 import { FaUserPlus, FaWrench } from "react-icons/fa"
+import { useNavigate } from "react-router-dom"
 import styled from "styled-components"
 
 const NavButton = styled.div`
@@ -32,6 +33,17 @@ const ButtonLink = styled.button`
 
 const SignUpBtn = () => {
     const [isSignUpOpen, setIsSignUpOpen] = useState(false)
+    const navigate=useNavigate()
+
+
+    const handleClientSignUp=()=>{
+        setIsSignUpOpen(false) // close the dropdown
+        navigate('/client_signup')
+    }
+    const handleTechnicianSignUp=()=>{
+        setIsSignUpOpen(false)
+        navigate('/technician_signup')
+    }
     
     return (
         <NavButton>
@@ -57,7 +69,9 @@ const SignUpBtn = () => {
                 </div>
 
                 <div className="py-2">
-                    <button className="
+                    <button
+                    onClick={handleClientSignUp}
+                     className="
                         w-full flex items-center pl-4 pt-2 pb-2
                         text-gray-700 hover:bg-blue-50 hover:text-blue-600
                         transition-colors duration-150
@@ -72,7 +86,9 @@ const SignUpBtn = () => {
                         </div>
                     </button>
 
-                    <button className="
+                    <button
+                    onClick={handleTechnicianSignUp}
+                    className="
                         w-full flex items-center pl-4 pt-2 pb-2
                         text-gray-700 hover:bg-green-50 hover:text-green-600
                         transition-colors duration-150

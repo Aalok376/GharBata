@@ -45,31 +45,5 @@ const Steps = ({ stepsnumber, title, description }) => {
 
 export default Steps
 
-{/*
-import React from "react";
 
-const Steps = ({ stepsnumber, title, description }) => {
-  return (
-    <div className="text-center relative">
-      <div
-        className="
-          w-20 h-20
-          bg-gradient-to-br from-indigo-500 to-purple-700
-          rounded-full
-          flex items-center justify-center
-          text-2xl font-bold text-white
-          mx-auto mb-6
-          shadow-[0_10px_30px_rgba(102,126,234,0.3)]
-        "
-      >
-        {stepsnumber}
-      </div>
-      <h3 className="text-xl font-semibold mb-4 text-gray-900">{title}</h3>
-      <p className="text-gray-500">{description}</p>
-    </div>
-  );
-};
-
-export default Steps;
-*/}
 
