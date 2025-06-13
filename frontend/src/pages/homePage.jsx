@@ -464,7 +464,7 @@ const FooterBottom = styled.div`
                          color: #9ca3af;
             `
 
-export default HomePageFunc
+export default HomePageFunc;
 
 
 {/*
