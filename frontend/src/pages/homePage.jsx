@@ -9,6 +9,8 @@ import Steps from '../components/steps'
 import { Link, useLocation } from 'react-router-dom'
 import WhyChoose from '../components/WhyChoose'
 import TopRatedProviders from '../components/TopRatedProviders'
+import WhatClientsay from '../components/WhatClientsay'
+import Blogsection from '../components/Blogsection'
 
 const BodyComponent = styled.div`
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -189,7 +191,7 @@ const HomePageFunc = () => {
                     </ServicesGrid>
                 </Container>
             </Services>
-            <div className="py-20 bg-white">
+            <div className="py-15 bg-white">
             <WhyChoose/> {/* whychoose gharbata jsx file is imported here */}
             </div>
 
@@ -208,6 +210,8 @@ const HomePageFunc = () => {
                 </Container>
             </HowItWorks>
             <TopRatedProviders/> {/*top rated providers lai render gareko */ }
+            <WhatClientsay/>{/*What Client Say lai render gareko*/}
+            <Blogsection/>{/*latest from Blog Section lai render gareko*/}
 
             <BookingForm>
                 <Container>
