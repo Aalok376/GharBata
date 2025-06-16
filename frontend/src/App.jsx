@@ -23,7 +23,6 @@ function App(){
         <Route path="/" element={<Navigate to="/homepage" replace />} />
         <Route path='/homepage' element={<HomePageFunc/>}/>
         <Route path='/professional' element={<ProfessionalPage/>}/>
-        
       </Routes>
     
 
