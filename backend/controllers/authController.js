@@ -74,13 +74,16 @@ export const login = async (req, res) => {
 };
 
 // Configure email transporter (example using Gmail)
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const getTransporter = () => {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+};
+
 
 // Generate verification token
 const generateVerificationToken = (userId) => {
@@ -90,6 +93,7 @@ const generateVerificationToken = (userId) => {
 // Send verification email
 export const sendVerificationEmail = async (user) => {
   try {
+    const transporter = getTransporter();
     const verificationToken = generateVerificationToken(user._id);
     
     // Save token to user document
@@ -120,7 +124,7 @@ export const sendVerificationEmail = async (user) => {
 // Verify Email function
 export const verifyEmail = async (req, res) => {
   try {
-    const { token } = req.query;
+    const { token } = req.params;
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
