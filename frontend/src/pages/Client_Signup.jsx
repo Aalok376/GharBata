@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react"
 import { NavLink } from "react-router-dom"
+import TermsAndCondition from "../components/TermsAndConditon"
 
 const Client_Signup = () => {
+
+  const [isOverlayOpen, setIsOverlayOpen] = useState(false)
   return (
     <>
       <style>
@@ -368,11 +371,11 @@ const Client_Signup = () => {
       `}
       </style>
 
-      <div class="background-shapes">
-        <div class="shape"></div>
-        <div class="shape"></div>
-        <div class="shape"></div>
-        <div class="shape"></div>
+      <div className="background-shapes">
+        <div className="shape"></div>
+        <div className="shape"></div>
+        <div className="shape"></div>
+        <div className="shape"></div>
       </div>
 
       <div className="signup-container">
@@ -400,29 +403,29 @@ const Client_Signup = () => {
         <form>
           <div className="form-row">
             <div className="form-group">
-              <label for="firstName">First Name</label>
+              <label htmlFor="firstName">First Name</label>
               <input type="text" id="firstName" name="firstName" placeholder="First Name" required></input>
             </div>
             <div className="form-group">
-              <label for="lastName">Last Name</label>
+              <label htmlFor="lastName">Last Name</label>
               <input type="text" id="lastName" name="lastName" placeholder="Last Name" required></input>
             </div>
           </div>
 
           <div className="form-group">
-            <label for="email">Email Address</label>
+            <label htmlFor="email">Email Address</label>
             <input type="email" id="email" name="email" placeholder="xyz@gmail.com" required></input>
           </div>
 
           <div className="form-group">
-            <label for="password">Password</label>
+            <label htmlFor="password">Password</label>
             <input type="password" id="password" name="password" placeholder="Create a strong password" required></input>
           </div>
 
           <div className="checkbox-group">
             <input type="checkbox" id="terms" name="terms" required></input>
-            <label for="terms">
-              I agree to the <a href="#" onClick={"event.preventDefault()"}>Terms of Service</a> and <a href="#" onClick={"event.preventDefault()"}>Privacy Policy</a>
+            <label htmlFor="terms">
+              I agree to the <NavLink to="#" onClick={(event)=>{event.preventDefault()}}>Terms of Service</NavLink> and <NavLink to="#" onClick={(event)=>{event.preventDefault()}}>Privacy Policy</NavLink>
             </label>
           </div>
 
@@ -434,8 +437,8 @@ const Client_Signup = () => {
         </div>
 
 
-        <div class="social-buttons">
-          <button class="social-btn" onclick="signupWithGoogle()">
+        <div className="social-buttons">
+          <button className="social-btn" onClick={"signupWithGoogle()"}>
             <svg width="20" height="20" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -450,6 +453,9 @@ const Client_Signup = () => {
           Already have an account? <a href="#" onClick={"event.preventDefault(); showLogin()"}>Sign in</a>
         </div>
       </div>
+      {isOverlayOpen && (
+        <TermsAndCondition></TermsAndCondition>
+      )}
     </>
   )
 }
