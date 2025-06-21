@@ -1,3 +1,5 @@
+
+  
 import React, { useState,useEffect } from 'react'
 import StyledLinkFunc from '../components/syledLink'
 import Navbar from '../components/Navbar'
@@ -5,6 +7,10 @@ import styled, { keyframes } from 'styled-components'
 import ServiceCard from '../components/serviceCard'
 import Steps from '../components/steps'
 import { Link, useLocation } from 'react-router-dom'
+import WhyChoose from '../components/WhyChoose'
+import TopRatedProviders from '../components/TopRatedProviders'
+import WhatClientsay from '../components/WhatClientsay'
+import Blogsection from '../components/Blogsection'
 
 const BodyComponent = styled.div`
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -12,6 +18,7 @@ const BodyComponent = styled.div`
             color: #1a1a1a;
             overflow-x: hidden;
 `
+
 const HomePageFunc = () => {
 
     const { hash } = useLocation()
@@ -27,6 +34,7 @@ const HomePageFunc = () => {
             window.scrollTo({ top: 0, behavior: 'smooth' })
         }
     }, [hash])
+ 
 
     const Service1 = [
         {
@@ -143,7 +151,8 @@ const HomePageFunc = () => {
     ]
     return (
         <BodyComponent>
-            <Navbar></Navbar>
+            <Navbar/>
+          
             <Hero>
                 <Container>
                     <HeroContent>
@@ -152,6 +161,7 @@ const HomePageFunc = () => {
                             <p>From cleaning and repairs to maintenance and installations - get trusted professionals to handle all your home needs with just a few clicks.</p>
                             <HeroCta>
                                 <StyledLinkFunc dynamicId={'#services'} text={'View Services'}></StyledLinkFunc>
+                            
                             </HeroCta>
                         </HeroText>
                         <HeroVisual>
@@ -167,7 +177,7 @@ const HomePageFunc = () => {
                 </Container>
             </Hero>
 
-            <Services id="#services">
+            <Services id="services">
                 <Container>
                     <SectionHeader>
                         <h2>Our Services</h2>
@@ -183,8 +193,11 @@ const HomePageFunc = () => {
                     </ServicesGrid>
                 </Container>
             </Services>
+            <div className="py-15 bg-white">
+            <WhyChoose/> {/* whychoose gharbata jsx file is imported here */}
+            </div>
 
-            <HowItWorks id="#how-it-works">
+            <HowItWorks id="how-it-works">
                 <Container>
                     <SectionHeader>
                         <h2>How It Works</h2>
@@ -198,6 +211,9 @@ const HomePageFunc = () => {
                     </Stepps>
                 </Container>
             </HowItWorks>
+            <TopRatedProviders/> {/*top rated providers lai render gareko */ }
+            <WhatClientsay/>{/*What Client Say lai render gareko*/}
+            <Blogsection/>{/*latest from Blog Section lai render gareko*/}
 
             <BookingForm>
                 <Container>
@@ -209,6 +225,7 @@ const HomePageFunc = () => {
                         padding="1rem"
                         align="center"
                     />
+                   
                 </Container>
             </BookingForm>
 
@@ -246,7 +263,9 @@ const HomePageFunc = () => {
                     </FooterContainer>
                 </Container>
             </FooterComponent>
+            
         </BodyComponent>
+        
     )
 }
 
@@ -452,4 +471,8 @@ const FooterBottom = styled.div`
                          color: #9ca3af;
             `
 
-export default HomePageFunc
+export default HomePageFunc;
+
+
+
+

@@ -83,4 +83,4 @@ const NavLinks = styled(Link)`
             }
 `
 
-export default Navbar
+export default Navbar;

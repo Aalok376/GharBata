@@ -1,3 +1,4 @@
+
 import React from "react"
 import { Link } from "react-router-dom"
 import styled from 'styled-components'
@@ -82,3 +83,38 @@ const ServiceCard = ({ icon, header, description, services }) => {
 }
 
 export default ServiceCard
+{/*
+import React from "react";
+
+const ServiceCard = ({ icon, header, description, services }) => {
+  const ListItems = services.map((service) => (
+    <li key={service.id} className="relative pl-6 text-gray-700 py-1">
+      {service.name}
+    </li>
+  ));
+
+  return (
+    <div className="bg-white rounded-2xl p-8 shadow-md transition-all duration-300 cursor-pointer border-2 border-transparent hover:-translate-y-2 hover:shadow-2xl hover:border-indigo-400">
+      <div className="w-15 h-15 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white text-2xl mb-6">
+        {icon}
+      </div>
+      <h3 className="text-xl font-semibold text-gray-900 mb-4">{header}</h3>
+      <p className="text-gray-500 mb-6">{description}</p>
+      <ul className="space-y-2">
+        {services.map((service) => (
+          <li
+            key={service.id}
+            className="relative pl-6 text-gray-700  before:content-['✓'] before:absolute before:left-0 before:text-green-500 before:font-bold"
+          >
+            {service.name}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default ServiceCard;
+*/}
+
+

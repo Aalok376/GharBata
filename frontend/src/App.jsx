@@ -13,6 +13,7 @@ import ClientPage from './pages/clientPage';
 function App(){
   return (
     <Router>
+     
       <Routes>
         <Route path='/dashboard' element={<ClientPage/>}/>
         <Route path='/client_login' element={<Client_Login/>}/>
@@ -23,6 +24,7 @@ function App(){
         <Route path='/homepage' element={<HomePageFunc/>}/>
         <Route path='/professional' element={<ProfessionalPage/>}/>
       </Routes>
+    
 
     </Router>
     
