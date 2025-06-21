@@ -20,8 +20,8 @@ function App(){
         <Route path='/client_signup' element={<Client_Signup/>}/>
         <Route path='/technician_login' element={<Technician_Login/>}/>
         <Route path='/technician_signup' element={<Technician_Signup/>}/>
-        <Route path="/" element={<Navigate to="/homepage" replace />} />
-        <Route path='/homepage' element={<HomePageFunc/>}/>
+        {/* <Route path="/" element={<Navigate to="/homepage" replace />} /> */}
+        <Route path='/' element={<HomePageFunc/>}/>
         <Route path='/professional' element={<ProfessionalPage/>}/>
       </Routes>
     

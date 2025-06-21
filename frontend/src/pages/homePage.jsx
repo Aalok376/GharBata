@@ -1,12 +1,10 @@
-
-  
 import React, { useState,useEffect } from 'react'
-import StyledLinkFunc from '../components/syledLink'
-import Navbar from '../components/Navbar'
 import styled, { keyframes } from 'styled-components'
+import { Link, useLocation } from 'react-router-dom'
 import ServiceCard from '../components/serviceCard'
 import Steps from '../components/steps'
-import { Link, useLocation } from 'react-router-dom'
+import StyledLinkFunc from '../components/syledLink'
+import Navbar from '../components/Navbar'
 import WhyChoose from '../components/WhyChoose'
 import TopRatedProviders from '../components/TopRatedProviders'
 import WhatClientsay from '../components/WhatClientsay'
@@ -25,7 +23,7 @@ const HomePageFunc = () => {
 
     useEffect(() => {
         if (hash) {
-            const element = document.getElementById(hash)
+            const element = document.querySelector(hash)
             console.log(hash,element)
             if (element) {
                 element.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -152,7 +150,6 @@ const HomePageFunc = () => {
     return (
         <BodyComponent>
             <Navbar/>
-          
             <Hero>
                 <Container>
                     <HeroContent>
