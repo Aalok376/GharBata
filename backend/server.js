@@ -30,7 +30,6 @@ connectDB();
 // --- Chat Features ---
 initializeSocket(server); // Initialize Socket.io for chat features
 
-
 // --- Placeholder for API routes ---
 app.use('/api/auth', authRoutes);
 // Add routes as project grows
