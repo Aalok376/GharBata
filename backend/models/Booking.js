@@ -24,7 +24,9 @@ const bookingSchema = new mongoose.Schema({
   address: { 
     type: String, 
     required: true,
-    trim: true
+    trim: true,
+     minlength: [10, 'Address must be at least 10 characters'],
+    maxlength: [200, 'Address cannot exceed 200 characters']
   },
   scheduled_date: { 
     type: Date, 
@@ -53,7 +55,10 @@ const bookingSchema = new mongoose.Schema({
   booking_status: { 
     type: String, 
     required: true,
-    enum: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'rescheduled'],
+    enum:{
+     values: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'rescheduled'],
+    message: 'Invalid booking status'
+  },
     default: 'pending'
   },
   cancelled_at: { 
