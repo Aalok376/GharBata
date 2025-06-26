@@ -1,11 +1,55 @@
 import React, { useState, useEffect } from "react"
-import { NavLink } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router-dom"
 import TermsAndCondition from "../components/TermsAndConditon"
 import Overlay_Otp from "../components/otpOverlay"
+import { toast } from 'sonner';
+import { register } from "../utils/api"; 
 
 const Client_Signup = () => {
 
-    const [isOverlayOpen, setIsOverlayOpen] = useState(false)
+  const navigate = useNavigate();
+  const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: ''
+  });
+  const [agree, setAgree] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCheckboxChange = (e) => {
+    setAgree(e.target.checked);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!agree) {
+      toast.error("Please accept the terms and conditions.");
+      return;
+    }
+
+    try {
+      const payload = {
+        fullName: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        password: formData.password,
+        userType: "client",
+        phoneNumber: "9093921873" // You can add a phone input field and assign value here
+      };
+
+      const response = await register(payload);
+      toast.success(response.message);
+      navigate("/client_login");
+    } catch (error) {
+      toast.error(error.message || "Registration failed.");
+    }
+  };
+  
     return (
         <>
             <style>
@@ -401,30 +445,30 @@ const Client_Signup = () => {
 
                 </div>
 
-                <form>
+                <form onSubmit={handleSubmit}>
                     <div className="form-row">
                         <div className="form-group">
                             <label htmlFor="firstName">First Name</label>
-                            <input type="text" id="firstName" name="firstName" placeholder="First Name" required></input>
+                            <input type="text" id="firstName" name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleChange} required></input>
                         </div>
                         <div className="form-group">
                             <label htmlFor="lastName">Last Name</label>
-                            <input type="text" id="lastName" name="lastName" placeholder="Last Name" required></input>
+                            <input type="text" id="lastName" name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleChange} required></input>
                         </div>
                     </div>
 
                     <div className="form-group">
                         <label htmlFor="email">Email Address</label>
-                        <input type="email" id="email" name="email" placeholder="xyz@gmail.com" required></input>
+                        <input type="email" id="email" name="email" placeholder="xyz@gmail.com" value={formData.email} onChange={handleChange} required></input>
                     </div>
 
                     <div className="form-group">
                         <label htmlFor="password">Password</label>
-                        <input type="password" id="password" name="password" placeholder="Create a strong password" required></input>
+                        <input type="password" id="password" name="password" placeholder="Create a strong password" value={formData.password} onChange={handleChange} required></input>
                     </div>
 
                     <div className="checkbox-group">
-                        <input type="checkbox" id="terms" name="terms" required></input>
+                        <input type="checkbox" id="terms" name="terms" checked={agree} onChange={handleCheckboxChange} required></input>
                         <label htmlFor="terms">
                             I agree to the <NavLink to="#" onClick={(event) => {
                                 event.preventDefault()

@@ -1,7 +1,45 @@
-import React, { useEffect, useState } from "react"
-import { NavLink } from "react-router-dom"
+import React, { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { Toaster, toast } from 'sonner';
+import { login } from "../utils/api";
 
 const ClientLogin = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const result = await login(email, password);
+    const userType = result.user?.userType;
+    console.log("Login result:", result);
+    if (result.success) {
+      toast.success("Login successful!");
+      if (userType === "client") {
+        navigate("/dashboard");
+      } else if (userType === "technician") {
+        navigate("/professional");
+      } else {
+        toast.info("Logged in as admin");
+        // You can navigate to admin route or keep it as toast only
+      }
+    } else {
+      toast.error(result.message);
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    setError("Google login not implemented yet.");
+  };
+
+  const handleFacebookLogin = () => {
+    setError("Facebook login not implemented yet.");
+  };
+
+
   return (<>
     <style>
       {`
@@ -284,24 +322,27 @@ const ClientLogin = () => {
           <p>Service Delivery at Your Doorstep</p>
         </div>
 
-        <form id="loginForm">
+        <form id="loginForm" onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="email">Email or Phone</label>
-            <input type="text" id="email" name="email" placeholder="Enter your email or phone number" required></input>
+            <input type="text" id="email" name="email" placeholder="Enter your email or phone number" value={email} onChange={(e) => setEmail(e.target.value)} required></input>
           </div>
 
           <div className="form-group">
             <label htmlFor="password">Password</label>
-            <input type="password" id="password" name="password" placeholder="Enter your password" required></input>
+            <input type="password" id="password" name="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} required></input>
           </div>
 
           <div className="forgot-password">
             <NavLink to="#" onClick={() => { }}>Forgot Password?</NavLink>
           </div>
 
-          <button type="submit" className="login-btn">
-            <span className="loading"></span>
-            <span className="btn-text">Sign In</span>
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? (
+              <span className="loading" />
+            ) : (
+              <span className="btn-text">Sign In</span>
+             )}
           </button>
         </form>
 
@@ -332,6 +373,7 @@ const ClientLogin = () => {
         </div>
       </div>
     </div>
+    <Toaster position="top-right" richColors />
   </>)
 }
 

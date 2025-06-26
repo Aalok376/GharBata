@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react';
 import {BrowserRouter as Router,Routes,Route} from 'react-router-dom'
 
 
@@ -11,15 +11,29 @@ import ProfessionalPage from './pages/professionalHomePage'
 import ClientPage from './pages/clientHomePage'
 import Overlay_Otp from './components/otpOverlay'
 import Chat from './pages/Chat'
+import { status } from './utils/api'
 
 
 
 function App(){
+  
+  // State to hold server status message
+  // This will be used to display server status on the console of browser
+  // This is for debugging purposes
+  const [serverMessage, setServerMessage] = useState("");
+  useEffect(() => {
+    const checkServer = async () => {
+      const result = await status();
+      setServerMessage(result.message || result); // handle both object or string
+      console.log("Backend status:", result);
+    };
+    checkServer();
+  }, []);
+
   return (
     <Router>
-     
       <Routes>
-        <Route path='/' element={<Chat/>}/>
+        <Route path='/' element={<HomePageFunc/>}/>
         <Route path='/home' element={<HomePageFunc/>}/>
         <Route path='/dashboard' element={<ClientPage/>}/>
         <Route path='/client_login' element={<Client_Login/>}/>
