@@ -4,8 +4,9 @@ import http from 'http';
 import dotenv from 'dotenv';
 
 import authRoutes from './routes/auth.js';
+import chatRoutes from './routes/chatRoutes.js';
 import connectDB from './utils/db.js';// Import MongoDB connection
-import { initializeSocket } from './utils/chat.js'; // Import Socket.io utilities
+import { initializeSocket } from './utils/socket.js'; // Import Socket.io utilities
 
 
 dotenv.config(); // Load environment variables from .env file
@@ -32,6 +33,7 @@ initializeSocket(server); // Initialize Socket.io for chat features
 
 // --- Placeholder for API routes ---
 app.use('/api/auth', authRoutes);
+app.use('/api/chats', chatRoutes);
 // Add routes as project grows
 
 // --- Start Server ---

@@ -12,14 +12,12 @@ export const register = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ message: 'Email already registered' });
     }
-    
-    const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
 
     // Create user (default role: 'client' if not provided)
     const user = new User({
       fullName: fullName,
       email,
-      password: hashedPassword,
+      password: password,
       userType: userType || 'client',
       phoneNumber
     });
