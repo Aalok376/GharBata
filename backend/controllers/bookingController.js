@@ -1,3 +1,4 @@
+import User from '../models/User.js';
 import Booking from '../models/Booking.js';
 import Service from '../models/Service.js';
 import {validationResult} from 'express-validator';
@@ -275,5 +276,3 @@ export const cancelBooking = async (req, res) => {
     });
   }
 };
-
-    

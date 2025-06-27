@@ -5,8 +5,7 @@ export const getChat = async (bookingId) => {
     const response = await api.get(`/api/chats/${bookingId}`);
     return response.data;
   } catch (error) {
-    console.error("Get chat failed:", error.response?.data || error.message);
-    return { messages: [] };
+    throw error.response?.data || new Error('Failed to fetch chat');
   }
 };
 
@@ -15,7 +14,7 @@ export const createChat = async (bookingId, participants) => {
     const response = await api.post('/api/chats', { bookingId, participants });
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Create chat failed' };
+    throw error.response?.data || new Error('Failed to send message');
   }
 };
 
@@ -31,3 +30,11 @@ export const sendMessage = async (bookingId, senderId, message) => {
     return { success: false, message: 'Failed to send message' };
   }
 };
+
+const chatService = {
+  getChat,
+  createChat,
+  sendMessage,
+};
+
+export default chatService;

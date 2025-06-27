@@ -5,9 +5,9 @@ import { sendVerificationEmail } from '../utils/email.js';
 
 // Register function
 export const register = async (req, res) => {
-  console.log("api/auth/:", req.body);
+  console.log("api/auth/register:", req.body);
   try {
-    const { fullName, email, password, role, phoneNumber } = req.body;
+    const { fullName, email, password, userType, phoneNumber } = req.body;
 
     const existingUser = await User.findOne({ email }); // Check if user already exists
     if (existingUser) {
@@ -36,7 +36,7 @@ export const register = async (req, res) => {
 // Login function
 export const login = async (req, res) => {
   try {
-    console.log("api/auth/:", req.body);
+    console.log("api/auth/login:", req.body);
     const { email, password } = req.body;
 
     // Find user by email
@@ -77,7 +77,7 @@ export const login = async (req, res) => {
 
 // Verify Email function
 export const verifyEmail = async (req, res) => {
-    console.log("api/auth/:", req.body);
+    console.log("api/auth/verifyemail:", req.body);
   try {
     const { token } = req.query;
 
