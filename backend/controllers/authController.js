@@ -7,7 +7,7 @@ import { sendVerificationEmail } from '../utils/email.js';
 export const register = async (req, res) => {
   console.log("api/auth/:", req.body);
   try {
-    const { fullName, email, password, userType, phoneNumber } = req.body;
+    const { fullName, email, password, role, phoneNumber } = req.body;
 
     const existingUser = await User.findOne({ email }); // Check if user already exists
     if (existingUser) {

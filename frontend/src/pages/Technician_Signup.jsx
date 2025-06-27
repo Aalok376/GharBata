@@ -472,4 +472,4 @@ const Client_Signup = () => {
     )
 }
 
-export default Client_Signup
+export default Client_Signup;
