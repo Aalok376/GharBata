@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Toaster, toast } from 'sonner';
-import { login } from "../utils/api";
+import { login } from "../api/auth";
 
 const ClientLogin = () => {
   const [email, setEmail] = useState("");

@@ -10,8 +10,8 @@ import HomePageFunc from './pages/IntroductionPage'
 import ProfessionalPage from './pages/professionalHomePage'
 import ClientPage from './pages/clientHomePage'
 import Overlay_Otp from './components/otpOverlay'
-import Chat from './pages/Chat'
-import { status } from './utils/api'
+import Chat from './components/chatBox'
+import { status } from './api/auth'
 
 
 

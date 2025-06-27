@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom"
 import TermsAndCondition from "../components/TermsAndConditon"
 import Overlay_Otp from "../components/otpOverlay"
 import { toast } from 'sonner';
-import { register } from "../utils/api"; 
+import { register } from "../api/auth"; 
 
 const Client_Signup = () => {
 
