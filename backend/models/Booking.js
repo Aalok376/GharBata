@@ -67,15 +67,16 @@ const bookingSchema = new mongoose.Schema({
   cancelled_by: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User' 
-  },
-  created_at: { 
-    type: Date, 
-    default: Date.now 
-  },
-  updated_at: { 
-    type: Date, 
-    default: Date.now 
   }
+  //unnecessary fields removed for simplicity as they are handled by Mongoose timestamps
+  // created_at: { 
+  //   type: Date, 
+  //   default: Date.now 
+  // },
+  // updated_at: { 
+  //   type: Date, 
+  //   default: Date.now 
+  // }
 }, {
   timestamps: true
 });

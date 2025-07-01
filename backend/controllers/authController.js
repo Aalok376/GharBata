@@ -2,6 +2,8 @@ import User from '../models/user.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { sendVerificationEmail } from '../utils/email.js';
+import { createClient }  from './clientController.js';
+import { createTechnician } from './technicianController.js';
 
 // Register function
 export const register = async (req, res) => {
@@ -24,6 +26,9 @@ export const register = async (req, res) => {
     });
 
     await user.save();
+    if (user.userType === 'client') await createClient(user._id, {});
+    if (user.userType === 'technician') await createTechnician(user._id, {});
+
 
     await sendVerificationEmail(user);// Send verification email
 

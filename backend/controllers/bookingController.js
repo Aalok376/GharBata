@@ -1,4 +1,4 @@
-import User from '../models/User.js';
+import User from '../models/user.js';
 import Booking from '../models/Booking.js';
 import Service from '../models/Service.js';
 import {validationResult} from 'express-validator';
@@ -43,19 +43,19 @@ export const  createBooking=async(req,res)=>{
         }
         const {technician_id, service_id,address,scheduled_date,scheduled_time,booking_service_price}=req.body;
         // check if technician exists and is actually a technician
-        if(!technician || technician.role != USER_ROLES.TECHNICIAN){
-            return res.status(HTTP_STATUS.NOT_FOUND).json({
-                success: false,
-                message: 'Technician not found'
-            });
-        }
-         //check if the technician is active
-         if(!technician.is_active){
-            return res.status(HTTP_STATUS.BAD_REQUEST).json({
-                success: false,
-                message: 'Technician is not currently available'
-            });
-         }
+        // if(!technician || technician.role != USER_ROLES.TECHNICIAN){
+        //     return res.status(HTTP_STATUS.NOT_FOUND).json({
+        //         success: false,
+        //         message: 'Technician not found'
+        //     });
+        // }
+        //  //check if the technician is active
+        //  if(!technician.is_active){
+        //     return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        //         success: false,
+        //         message: 'Technician is not currently available'
+        //     });
+        //  }
          // Check if service exists and is active
          const service=await Service.findById(service_id);
          if(!service || !service_is_active){
@@ -65,17 +65,21 @@ export const  createBooking=async(req,res)=>{
             });
          }
          // check technician availability for the selected date and time
-         const isAvailable=await checkTechnicianAvailability(technician_id,scheduled_date,scheduled_time);
-         if(!isAvailable){
+        const isAvailable=await checkTechnicianAvailability(technician_id,scheduled_date,scheduled_time);
+        if(!isAvailable){
             return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: 'Technician is not available at the selected date and time'
 
             });
          }
-         // Generate unique booking ID
-         const booking_id=generateBookingId();
-         // Create new booking
+          // Generate unique booking ID
+          let booking_id;
+          let exists;
+          do {
+            booking_id = generateBookingId();
+            exists = await Booking.findOne({ booking_id });
+          } while (exists);         // Create new booking
          const newBooking=new Booking({
             booking_id,
             client_id: req.user.id, // from auth middleware

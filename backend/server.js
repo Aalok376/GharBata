@@ -6,6 +6,9 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import chatRoutes from './routes/chatRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js'; 
+import serviceRoutes from './routes/serviceRoutes.js';
+import clientRoutes from './routes/clientRoutes.js';
+import technicianRoutes from './routes/technicianRoutes.js';
 import connectDB from './config/db.js';// Import MongoDB connection
 import { initializeSocket } from './utils/socket.js'; // Import Socket.io utilities
 
@@ -36,7 +39,10 @@ initializeSocket(server); // Initialize Socket.io for chat features
 // --- Placeholder for API routes ---
 app.use('/api/auth', authRoutes);
 app.use('/api/chats', chatRoutes);
-app.use('/api/bookings', bookingRoutes); 
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/services', serviceRoutes);
+app.use('/api/clients', clientRoutes);
+app.use('/api/technicians', technicianRoutes);
 // Add routes as project grows
 
 // --- Start Server ---
