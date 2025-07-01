@@ -26,7 +26,7 @@ export const authMiddleware = async (req, res, next) => {
 
     // Attach to req object
     req.user = { id: user._id };
-    req.userRole = user.userRole; 
+    req.userRole = user.role; 
 
     next(); // Proceed to the next middleware/route
   } catch (err) {

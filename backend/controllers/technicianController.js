@@ -26,7 +26,8 @@ export const createTechnicianProfile = async(req,res)=>{
             currentLocation: req.body.currentLocation,
             rating: 0,
             tasksCompleted: 0,
-            isVerified: false
+            isVerified: false,
+            isActive: true,   
         });
         await technician.save();
         res.status(201).json({ message:"Technician profile created",technician});

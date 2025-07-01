@@ -5,17 +5,18 @@ import {createBooking,getClientBookings,getBookingById,
 import{
     validateCreateBooking,validateCancellation
 } from '../middlewares/bookingValidation.js';
+import { authMiddleware } from '../middlewares/auth.js';
 
 const router=express.Router();
 //POST/api/bookings - create a new booking
-router.post('/',validateCreateBooking,createBooking);
+router.post('/',authMiddleware,validateCreateBooking,createBooking);
 
 // Get/api/bookings - Get client's bookings
-router.get('/',getClientBookings);
+router.get('/',authMiddleware,getClientBookings);
 // GET/api/bookings/:id - Get single booking details
-router.get('/:id',getBookingById);
+router.get('/:id',authMiddleware,getBookingById);
 
 //PUT /api/bookings/:id/cancel - Cancel booking
-router.put('/:id/cancel', validateCancellation,cancelBooking);
+router.put('/:id/cancel', authMiddleware,validateCancellation,cancelBooking);
 
 export default router;

@@ -1,5 +1,6 @@
 import Booking from '../models/Booking.js';
 import Service from '../models/Service.js';
+import User from '../models/user.js';
 import {validationResult} from 'express-validator';
 import {generateBookingId,canCancelBooking,checkTechnicianAvailability} from '../utils/bookingUtils.js';
 
@@ -41,6 +42,8 @@ export const  createBooking=async(req,res)=>{
             
         }
         const {technician_id, service_id,address,scheduled_date,scheduled_time,booking_service_price}=req.body;
+        // Fetch technician by ID
+const technician = await User.findById(technician_id);
         // check if technician exists and is actually a technician
         if(!technician || technician.role != USER_ROLES.TECHNICIAN){
             return res.status(HTTP_STATUS.NOT_FOUND).json({
@@ -57,7 +60,7 @@ export const  createBooking=async(req,res)=>{
          }
          // Check if service exists and is active
          const service=await Service.findById(service_id);
-         if(!service || !service_is_active){
+         if(!service || !service.is_active){
             return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: 'Service not found or not available'
