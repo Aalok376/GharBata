@@ -46,8 +46,5 @@ const serviceSchema= new mongoose.Schema({
         ref:' User',
         required: true
     }
-},{
-    timestamps: true
-}
-);
+});
 export default mongoose.model('Service',serviceSchema);

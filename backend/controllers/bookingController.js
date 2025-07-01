@@ -49,7 +49,7 @@ export const  createBooking=async(req,res)=>{
             });
         }
          //check if the technician is active
-         if(!technician.is_active){
+         if(!technician.isActive){
             return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: 'Technician is not currently available'

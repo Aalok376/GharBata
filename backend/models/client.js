@@ -1,9 +1,19 @@
 import mongoose from 'mongoose';
 
 const clientSchema = new mongoose.Schema({
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
-  address: String,
-  servicePreferences: [String]
+  client_id: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User',
+     required: true, 
+     unique: true
+     },
+  address: {
+    type : String,
+    trim: true
+  },
+  servicePreferences: [{type: String}]
+},{
+  timestamps: true
 });
+export default mongoose.model('Client', clientSchema);
 
-module.exports = mongoose.model('Client', clientSchema);
