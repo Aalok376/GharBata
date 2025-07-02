@@ -1,3 +1,4 @@
+import User from '../models/user.js';
 import Booking from '../models/Booking.js';
 import Service from '../models/Service.js';
 import User from '../models/user.js';
@@ -67,15 +68,15 @@ const technician = await User.findById(technician_id);
             });
          }
          // check technician availability for the selected date and time
-         const isAvailable=await checkTechnicianAvailability(technician_id,scheduled_date,scheduled_time);
-         if(!isAvailable){
+        const isAvailable=await checkTechnicianAvailability(technician_id,scheduled_date,scheduled_time);
+        if(!isAvailable){
             return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: 'Technician is not available at the selected date and time'
 
             });
          }
-         // Generate unique booking ID
+          // Generate unique booking ID
          const booking_id=generateBookingId();
          // Create new booking
          const newBooking=new Booking({
@@ -278,5 +279,3 @@ export const cancelBooking = async (req, res) => {
     });
   }
 };
-
-    

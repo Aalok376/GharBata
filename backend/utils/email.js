@@ -1,10 +1,21 @@
 import jwt from 'jsonwebtoken';
-import { getTransporter } from '../config/mailer.js';
 import User from '../models/user.js';
+import nodemailer from 'nodemailer';
 
 export const generateVerificationToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
 };
+
+export const getTransporter = () => {
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+};
+
 
 export const sendVerificationEmail = async (user) => {
   try {

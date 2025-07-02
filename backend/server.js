@@ -4,6 +4,7 @@ import http from 'http';
 import dotenv from 'dotenv';
 
 import authRoutes from './routes/auth.js';
+import chatRoutes from './routes/chatRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js'; 
 import clientRoutes from './routes/clientRoutes.js';
 import technicianRoutes from './routes/technicianRoutes.js';
@@ -14,10 +15,15 @@ import { initializeSocket } from './utils/chat.js'; // Import Socket.io utilitie
 
 dotenv.config(); // Load environment variables from .env file
 
-// Create Express app
-const app = express();
+const app = express(); // Create Express app
+const PORT = process.env.PORT;
+const server = http.createServer(app); // Create HTTP server
+
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.CLIENT_URL,
+  // credentials: true, 
+})); // Allow credentials for cookies, authorization headers, etc.
 app.use(express.json()); // Parse JSON bodies
 
 // Basic health check route
@@ -25,11 +31,8 @@ app.get('/', (req, res) => {
   res.send('GharBata backend server is running.');
 });
 
-// --- Create HTTP server
-const server = http.createServer(app);
 
-// --- MongoDB Connection ---
-connectDB();
+connectDB(); // MongoDB Connection
 
 // --- Chat Features ---
 initializeSocket(server); // Initialize Socket.io for chat features
@@ -43,7 +46,6 @@ app.use('/api/services',serviceRoutes);
 // Add routes as project grows
 
 // --- Start Server ---
-const PORT = process.env.PORT;
 server.listen(PORT, () => {
   console.log(`GharBata backend server listening on port ${PORT}`);
 });

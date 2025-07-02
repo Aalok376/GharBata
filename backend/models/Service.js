@@ -43,7 +43,7 @@ const serviceSchema= new mongoose.Schema({
     },
     created_by:{
         type: mongoose.Schema.Types.ObjectId,
-        ref:' User',
+        ref:'User',
         required: true
     }
 });
