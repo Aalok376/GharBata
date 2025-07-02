@@ -109,54 +109,6 @@ const ClientPage = () => {
                     font-size: 1.1rem;
                 }
         
-                .user-profile {
-                    display: flex;
-                    align-items: center;
-                    gap: 1rem;
-                }
-        
-                .avatar {
-                    width: 50px;
-                    height: 50px;
-                    border-radius: 50%;
-                    background: linear-gradient(135deg, #667eea, #764ba2);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    font-weight: 600;
-                    font-size: 1.2rem;
-                }
-        
-                .notification-btn {
-                    position: relative;
-                    background: rgba(102, 126, 234, 0.1);
-                    border: none;
-                    border-radius: 50%;
-                    width: 45px;
-                    height: 45px;
-                    cursor: pointer;
-                    color: #667eea;
-                    font-size: 1.2rem;
-                    transition: all 0.3s ease;
-                }
-        
-                .notification-btn:hover {
-                    background: rgba(102, 126, 234, 0.2);
-                    transform: scale(1.1);
-                }
-        
-                .notification-badge {
-                    position: absolute;
-                    top: -5px;
-                    right: -5px;
-                    background: #ff4757;
-                    color: white;
-                    font-size: 0.7rem;
-                    padding: 2px 6px;
-                    border-radius: 10px;
-                }
-        
                 .services-grid {
                     display: grid;
                     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -301,13 +253,6 @@ const ClientPage = () => {
                             <div className="welcome">
                                 <h2>Welcome back, Sarah!</h2>
                                 <p>Ready to book your next service?</p>
-                            </div>
-                            <div className="user-profile">
-                                <button className="notification-btn">
-                                    🔔
-                                    <span className="notification-badge">3</span>
-                                </button>
-                                <div className="avatar">SM</div>
                             </div>
                         </header>
                         <section className="services-grid">

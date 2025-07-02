@@ -11,6 +11,7 @@ import ProfessionalPage from './pages/professionalHomePage'
 import ClientPage from './pages/clientHomePage'
 import Overlay_Otp from './components/otpOverlay'
 import Chat from './components/chatBox'
+import ProfessionalProfilePage from './pages/professionalProfile';
 import { status } from './api/auth'
 
 
@@ -42,6 +43,7 @@ function App(){
         <Route path='/technician_signup' element={<Technician_Signup/>}/>
         <Route path='/otp' element={<Overlay_Otp/>}/>
         <Route path='/professional' element={<ProfessionalPage/>}/>
+        <Route path='/professionalProfilePage' element={<ProfessionalProfilePage/>}/>
         <Route path='/chat/:bookingId' element={<Chat/>}/>
       </Routes>
     
