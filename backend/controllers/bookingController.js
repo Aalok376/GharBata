@@ -1,7 +1,6 @@
 import User from '../models/user.js';
 import Booking from '../models/Booking.js';
 import Service from '../models/Service.js';
-import User from '../models/user.js';
 import {validationResult} from 'express-validator';
 import {generateBookingId,canCancelBooking,checkTechnicianAvailability} from '../utils/bookingUtils.js';
 

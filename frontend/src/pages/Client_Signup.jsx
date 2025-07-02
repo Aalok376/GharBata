@@ -43,6 +43,8 @@ const Client_Signup = () => {
       };
 
       const response = await register(payload);
+      const result=await response.json()
+      console.log(result)
       toast.success(response.message);
       navigate("/client_login");
     } catch (error) {
