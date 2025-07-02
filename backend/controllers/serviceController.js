@@ -1,17 +1,16 @@
 import Service from "../models/Service.js";
 import User from "../models/user.js";
-// Create Service(Only technician allowed)
+
 export const createService= async (req,res) => {
     try{
         const userId= req.user.id;
         const userRole = req.userRole;
 
-        // Allow only technicians or admins to create services
         if(!['technician','admin'].includes(userRole)){
             return res.status(403).json({message: 'Only technicians or admins can create services'});
         }
-        const {name,description,category,service_price,duration_hours}=req.body;
-         //Check for required fields
+        const {name,description,category,service_price,duration_hours}=req.body
+        
          if(!name || !description || !category || !service_price == null || duration_hours == null){
             return res.status(400).json({message:'All Fields are required'});
          }
