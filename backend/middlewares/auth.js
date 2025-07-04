@@ -41,7 +41,7 @@ export const verifyToken = async (req, res, next) => {
       const AccessToken = jwt.sign({ id: userId }, process.env.JWT_ACCESS_SECRET, { expiresIn: '30m' })
       res.cookie('accessToken', AccessToken, { httpOnly: true })
 
-      req.user = { id: payload.id };
+      req.user = { id: payload.id }
       return next()
     }
     else {

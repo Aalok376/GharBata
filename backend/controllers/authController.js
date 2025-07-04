@@ -4,6 +4,7 @@ import TokenStore from '../models/RefreshToken.js'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { sendEmail } from '../utils/email.js'
+import RefreshToken from '../models/RefreshToken.js'
 
 export const verificationOtp = async (req, res) => {
   const { username, password } = req.body
@@ -84,3 +85,57 @@ export const login = async (req, res) => {
   }
 }
 
+export const Logout = async (req, res) => {
+  try {
+    const userID = req.user.id
+
+    const loggedUser = await User.findById(userID)
+
+    if (!loggedUser) {
+      return res.status(404).json({ success: false, msg: 'User not found.' });
+    }
+    const { username } = loggedUser
+
+    await RefreshToken.deleteOne({ username })
+
+    res.clearCookie('refreshToken', { httpOnly: true })
+    res.clearCookie('accessToken', { httpOnly: true })
+
+    return res.status(200).json({ success: true, msg: 'Logged Out Successfully.' })
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ success: false, msg: 'Internal server error.' })
+  }
+}
+
+export const deleteUser = async (req, res) => {
+  const userID = req.user.id
+
+  const { username, password } = req.body
+
+  try {
+    const UserTodelete = await User.findById(userID)
+    if (!UserTodelete) {
+      return res.status(404).json({ success: false, msg: 'User not Found' })
+    }
+    else if(username!==UserTodelete.username){
+      return res.status(401).json({success:false,msg:'Invalid Username'})
+    }
+    
+    const isMatch = await bcrypt.compare(password, UserTodelete.password)
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials: Incorrect password.' })
+    }
+
+    await RefreshToken.deleteOne({ username:UserTodelete.username })
+    res.clearCookie('refreshToken', { httpOnly: true })
+    res.clearCookie('accessToken', { httpOnly: true })
+
+    await User.deleteOne({ _id: userID })
+
+    return res.status(200).json({success:true,msg:'User deleted Successfully'})
+  } catch (error) {
+    console.error(error)
+    return res.status(505).json({ success: false, msg: 'Internal server error' })
+  }
+}
