@@ -1,30 +1,64 @@
-import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose'
+import bcrypt from 'bcryptjs'
 
-const userSchema = new mongoose.Schema({
-  email: { type: String, required: [true, 'Email is required'], unique: true },
-  password: { type: String, required: [true, 'Password is required'] },
-  userType: { type: String, enum: ['client', 'technician', 'admin'], required: [true, 'User type is required'] },
-  fullName: { type: String, required: [true, 'Full name is required'] },
-  phoneNumber: { type: String, required: [true, 'Phone number is required'] },
-  emailVerificationToken: { type: String },
-  passwordResetToken: { type: String },
-  passwordResetExpires: { type: Date },
-  isActive: { type: Boolean, default: true }
-  // createdAt: { type: Date, default: Date.now },
-  // updatedAt: Date
-},{ timestamps: true });
+const UserSchema = new mongoose.Schema({
 
-// Hashing password before saving
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 10);
-  next();
-});
+  userType: {
+    type: String,
+    enum: ['client', 'technician', 'admin'],
+    required: [true, 'User type is required'],
+  },
+  fname: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  lname: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+  profilePicture: {
+    type: String,
+    default: null,
+  },
+  contactNumber: {
+    type: String,
+    default: null,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
+}, { timestamps: true })
 
-// Method to compare password
-userSchema.methods.matchPassword = async function (enteredPassword) {
-  return bcrypt.compare(enteredPassword, this.password);
-};
 
-export default mongoose.model('User', userSchema);
+UserSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) {
+    return next();
+  }
+
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt)
+    next()
+  }
+  catch (error) {
+    next(error)
+  }
+})
+export default mongoose.model('User', UserSchema)

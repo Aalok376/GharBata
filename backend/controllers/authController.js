@@ -1,112 +1,86 @@
-import User from '../models/user.js';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { sendVerificationEmail } from '../utils/email.js';
+import User from '../models/user.js'
+import OtpStore from '../models/verificationOtp.js'
+import TokenStore from '../models/RefreshToken.js'
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
+import { sendEmail } from '../utils/email.js'
 
-// Register function
-export const register = async (req, res) => {
-  console.log("api/auth/register:", req.body);
-  try {
-    const { fullName, email, password, role, phoneNumber } = req.body;
+export const verificationOtp = async (req, res) => {
+  const { username, password } = req.body
 
-    const existingUser = await User.findOne({ email }); // Check if user already exists
-    if (existingUser) {
-      return res.status(400).json({ message: 'Email already registered' });
-    }
-
-    // Create user (default role: 'client' if not provided)
-    const user = new User({
-      fullName: fullName,
-      email,
-      password,
-      userType: role || 'client',
-      phoneNumber
-    });
-
-    await user.save();
-
-    await sendVerificationEmail(user);// Send verification email
-
-    res.status(201).json({ message: "User registered successfully. Please verify your email." });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  const validatePassword = (password) => {
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+    return passwordRegex.test(password)
   }
-};
 
+  if (!username || !password) {
+    return res.status(400).json({ msg: 'Please provide all data' })
+  }
+  else if (!validatePassword(password)) {
+    return res.status(400).json({
+      success: false,
+      msg: 'Password must be at least 8 characters long and include at least one letter and one number.',
+    })
+  }
+  else {
+    try {
+      const existinguser = await User.findOne({ username })
+      if (existinguser) {
+        return res.status(409).json({ msg: 'Username already taken' })
+      }
+
+      const otp = Math.floor(100000 + Math.random() * 900000).toString()
+      sendEmail(username, otp)
+
+      const otpDb = new OtpStore({ username, otp })
+      await otpDb.save()
+      return res.status(200).json({ msg: 'OTP sent to your email. Please verify to complete signup.' })
+    }
+    catch (error) {
+      console.log(error)
+      return res.status(500).json({ error })
+    }
+  }
+}
+//Register Function
+export const Register = async (req, res) => {
+  const { username, password, fname, lname, userType } = req.body
+  try {
+    const user = new User({ fname, lname, username, password, userType })
+    await user.save();
+    return res.status(200).json({ success: true, msg: 'User created successfully.' })
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ success: false, msg: 'Internal server error' })
+  }
+}
 // Login function
 export const login = async (req, res) => {
   try {
-    console.log("api/auth/login:", req.body);
-    const { email, password } = req.body;
+    const { username, password } = req.body
 
-    // Find user by email
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ username })
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials: User not found.' });
+      return res.status(401).json({ message: 'Invalid credentials: User not found.' })
     }
 
-    // Check if email is verified. Remove this check if user is allowed login without email verification.
-    if (user.emailVerificationToken) {
-      return res.status(403).json({ message: 'Please verify your email before logging in' });
-    }
-    // Check password
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials: Incorrect password.' });
+      return res.status(401).json({ message: 'Invalid credentials: Incorrect password.' })
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
+    const AccessToken = jwt.sign({ id: user._id }, process.env.JWT_ACCESS_SECRET, { expiresIn: '30m' })
+    res.cookie('accessToken', AccessToken, { httpOnly: true })
 
-    // Remove sensitive data before sending
-    const { password: _, emailVerificationToken, passwordResetToken, passwordResetExpires, ...userData } = user.toObject();
+    const RefreshToken = jwt.sign({ id: user._id }, process.env.JWT_REFRESH_SECRET)
+    const tokenStoree = new TokenStore({ username, RefreshToken })
+    await tokenStoree.save()
+    res.cookie('refreshToken', RefreshToken, { httpOnly: true, maxAge: 7 * 86400 * 1000 })
 
-    res.status(200).json({
-      message: "Logged in successfully",
-      token,
-      user: userData
-    });
+    return res.status(200).json({ success: true, message: "Logged in successfully" })
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.log(error)
+    return res.status(500).json({ success: false, msg: 'Internal server error' })
   }
-};
-
-// Verify Email function
-export const verifyEmail = async (req, res) => {
-    console.log("api/auth/verifyemail:", req.body);
-  try {
-    const { token } = req.query;
-
-    if (!token) {
-      return res.status(400).json({ message: 'Verification token is missing' });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Token Decoded
-    const user = await User.findById(decoded.userId);
-
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid Token or User not found' });
-    }
-
-    if (user.emailVerificationToken !== token) {
-      return res.status(400).json({ message: 'Invalid or expired Token' });
-    }
-
-    // Mark user as verified
-    // user.verified = true;
-    user.emailVerificationToken = null;
-    await user.save();
-
-    res.status(200).json({ message: 'Email verified successfully' });
-  } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(400).json({ message: 'Verification link expired' });
-    }
-    res.status(500).json({ message: error.message });
-  }
-};
+}
 
