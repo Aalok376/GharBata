@@ -7,21 +7,10 @@ import { sendEmail } from '../utils/email.js'
 import RefreshToken from '../models/RefreshToken.js'
 
 export const verificationOtp = async (req, res) => {
-  const { username, password } = req.body
-
-  const validatePassword = (password) => {
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
-    return passwordRegex.test(password)
-  }
+  const { username, password, fname, lname } = req.body
 
   if (!username || !password) {
     return res.status(400).json({ msg: 'Please provide all data' })
-  }
-  else if (!validatePassword(password)) {
-    return res.status(400).json({
-      success: false,
-      msg: 'Password must be at least 8 characters long and include at least one letter and one number.',
-    })
   }
   else {
     try {
@@ -118,22 +107,22 @@ export const deleteUser = async (req, res) => {
     if (!UserTodelete) {
       return res.status(404).json({ success: false, msg: 'User not Found' })
     }
-    else if(username!==UserTodelete.username){
-      return res.status(401).json({success:false,msg:'Invalid Username'})
+    else if (username !== UserTodelete.username) {
+      return res.status(401).json({ success: false, msg: 'Invalid Username' })
     }
-    
+
     const isMatch = await bcrypt.compare(password, UserTodelete.password)
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials: Incorrect password.' })
     }
 
-    await RefreshToken.deleteOne({ username:UserTodelete.username })
+    await RefreshToken.deleteOne({ username: UserTodelete.username })
     res.clearCookie('refreshToken', { httpOnly: true })
     res.clearCookie('accessToken', { httpOnly: true })
 
     await User.deleteOne({ _id: userID })
 
-    return res.status(200).json({success:true,msg:'User deleted Successfully'})
+    return res.status(200).json({ success: true, msg: 'User deleted Successfully' })
   } catch (error) {
     console.error(error)
     return res.status(505).json({ success: false, msg: 'Internal server error' })

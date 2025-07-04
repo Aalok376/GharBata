@@ -1,34 +1,45 @@
-import api from '../utils/api';
+const BASE_URL = import.meta.env.BASE_URL
 
-export const status = async () => {
+export const SignUp = async ({username, password, fname, lname}) => {
   try {
-    const response = await api.get('/');
-    return response.data;
-  } catch (error) {
-    console.error("Status check failed:", error.response?.data || error.message);
-    return { success: false, message: "Server is down" };
-  }
-};
+    const response = await fetch(`${BASE_URL}/api/auth/emailVerification`, {
+      method: 'POST',
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, password, fname, lname })
+    })
 
-export const login = async (email, password) => {
-  try {
-    const response = await api.post('/api/auth/login', { email, password });
-    const { token, user } = response.data;
-    localStorage.setItem('token', token);
-    return { success: true, user };
+    if (response.status === 200) {
+      return true
+    }
+    else {
+      return false
+    }
   } catch (error) {
-    return {
-      success: false,
-      message: error.response?.data?.message || "Login failed",
-    };
+    console.error(error)
+    return false
   }
-};
+}
 
-export const register = async (formData) => {
+export const register = async ({username, password, fname, lname, userType}) => {
   try {
-    const response = await api.post('/api/auth/register', formData);
-    return response.data;
+    const response = await fetch(`${BASE_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, password, fname, lname, userType })
+    })
+
+    if (response.status === 200) {
+      return true
+    }
+    else {
+      return false
+    }
   } catch (error) {
-    throw error.response?.data || { message: 'Registration failed' };
+    console.error(error)
+    return false
   }
-};
+}

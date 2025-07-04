@@ -12,26 +12,11 @@ import ClientPage from './pages/clientHomePage'
 import Overlay_Otp from './components/otpOverlay'
 import Chat from './components/chatBox'
 import ProfessionalProfilePage from './pages/professionalProfile';
-import { status } from './api/auth'
 
 
 
 function App(){
-  
-  // State to hold server status message
-  // This will be used to display server status on the console of browser
-  // This is for debugging purposes
-  const [serverMessage, setServerMessage] = useState("");
-  useEffect(() => {
-    const checkServer = async () => {
-      const result = await status();
-      setServerMessage(result.message || result); // handle both object or string
-      console.log("Backend status:", result);
-    };
-    checkServer();
-  }, []);
-
-  return (
+ return (
     <Router>
       <Routes>
         <Route path='/' element={<HomePageFunc/>}/>
