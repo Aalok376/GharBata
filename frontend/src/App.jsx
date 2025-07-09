@@ -9,6 +9,7 @@ import Technician_Login from './pages/Technician_Login'
 import HomePageFunc from './pages/IntroductionPage'
 import ProfessionalPage from './pages/professionalHomePage'
 import ClientPage from './pages/clientHomePage'
+import BookingDashboard from './components/BookingDashboard'
 
 
 
@@ -24,6 +25,7 @@ function App(){
         <Route path='/technician_signup' element={<Technician_Signup/>}/>
         <Route path='/' element={<HomePageFunc/>}/>
         <Route path='/professional' element={<ProfessionalPage/>}/>
+           <Route path="/bookings" element={<BookingDashboard />} />
       </Routes>
     
 
