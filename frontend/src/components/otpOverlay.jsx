@@ -1,10 +1,103 @@
-import React,{useState,useEffect} from "react"
+import React, { useState, useEffect } from "react"
+import { register, SignUp } from "../api/auth"
+import { toast } from 'sonner'
+import { useNavigate } from "react-router-dom"
 
-const Overlay_Otp=()=>{
-    return(<>
+const Overlay_Otp = () => {
 
-    <style>
-        {`.otp-overlay {
+    const [Username, setUsername] = useState()
+    const [Timer, setTimer] = useState(120)
+
+    setTimeout(() => {
+        setTimer((prev) => prev - 1)
+    }, 1000)
+
+  const formData = JSON.parse(sessionStorage.getItem('formData'))
+
+    console.log(formData)
+
+    const username = formData.username
+    const fname = formData.fname
+    const lname = formData.lname
+    const password = formData.password
+    const userType = formData.userType
+
+    const navigate = useNavigate()
+
+    const RegisterUser = async (e) => {
+        e.preventDefault()
+
+        setUsername(username)
+
+        try {
+            const result = await register({ username, password, fname, lname, userType })
+
+            if (result) {
+                toast.success('User Registered successfully. Please login to continue')
+                if (userType === 'client') {
+                    navigate('/client_login')
+                }
+                else if (userType === 'technician') {
+                    navigate('/technician_login')
+                }
+            }
+        } catch (error) {
+            console.log(error)
+            toast.error("Registration failed.")
+        }
+    }
+    return (<>
+        <div className="otp-overlay" id="otpOverlay">
+            <div className="otp-modal" id="otpModal">
+                <button className="otp-close" onClick={() => {
+                    if (userType === 'client') {
+                        navigate('/client_login')
+                    }
+                    else if (userType === 'technician') {
+                        navigate('/technician_login')
+                    }
+                }}>&times;</button>
+
+                <div className="otp-header">
+                    <div className="otp-icon">
+                        <svg width="28" height="28" fill="white" viewBox="0 0 24 24">
+                            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+                            <path d="M9 12l2 2 4-4" stroke="white" stroke-width="2" fill="none" />
+                        </svg>
+                    </div>
+                    <h2>Verify Your Account</h2>
+                    <p>We've sent a 6-digit verification code to</p>
+                    <div className="email_id" id="phoneDisplay">{Username}</div>
+                </div>
+
+                <div className="otp-inputs">
+                    <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" name=''></input>
+                    <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]"></input>
+                    <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]"></input>
+                    <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]"></input>
+                    <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]"></input>
+                    <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]"></input>
+                </div>
+
+                <div className="otp-timer">
+                    <span className="timer-text">Code expires in</span>
+                    <span className="timer-count" id="timerCount">{Timer}</span>
+                </div>
+
+                <div className="resend-section">
+                    <div className="resend-text">Didn't receive the code?</div>
+                    <button className="resend-btn" id="resendBtn" onClick={async () => { await SignUp({ username, password, fname, lname }) }}>Resend Code</button>
+                </div>
+
+                <button className="verify-btn" id="verifyBtn" onClick={() => { }} disabled>
+                    <span className="otp-loading"></span>
+                    <span className="verify-btn-text">Verify Code</span>
+                </button>
+            </div>
+        </div>
+
+        <style>
+            {`.otp-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -345,48 +438,7 @@ const Overlay_Otp=()=>{
                 font-size: 1.5rem;
             }
         }`}
-    </style>
-        <div className="otp-overlay" id="otpOverlay">
-        <div className="otp-modal" id="otpModal">
-            <button className="otp-close" onClick={()=>{}}>&times;</button>
-            
-            <div className="otp-header">
-                <div className="otp-icon">
-                    <svg width="28" height="28" fill="white" viewBox="0 0 24 24">
-                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-                        <path d="M9 12l2 2 4-4" stroke="white" stroke-width="2" fill="none"/>
-                    </svg>
-                </div>
-                <h2>Verify Your Account</h2>
-                <p>We've sent a 6-digit verification code to</p>
-                <div className="email_id" id="phoneDisplay">xyz@gmail.com</div>
-            </div>
-
-            <div className="otp-inputs">
-                <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]"></input>
-                <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]"></input>
-                <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]"></input>
-                <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]"></input>
-                <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]"></input>
-                <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]"></input>
-            </div>
-
-            <div className="otp-timer">
-                <span className="timer-text">Code expires in</span>
-                <span className="timer-count" id="timerCount">03:00</span>
-            </div>
-
-            <div className="resend-section">
-                <div className="resend-text">Didn't receive the code?</div>
-                <button className="resend-btn" id="resendBtn" onClick={()=>{}}>Resend Code</button>
-            </div>
-
-            <button className="verify-btn" id="verifyBtn" onClick={()=>{}} disabled>
-                <span className="otp-loading"></span>
-                <span className="verify-btn-text">Verify Code</span>
-            </button>
-        </div>
-    </div>
+        </style>
     </>)
 }
 
