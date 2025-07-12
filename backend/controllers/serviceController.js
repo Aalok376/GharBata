@@ -1,79 +1,77 @@
-import Service from "../models/Service.js"
-import User from "../models/user.js"
+import Service from '../models/Service.js';
 
-export const createService= async (req,res) => {
-    try{
-        const userId= req.user.id
-        const userRole = req.userRole
+// Create a new service
+export const createService = async (req, res) => {
+  try {
+    const serviceData = req.body;
+    serviceData.created_by = req.user._id; // Assuming user info is attached by auth middleware
 
-        if(!['technician','admin'].includes(userRole)){
-            return res.status(403).json({message: 'Only technicians or admins can create services'})
-        }
-        const {name,description,category,service_price,duration_hours}=req.body
-        
-         if(!name || !description || !category || !service_price == null || duration_hours == null){
-            return res.status(400).json({message:'All Fields are required'})
-         }
-         // Create service
-         const service= new Service({
-            name,
-            description,
-            category,
-            service_price,
-            duration_hours,
-            created_by: userId
-         })
-         await service.save()
-         res.status(201).json({message:"Service created successfully",service})
+    const newService = new Service(serviceData);
+    await newService.save();
 
-    }catch (error){
-        res.status(500).json({error: error.message})
+    res.status(201).json({ message: 'Service created successfully', service: newService });
+  } catch (error) {
+    res.status(400).json({ message: 'Failed to create service', error: error.message });
+  }
+};
+
+// Get all active services
+export const getAllServices = async (req, res) => {
+  try {
+    const services = await Service.find({ is_active: true });
+    res.status(200).json(services);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch services', error: error.message });
+  }
+};
+
+// Get service by ID
+export const getServiceById = async (req, res) => {
+  try {
+    const service = await Service.findById(req.params.id);
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
     }
-    
-}
-// get all active services
-export const getAllActiveServices= async(req,res)=>{
-    try {
-        const services= await Service.find({is_active: true})
-        res.status(200).json({services})
+    res.status(200).json(service);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching service', error: error.message });
+  }
+};
 
-        
-    } catch (error) {
-        res.status(500).json({error: error.message})
-        
-    }
-}
-// Deactive a Service 
-export const deactiveService= async (req,res) => {
-    try {
-        const {serviceId}= req.params
-        const service= await Service.findById(serviceId)
-        if(!service){
-            return res.status(404).json({message:'Service not found'})
-        }
-        service.is_active=false
-        await service.save()
-        res.status(200).json({message:'Service deactivated successfully'})
-        
-    } catch (error) {
-        res.status(500).json({error: error.message})
-        
-    }
-    
-}
-// get service by ID
-export const getServiceById= async (req,res) => {
-    try {
-     const {serviceId}=req.params
-     const service= await Service.findById(serviceId)
-     if(!service || !service.is_active){
-        return res.status(404).json({message:'Service not found or inactive'})
-     }   
-     res.status(200).json({service})
+// Update service by ID
+export const updateService = async (req, res) => {
+  try {
+    const service = await Service.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
 
-    } catch (error) {
-        res.status(500).json({error:error.message})
-        
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
     }
-    
-}
+
+    res.status(200).json({ message: 'Service updated successfully', service });
+  } catch (error) {
+    res.status(400).json({ message: 'Failed to update service', error: error.message });
+  }
+};
+
+// Soft delete (deactivate) service
+export const deactivateService = async (req, res) => {
+  try {
+    const service = await Service.findByIdAndUpdate(
+      req.params.id,
+      { is_active: false },
+      { new: true }
+    );
+
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    res.status(200).json({ message: 'Service deactivated', service });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to deactivate service', error: error.message });
+  }
+};
