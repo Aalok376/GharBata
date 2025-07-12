@@ -12,7 +12,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 
-import authRoutes from './routes/auth.js'
+import authRoutes from './routes/Login.js'
 import chatRoutes from './routes/chatRoutes.js'
 import bookingRoutes from './routes/bookingRoutes.js' 
 import clientRoutes from './routes/clientRoutes.js'

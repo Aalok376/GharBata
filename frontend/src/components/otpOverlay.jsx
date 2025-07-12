@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { register, SignUp } from "../api/auth"
 import { toast } from 'sonner'
 import { useNavigate } from "react-router-dom"
@@ -6,15 +6,28 @@ import { useNavigate } from "react-router-dom"
 const Overlay_Otp = () => {
 
     const [Username, setUsername] = useState()
-    const [Timer, setTimer] = useState(120)
+    const [Timer, setTimer] = useState()
+    const [resendTrigger, setResendTrigger] = useState(0)
+    const [isDisabled, setIsDisabled] = useState(true)
+    const [isVerifyBtnDisabled, setIsVerifyBtnDisabled] = useState(true)
 
-    setTimeout(() => {
-        setTimer((prev) => prev - 1)
-    }, 1000)
+    useEffect(() => {
+        setTimer(120)
+        const interval = setInterval(() => {
+            setTimer(prev => {
+                if (prev <= 1) {
+                    clearInterval(interval)
+                    setIsDisabled(false)
+                    return 0
+                }
+                return prev - 1
+            })
+        }, 1000)
 
-  const formData = JSON.parse(sessionStorage.getItem('formData'))
+        return () => clearInterval(interval)
+    }, [resendTrigger])
 
-    console.log(formData)
+    const formData = JSON.parse(sessionStorage.getItem('formData'))
 
     const username = formData.username
     const fname = formData.fname
@@ -23,16 +36,48 @@ const Overlay_Otp = () => {
     const userType = formData.userType
 
     const navigate = useNavigate()
+    const [otpData, setOtpData] = useState(
+        {
+            digit1: '',
+            digit2: '',
+            digit3: '',
+            digit4: '',
+            digit5: '',
+            digit6: '',
+        }
+    )
+
+    const inputRef = useRef([])
+    const handleOtpchange = (e, index) => {
+        const { name, value } = e.target
+        const updatedOtp = { ...otpData, [name]: value }
+
+        setOtpData(updatedOtp)
+
+        if (value && index < inputRef.current.length - 1) {
+            inputRef.current[index + 1].focus()
+            setIsVerifyBtnDisabled(true)
+        }
+        const allFilled = Object.values(updatedOtp).every(val => val.trim() !== '');
+        setIsVerifyBtnDisabled(!allFilled)
+    }
+
+    const FuncKeyDown = (e, index) => {
+        if (e.key === 'Backspace' && e.target.value === '' && index > 0) {
+            inputRef.current[index - 1].focus()
+        }
+    }
 
     const RegisterUser = async (e) => {
         e.preventDefault()
 
+        const userInputOtp=otpData.digit1+otpData.digit2+otpData.digit3+otpData.digit4+otpData.digit5+otpData.digit6
         setUsername(username)
 
         try {
-            const result = await register({ username, password, fname, lname, userType })
+            const rresult = await register({ username, password, fname, lname, userType,userInputOtp })
 
-            if (result) {
+            if (rresult.success) {
                 toast.success('User Registered successfully. Please login to continue')
                 if (userType === 'client') {
                     navigate('/client_login')
@@ -41,9 +86,11 @@ const Overlay_Otp = () => {
                     navigate('/technician_login')
                 }
             }
+            else{
+                toast.error(rresult.msg)
+            }
         } catch (error) {
             console.log(error)
-            toast.error("Registration failed.")
         }
     }
     return (<>
@@ -62,7 +109,7 @@ const Overlay_Otp = () => {
                     <div className="otp-icon">
                         <svg width="28" height="28" fill="white" viewBox="0 0 24 24">
                             <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
-                            <path d="M9 12l2 2 4-4" stroke="white" stroke-width="2" fill="none" />
+                            <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="2" fill="none" />
                         </svg>
                     </div>
                     <h2>Verify Your Account</h2>
@@ -71,12 +118,10 @@ const Overlay_Otp = () => {
                 </div>
 
                 <div className="otp-inputs">
-                    <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" name=''></input>
-                    <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]"></input>
-                    <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]"></input>
-                    <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]"></input>
-                    <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]"></input>
-                    <input type="text" className="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]"></input>
+                    {Object.keys(otpData).map((key, index) => (
+                        <input key={key} type="text" className="otp-input" maxLength="1" inputMode="numeric" pattern="[0-9]" name={key} value={otpData.key} onChange={(e) => handleOtpchange(e, index)} onKeyDown={(e) => FuncKeyDown(e, index)} ref={(el) => { inputRef.current[index] = el }}></input>
+                    ))}
+
                 </div>
 
                 <div className="otp-timer">
@@ -86,10 +131,13 @@ const Overlay_Otp = () => {
 
                 <div className="resend-section">
                     <div className="resend-text">Didn't receive the code?</div>
-                    <button className="resend-btn" id="resendBtn" onClick={async () => { await SignUp({ username, password, fname, lname }) }}>Resend Code</button>
+                    <button className="resend-btn" disabled={isDisabled} id="resendBtn" onClick={async () => { 
+                        setIsDisabled(true)
+                        setResendTrigger(prev=>prev+1)
+                        await SignUp({ username, password, fname, lname }) }}>Resend Code</button>
                 </div>
 
-                <button className="verify-btn" id="verifyBtn" onClick={() => { }} disabled>
+                <button className="verify-btn" id="verifyBtn" onClick={RegisterUser} disabled={isVerifyBtnDisabled}>
                     <span className="otp-loading"></span>
                     <span className="verify-btn-text">Verify Code</span>
                 </button>

@@ -1,6 +1,6 @@
 import dotenv from 'dotenv'
-import TokenStore from '../models/RefreshToken'
-import User from '../models/user'
+import TokenStore from '../models/RefreshToken.js'
+import User from '../models/user.js'
 import jwt from 'jsonwebtoken'
 dotenv.config()
 

@@ -1,43 +1,39 @@
-import React, { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { Toaster, toast } from 'sonner';
-// import { login } from "../api/auth";
+import React, { useState } from "react"
+import { NavLink, useNavigate } from "react-router-dom"
+import { Toaster, toast } from 'sonner'
+import { Llogin } from "../api/auth"
 
 const ClientLogin = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const [username, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    const result = await login(email, password);
-    const userType = result.user?.userType;
-    console.log("Login result:", result);
-    if (result.success) {
-      toast.success("Login successful!");
+    e.preventDefault()
+    setLoading(true)
+    const rresult = await Llogin({username, password})
+    
+    if (result) {
+      toast.success("Login successful!")
       if (userType === "client") {
-        navigate("/dashboard");
+        navigate("/dashboard")
       } else if (userType === "technician") {
-        navigate("/professional");
-      } else {
-        toast.info("Logged in as admin");
-        // You can navigate to admin route or keep it as toast only
-      }
+        navigate("/professional")
+      } 
     } else {
-      toast.error(result.message);
+      toast.error(rresult.msg)
     }
-  };
+  }
 
   const handleGoogleLogin = () => {
-    setError("Google login not implemented yet.");
-  };
+    setError("Google login not implemented yet.")
+  }
 
   const handleFacebookLogin = () => {
-    setError("Facebook login not implemented yet.");
-  };
+    setError("Facebook login not implemented yet.")
+  }
 
 
   return (<>
@@ -324,8 +320,8 @@ const ClientLogin = () => {
 
         <form id="loginForm" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">Email or Phone</label>
-            <input type="text" id="email" name="email" placeholder="Enter your email or phone number" value={email} onChange={(e) => setEmail(e.target.value)} required></input>
+            <label htmlFor="email">Username</label>
+            <input type="text" id="email" name="email" placeholder="Enter your email or phone number" value={username} onChange={(e) => setEmail(e.target.value)} required></input>
           </div>
 
           <div className="form-group">
@@ -338,11 +334,7 @@ const ClientLogin = () => {
           </div>
 
           <button type="submit" className="login-btn" disabled={loading}>
-            {loading ? (
-              <span className="loading" />
-            ) : (
               <span className="btn-text">Sign In</span>
-             )}
           </button>
         </form>
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
 import TermsAndCondition from "../components/TermsAndConditon"
-import Overlay_Otp from "../components/otpOverlay"
 import { toast } from 'sonner'
 import { SignUp } from "../api/auth"
 
@@ -11,7 +10,7 @@ const Client_Signup = () => {
 
     const [isOverlayOpen, setIsOverlayOpen] = useState(false)
 
-    const[error, setError] = useState()
+    const [error, setError] = useState()
 
     const [formData, setFormData] = useState({
         fname: '',
@@ -22,6 +21,7 @@ const Client_Signup = () => {
     })
 
     const [agree, setAgree] = useState(false)
+    const [isEveryFieldOkay,setIsEveryFieldOkay]=useState(false)
 
     const handleChange = (e) => {
         const { name, value } = e.target
@@ -35,17 +35,21 @@ const Client_Signup = () => {
             const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
             return passwordRegex.test(password)
         }
+        
         if (
             (name === "fname" || name === "lname") &&
             (!isValidName(updatedData.fname) || !isValidName(updatedData.lname))
         ) {
             setError("First and Last name must contain only alphabetic characters")
+            setIsEveryFieldOkay(false)
         }
 
-        else if ((name === "password") && (!validatePassword(password))) {
+        else if ((name === "password") && (!validatePassword(updatedData.password))) {
             setError('Password must be at least 8 characters long and include at least one letter and one number.')
+            setIsEveryFieldOkay(false)
         } else {
             setError("")
+            setIsEveryFieldOkay(true)
         }
     }
 
@@ -55,8 +59,8 @@ const Client_Signup = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        if (!agree) {
-            toast.error("Please accept the terms and conditions.");
+        if (!agree || !isEveryFieldOkay ) {
+            toast.error("Please accept the terms and conditions.")
             return
         }
 

@@ -48,15 +48,16 @@ export const Register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { username, password } = req.body
+    console.log(password)
 
     const user = await User.findOne({ username })
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials: User not found.' })
+      return res.status(401).json({ msg: 'Invalid credentials: User not found.' })
     }
 
     const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials: Incorrect password.' })
+      return res.status(401).json({ msg: 'Invalid credentials: Incorrect password.' })
     }
 
     const AccessToken = jwt.sign({ id: user._id }, process.env.JWT_ACCESS_SECRET, { expiresIn: '30m' })
@@ -67,7 +68,7 @@ export const login = async (req, res) => {
     await tokenStoree.save()
     res.cookie('refreshToken', RefreshToken, { httpOnly: true, maxAge: 7 * 86400 * 1000 })
 
-    return res.status(200).json({ success: true, message: "Logged in successfully" })
+    return res.status(200).json({ success: true, msg: "Logged in successfully" })
   } catch (error) {
     console.log(error)
     return res.status(500).json({ success: false, msg: 'Internal server error' })
@@ -113,7 +114,7 @@ export const deleteUser = async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, UserTodelete.password)
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials: Incorrect password.' })
+      return res.status(401).json({ msg: 'Invalid credentials: Incorrect password.' })
     }
 
     await RefreshToken.deleteOne({ username: UserTodelete.username })
