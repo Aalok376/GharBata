@@ -7,15 +7,15 @@ const ChatBox = ({ bookingId, userId }) => {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
-
+  const chatEndRef = useRef(null);
 
   useEffect(() => {
     const fetchChat = async () => {
       try {
-        const data = await chatService.getChat(bookingId)
-        if (!data) {
-          const newChat = await chatService.createChat(bookingId, [userId, technicianId])
-          setChat(newChat)
+        const data = await chatService.getChat(bookingId);
+        if (!data || data._id) {
+          const newChat = await chatService.createChat(bookingId, [userId, technicianId]);
+          setChat(newChat);
         } else {
           setChat(data)
         }
@@ -38,11 +38,11 @@ const ChatBox = ({ bookingId, userId }) => {
       setChat(updatedChat)
       setMessage('')
     } catch (error) {
-      setError(error.message || 'Something went wrong')
+      setError(error.message || 'Something went wrong');
+    } finally {
+      setSending(false);
     }
   }
-
-  const chatEndRef = useRef(null)
 
   useEffect(() => {
     if (chatEndRef.current) {
@@ -56,6 +56,9 @@ const ChatBox = ({ bookingId, userId }) => {
   return (
     <div className="chat-container" style={{ border: '1px solid #ccc', padding: '1rem', width: '100%', maxWidth: '600px', margin: 'auto' }}>
       <h3>Chat</h3>
+      {error && (
+        <div style={{ color: 'red', marginBottom: '0.5rem' }}>{error}</div>
+      )}
       <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '1rem', border: '1px solid #eee', padding: '0.5rem' }}>
         {chat?.messages?.length > 0 ? (
           chat.messages.map((msg, idx) => (
@@ -65,6 +68,7 @@ const ChatBox = ({ bookingId, userId }) => {
                 padding: '0.5rem',
                 backgroundColor: msg.senderId?._id === userId ? '#e0f7fa' : '#f1f1f1',
                 borderRadius: '8px',
+                textAlign: msg.senderId?._id === userId ? 'right' : 'left',
               }}
             >
               <strong>{msg.senderId?.username || 'Unknown'}:</strong> {msg.message}

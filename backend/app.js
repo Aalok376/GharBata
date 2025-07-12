@@ -24,5 +24,6 @@ app.use('/api/bookings', bookingRoutes)
 app.use('/api/clients',clientRoutes)
 app.use('/api/technicians',technicianRoutes)
 app.use('/api/services',serviceRoutes)
+app.use('/api/chat', chatRoutes)
 
 export default app

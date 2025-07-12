@@ -26,8 +26,7 @@ export const sendMessage = async (bookingId, senderId, message) => {
     })
     return response.data
   } catch (error) {
-    console.error("Send message failed:", error.response?.data || error.message)
-    return { success: false, message: 'Failed to send message' }
+    throw error.response?.data || new Error('Failed to send message');
   }
 }
 
