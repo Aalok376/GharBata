@@ -10,6 +10,7 @@ const Overlay_Otp = () => {
     const [resendTrigger, setResendTrigger] = useState(0)
     const [isDisabled, setIsDisabled] = useState(true)
     const [isVerifyBtnDisabled, setIsVerifyBtnDisabled] = useState(true)
+    const [error, setError] = useState()
 
     useEffect(() => {
         setTimer(120)
@@ -87,7 +88,7 @@ const Overlay_Otp = () => {
                 }
             }
             else{
-                toast.error(rresult.msg)
+                setError(rresult.msg)
             }
         } catch (error) {
             console.log(error)
@@ -141,6 +142,12 @@ const Overlay_Otp = () => {
                     <span className="otp-loading"></span>
                     <span className="verify-btn-text">Verify Code</span>
                 </button>
+
+                 {error && (
+                        <p id="error-message" style={{ color: "red" }}>
+                            {error}
+                        </p>
+                    )}
             </div>
         </div>
 

@@ -73,16 +73,19 @@ const Client_Signup = () => {
             const lname = formData.lname
             const password = formData.password
 
-            const result = await SignUp({ username, password, fname, lname })
+            const rresult = await SignUp({ username, password, fname, lname })
 
-            if (result) {
+            if (rresult.success) {
                 navigate("/otp")
+            }
+            else{
+                setError(rresult.msg)
             }
 
         } catch (error) {
             toast.error(error.message || "Registration failed.")
         }
-    };
+    }
 
     return (
         <>

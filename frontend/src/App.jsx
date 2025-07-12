@@ -20,7 +20,6 @@ function App(){
     <Router>
       <Routes>
         <Route path='/' element={<HomePageFunc/>}/>
-        <Route path='/home' element={<HomePageFunc/>}/>
         <Route path='/dashboard' element={<ClientPage/>}/>
         <Route path='/client_login' element={<Client_Login/>}/>
         <Route path='/client_signup' element={<Client_Signup/>}/>

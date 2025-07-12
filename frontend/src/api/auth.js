@@ -10,12 +10,8 @@ export const SignUp = async ({ username, password, fname, lname }) => {
       body: JSON.stringify({ username, password, fname, lname })
     })
 
-    if(response.status===200){
-      return true
-    }
-    else{
-      return false
-    }
+   const result = response.json()
+    return result
 
   } catch (error) {
     console.error(error)

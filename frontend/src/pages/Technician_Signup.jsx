@@ -1,10 +1,92 @@
 import React, { useState, useEffect } from "react"
-import { NavLink } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router-dom"
 import TermsAndCondition from "../components/TermsAndConditon"
+import { toast } from 'sonner'
+import { SignUp } from "../api/auth"
 
-const Client_Signup = () => {
+const Technician_Signup = () => {
 
-    const [isOverlayOpen, setIsOverlayOpen] = useState(false)
+    const navigate = useNavigate()
+   
+       const [isOverlayOpen, setIsOverlayOpen] = useState(false)
+   
+       const [error, setError] = useState()
+   
+       const [formData, setFormData] = useState({
+           fname: '',
+           lname: '',
+           username: '',
+           password: '',
+           userType: 'technician'
+       })
+
+       const [agree, setAgree] = useState(false)
+           const [isEveryFieldOkay,setIsEveryFieldOkay]=useState(false)
+       
+           const handleChange = (e) => {
+               const { name, value } = e.target
+               const updatedData = { ...formData, [name]: value }
+       
+               setFormData(updatedData)
+       
+               const isValidName = (str) => /^[A-Za-z\s\-]+$/.test(str)
+       
+               const validatePassword = (password) => {
+                   const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+                   return passwordRegex.test(password)
+               }
+               
+               if (
+                   (name === "fname" || name === "lname") &&
+                   (!isValidName(updatedData.fname) || !isValidName(updatedData.lname))
+               ) {
+                   setError("First and Last name must contain only alphabetic characters")
+                   setIsEveryFieldOkay(false)
+               }
+       
+               else if ((name === "password") && (!validatePassword(updatedData.password))) {
+                   setError('Password must be at least 8 characters long and include at least one letter and one number.')
+                   setIsEveryFieldOkay(false)
+               } else {
+                   setError("")
+                   setIsEveryFieldOkay(true)
+               }
+           }
+       
+           const handleCheckboxChange = (e) => {
+               setAgree(e.target.checked)
+           }
+       
+           const handleSubmit = async (e) => {
+               e.preventDefault()
+               if (!agree || !isEveryFieldOkay ) {
+                   toast.error("Please accept the terms and conditions.")
+                   return
+               }
+       
+               try {
+       
+                   sessionStorage.setItem('formData', JSON.stringify(formData))
+       
+                   const username = formData.username
+                   const fname = formData.fname
+                   const lname = formData.lname
+                   const password = formData.password
+       
+                   const rresult = await SignUp({ username, password, fname, lname })
+       
+                   if (rresult.success) {
+                       navigate("/otp")
+                   }
+                   else{
+                       setError(rresult.msg)
+                   }
+       
+               } catch (error) {
+                   toast.error(error.message || "Registration failed.")
+               }
+           }
+
     return (
         <>
             <style>
@@ -400,30 +482,31 @@ const Client_Signup = () => {
 
                 </div>
 
-                <form>
+
+                <form onSubmit={handleSubmit}>
                     <div className="form-row">
                         <div className="form-group">
                             <label htmlFor="firstName">First Name</label>
-                            <input type="text" id="firstName" name="firstName" placeholder="First Name" required></input>
+                            <input type="text" id="firstName" name="fname" placeholder="First Name" value={formData.fname} onChange={handleChange} required></input>
                         </div>
                         <div className="form-group">
                             <label htmlFor="lastName">Last Name</label>
-                            <input type="text" id="lastName" name="lastName" placeholder="Last Name" required></input>
+                            <input type="text" id="lastName" name="lname" placeholder="Last Name" value={formData.lname} onChange={handleChange} required></input>
                         </div>
                     </div>
 
                     <div className="form-group">
                         <label htmlFor="email">Email Address</label>
-                        <input type="email" id="email" name="email" placeholder="xyz@gmail.com" required></input>
+                        <input type="email" id="email" name="username" placeholder="xyz@gmail.com" value={formData.username} onChange={handleChange} required></input>
                     </div>
 
                     <div className="form-group">
                         <label htmlFor="password">Password</label>
-                        <input type="password" id="password" name="password" placeholder="Create a strong password" required></input>
+                        <input type="password" id="password" name="password" placeholder="Create a strong password" value={formData.password} onChange={handleChange} required></input>
                     </div>
 
                     <div className="checkbox-group">
-                        <input type="checkbox" id="terms" name="terms" required></input>
+                        <input type="checkbox" id="terms" name="terms" checked={agree} onChange={handleCheckboxChange} required></input>
                         <label htmlFor="terms">
                             I agree to the <NavLink to="#" onClick={(event) => {
                                 event.preventDefault()
@@ -436,6 +519,12 @@ const Client_Signup = () => {
                     </div>
 
                     <button type="submit" className="signup-btn">Create Account</button>
+                    {error && (
+                        <p id="error-message" style={{ color: "red" }}>
+                            {error}
+                        </p>
+                    )}
+
                 </form>
 
                 <div className="divider">
@@ -462,7 +551,7 @@ const Client_Signup = () => {
                 </div>
 
                 <div className="login-link">
-                    Already have an account? <NavLink to="/technician_login">Sign in</NavLink>
+                    Already have an account? <NavLink to="/client_login">Sign in</NavLink>
                 </div>
             </div>
             {isOverlayOpen && (
@@ -472,4 +561,4 @@ const Client_Signup = () => {
     )
 }
 
-export default Client_Signup;
+export default Technician_Signup;

@@ -7,23 +7,29 @@ const ClientLogin = () => {
   const [username, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState()
+
+  const formData = JSON.parse(sessionStorage.getItem('formData'))
+  const userType = formData.userType
+
+  sessionStorage.clearItem('formData')
 
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
+    
     const rresult = await Llogin({username, password})
     
-    if (result) {
-      toast.success("Login successful!")
+    if (rresult.success) {
+      setLoading(true)
       if (userType === "client") {
         navigate("/dashboard")
       } else if (userType === "technician") {
         navigate("/professional")
       } 
     } else {
-      toast.error(rresult.msg)
+      setError(rresult.msg)
     }
   }
 
@@ -336,6 +342,12 @@ const ClientLogin = () => {
           <button type="submit" className="login-btn" disabled={loading}>
               <span className="btn-text">Sign In</span>
           </button>
+
+          {error && (
+                        <p id="error-message" style={{ color: "red" }}>
+                            {error}
+                        </p>
+                    )}
         </form>
 
         <div className="divider">
