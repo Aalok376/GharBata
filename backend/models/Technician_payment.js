@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from "mongoose"
 const payoutSchema=new mongoose.Schema({
     payout_id:{
         type:String,
@@ -58,5 +58,5 @@ const payoutSchema=new mongoose.Schema({
 {
     timestamps:true
 }
-);
-export default mongoose.model('Payout',payoutSchema);
+)
+export default mongoose.model('Payout',payoutSchema)

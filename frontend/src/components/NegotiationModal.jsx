@@ -1,4 +1,4 @@
-import React from "react";
+import React from "react"
 const NegotiationModal=({
     booking,
     negotiationPrice,
@@ -53,7 +53,7 @@ const NegotiationModal=({
             </div>
         </div>
 
-    );
-};
+    )
+}
 
-export default NegotiationModal;
+export default NegotiationModal

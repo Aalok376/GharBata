@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from "mongoose"
 const paymentSchema=new mongoose.Schema({
     payment_id:{
         type: String,
@@ -71,5 +71,5 @@ const paymentSchema=new mongoose.Schema({
 {
     timestamps:true
 }
-);
-export default mongoose.model('Payment',paymentSchema);
+)
+export default mongoose.model('Payment',paymentSchema)

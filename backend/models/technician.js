@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from 'mongoose'
 
 const technicianSchema = new mongoose.Schema({
   technician_id: {
@@ -42,6 +42,6 @@ type: String
      },
 },{
   timestamps: true
-});
+})
 
-export default mongoose.model('Technician', technicianSchema);
+export default mongoose.model('Technician', technicianSchema)

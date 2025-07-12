@@ -1,57 +1,57 @@
-import React, { useEffect, useState } from 'react';
-import chatService from '../api/chat';
+import React, { useEffect, useState } from 'react'
+import chatService from '../api/chat'
 
 const ChatBox = ({ bookingId, userId }) => {
-  const [chat, setChat] = useState(null);
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState('');
+  const [chat, setChat] = useState(null)
+  const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState('')
 
 
   useEffect(() => {
     const fetchChat = async () => {
       try {
-        const data = await chatService.getChat(bookingId);
+        const data = await chatService.getChat(bookingId)
         if (!data) {
-          const newChat = await chatService.createChat(bookingId, [userId, technicianId]);
-          setChat(newChat);
+          const newChat = await chatService.createChat(bookingId, [userId, technicianId])
+          setChat(newChat)
         } else {
-          setChat(data);
+          setChat(data)
         }
     } catch (error) {
-      console.error('Failed to fetch chat:', error);
+      console.error('Failed to fetch chat:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
       }
-    };
+    }
 
-    fetchChat();
-  }, [bookingId]);
+    fetchChat()
+  }, [bookingId])
 
   const handleSend = async (e) => {
-    e.preventDefault();
-    if (!message.trim()) return;
-    setSending(true);
+    e.preventDefault()
+    if (!message.trim()) return
+    setSending(true)
     try {
-      const updatedChat = await chatService.sendMessage(bookingId, userId, message);
-      setChat(updatedChat);
-      setMessage('');
+      const updatedChat = await chatService.sendMessage(bookingId, userId, message)
+      setChat(updatedChat)
+      setMessage('')
     } catch (error) {
-      setError(error.message || 'Something went wrong');
+      setError(error.message || 'Something went wrong')
     }
-  };
+  }
 
-  const chatEndRef = useRef(null);
+  const chatEndRef = useRef(null)
 
   useEffect(() => {
     if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [chat?.messages]);
+  }, [chat?.messages])
 
 
-  if (loading) return <p>Loading chat...</p>;
+  if (loading) return <p>Loading chat...</p>
 
   return (
     <div className="chat-container" style={{ border: '1px solid #ccc', padding: '1rem', width: '100%', maxWidth: '600px', margin: 'auto' }}>
@@ -91,7 +91,7 @@ const ChatBox = ({ bookingId, userId }) => {
         </button>
       </form>
     </div>
-  );
-};
+  )
+}
 
-export default ChatBox;
+export default ChatBox

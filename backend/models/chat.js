@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from 'mongoose'
 
 const chatSchema = new mongoose.Schema({
   bookingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking' },
@@ -11,6 +11,6 @@ const chatSchema = new mongoose.Schema({
     }
   ],
   isActive: { type: Boolean, default: true }
-});
+})
 
-export default mongoose.model('Chat', chatSchema);
+export default mongoose.model('Chat', chatSchema)

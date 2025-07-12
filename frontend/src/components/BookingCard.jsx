@@ -1,6 +1,6 @@
-import React from "react";
-import { Calendar, Clock, MapPin, Star, Eye, DollarSign, MessageSquare, Phone, Mail } from 'lucide-react';
-import { getStatusColor, formatDate, formatTime } from '../utils/helpers.jsx';
+import React from "react"
+import { Calendar, Clock, MapPin, Star, Eye, DollarSign, MessageSquare, Phone, Mail } from 'lucide-react'
+import { getStatusColor, formatDate, formatTime } from '../utils/helpers.jsx'
 
 const BookingCard = ({
   booking,
@@ -104,7 +104,7 @@ const BookingCard = ({
       </div>
 
     </div>
-  );
-};
+  )
+}
 
-export default BookingCard;
+export default BookingCard
