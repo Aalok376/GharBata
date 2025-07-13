@@ -1,68 +1,98 @@
-import React, { useEffect, useState } from 'react'
-import chatService from '../api/chat'
+import React, { useEffect, useState, useRef } from 'react';
+import chatService from '../api/chat';
 
-const ChatBox = ({ bookingId, userId }) => {
-  const [chat, setChat] = useState(null)
-  const [message, setMessage] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [sending, setSending] = useState(false)
-  const [error, setError] = useState('')
+const ChatBox = ({ bookingId, userId, technicianId }) => {
+  const [chat, setChat] = useState(null);
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
   const chatEndRef = useRef(null);
 
+  // Fetch or create chat on mount or when bookingId changes
   useEffect(() => {
     const fetchChat = async () => {
       try {
+        console.log('Fetching chat for bookingId:', bookingId);
         const data = await chatService.getChat(bookingId);
-        if (!data || data._id) {
+        if (!data || !data._id) {
+          console.log('No chat found, creating new chat');
           const newChat = await chatService.createChat(bookingId, [userId, technicianId]);
           setChat(newChat);
         } else {
-          setChat(data)
+          setChat(data);
         }
-    } catch (error) {
-      console.error('Failed to fetch chat:', error)
-    } finally {
-      setLoading(false)
+      } catch (error) {
+        console.error('Failed to fetch chat:', error);
+        setError('Failed to load chat');
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
-    fetchChat()
-  }, [bookingId])
+    if (bookingId && userId && technicianId) {
+      fetchChat();
+    }
+  }, [bookingId, userId, technicianId]);
+
+  // Scroll to bottom when messages update
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chat?.messages]);
 
   const handleSend = async (e) => {
-    e.preventDefault()
-    if (!message.trim()) return
-    setSending(true)
+    e.preventDefault();
+    if (!message.trim()) return;  // Prevent sending empty messages
+    setSending(true);
+    setError('');
     try {
-      const updatedChat = await chatService.sendMessage(bookingId, userId, message)
-      setChat(updatedChat)
-      setMessage('')
+      const updatedChat = await chatService.sendMessage(bookingId, userId, message);
+      setChat(updatedChat);
+      setMessage('');
     } catch (error) {
-      setError(error.message || 'Something went wrong');
+      setError(error.message || 'Failed to send message');
     } finally {
       setSending(false);
     }
-  }
+  };
 
-  useEffect(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' })
-    }
-  }, [chat?.messages])
+  console.log('ChatBox render:', { chat, loading, error });
 
-
-  if (loading) return <p>Loading chat...</p>
+  if (loading) return <p>Loading chat...</p>;
+  if (error) return <p style={{ color: 'red' }}>{error}</p>;
+  if (!chat) return <p>No chat data available.</p>;
 
   return (
-    <div className="chat-container" style={{ border: '1px solid #ccc', padding: '1rem', width: '100%', maxWidth: '600px', margin: 'auto' }}>
+    <div
+      className="chat-container"
+      style={{
+        border: '1px solid #ccc',
+        padding: '1rem',
+        width: '100%',
+        maxWidth: '600px',
+        margin: 'auto',
+        backgroundColor: '#fff',
+        borderRadius: '8px',
+      }}
+    >
       <h3>Chat</h3>
-      {error && (
-        <div style={{ color: 'red', marginBottom: '0.5rem' }}>{error}</div>
-      )}
-      <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '1rem', border: '1px solid #eee', padding: '0.5rem' }}>
-        {chat?.messages?.length > 0 ? (
+      <div
+        style={{
+          maxHeight: '300px',
+          overflowY: 'auto',
+          marginBottom: '1rem',
+          border: '1px solid #eee',
+          padding: '0.5rem',
+          backgroundColor: '#fafafa',
+          borderRadius: '4px',
+        }}
+      >
+        {chat.messages.length > 0 ? (
           chat.messages.map((msg, idx) => (
-            <div key={idx}
+            <div
+              key={idx}
               style={{
                 marginBottom: '0.5rem',
                 padding: '0.5rem',
@@ -72,9 +102,10 @@ const ChatBox = ({ bookingId, userId }) => {
               }}
             >
               <strong>{msg.senderId?.username || 'Unknown'}:</strong> {msg.message}
-              <div style={{ fontSize: '0.75rem', color: 'gray' }}>{new Date(msg.timestamp).toLocaleString()}</div>
+              <div style={{ fontSize: '0.75rem', color: 'gray' }}>
+                {new Date(msg.timestamp).toLocaleString()}
+              </div>
             </div>
-
           ))
         ) : (
           <p>No messages yet.</p>
@@ -88,14 +119,14 @@ const ChatBox = ({ bookingId, userId }) => {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Type your message"
-          style={{ flex: 1 }}
+          style={{ flex: 1, padding: '0.5rem', fontSize: '1rem' }}
         />
         <button type="submit" disabled={sending || !message.trim()}>
           {sending ? 'Sending...' : 'Send'}
         </button>
       </form>
     </div>
-  )
-}
+  );
+};
 
-export default ChatBox
+export default ChatBox;

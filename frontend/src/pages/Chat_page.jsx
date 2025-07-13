@@ -1,33 +1,38 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom'; // For URL param (bookingId)
+import { useParams } from 'react-router-dom';
 import ChatBox from '../components/chatBox';
 
 const ChatPage = ({ currentUser }) => {
-  const { bookingId } = useParams(); // /chat/:bookingId
+  const { bookingId } = useParams();
   const [userId, setUserId] = useState(null);
-  const [technicianId, setTechnicianId] = useState(null); // Replace with actual tech fetch
-  // ✅ Hardcoded constants for testing
-  
-  setUserId("6863eb9cee0bfd70e6beab0d");
-  setTechnicianId("6863e9a2ee0bfd70e6beaaff");
-  // setBookingId("6863f570d9cd398ae0801355");
-  
+  const [technicianId, setTechnicianId] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    // Option 1: Get userId from props
-    if (currentUser) {
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+
+    if (currentUser?._id) {
       setUserId(currentUser._id);
+    } else if (storedUser?._id) {
+      setUserId(storedUser._id);
     } else {
-      // Option 2: From localStorage/session
-      const storedUser = JSON.parse(localStorage.getItem('user'));
-      setUserId(storedUser?._id);
+      setUserId("6863eb9cee0bfd70e6beab0d"); // fallback id for testing
     }
 
-    // TODO: Fetch technicianId from booking or pass as prop
-    setTechnicianId("REPLACE_WITH_TECHNICIAN_ID"); // <- hardcoded or fetched via API
+    // TODO: Replace hardcoded technicianId with API fetch if needed
+    setTechnicianId("6863e9a2ee0bfd70e6beaaff");
+
+    setLoading(false);
   }, [currentUser]);
 
+  console.log('ChatPage:', { bookingId, userId, technicianId });
+
+  if (loading) {
+    return <div>Loading chat data...</div>;
+  }
+
   if (!userId || !bookingId || !technicianId) {
-    return <div>Loading chat...</div>;
+    return <div>Missing required data to load chat.</div>;
   }
 
   return (
@@ -35,7 +40,6 @@ const ChatPage = ({ currentUser }) => {
       <header style={styles.header}>
         <h2>Booking Chat</h2>
       </header>
-
       <main style={styles.chatContainer}>
         <ChatBox bookingId={bookingId} userId={userId} technicianId={technicianId} />
       </main>
@@ -45,7 +49,6 @@ const ChatPage = ({ currentUser }) => {
 
 export default ChatPage;
 
-// 🧑‍🎨 Basic inline styles
 const styles = {
   page: {
     minHeight: '100vh',
