@@ -1,8 +1,8 @@
-import User from '../models/user.js';
-import Booking from '../models/Booking.js';
-import Service from '../models/Service.js';
-import {validationResult} from 'express-validator';
-import {generateBookingId,canCancelBooking,checkTechnicianAvailability} from '../utils/bookingUtils.js';
+import User from '../models/user.js'
+import Booking from '../models/Booking.js'
+import Service from '../models/Service.js'
+import {validationResult} from 'express-validator'
+import {generateBookingId,canCancelBooking,checkTechnicianAvailability} from '../utils/bookingUtils.js'
 
 //HTTP status codes
 const HTTP_STATUS={
@@ -11,13 +11,13 @@ const HTTP_STATUS={
     BAD_REQUEST: 400,
     NOT_FOUND: 404,
     INTERNAL_SERVER_ERROR: 500
-};
+}
 
 // User roles
 const USER_ROLES={
     CLIENT: 'client',
     TECHNICIAN: 'technician'
-};
+}
 // Booking status
 const BOOKING_STATUS = {
   PENDING: 'pending',
@@ -26,57 +26,57 @@ const BOOKING_STATUS = {
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
   RESCHEDULED: 'rescheduled'
-};
+}
 
 //create new booking
 export const  createBooking=async(req,res)=>{
     try{
         // check validation errors
-        const errors=validationResult(req);
+        const errors=validationResult(req)
         if(!errors.isEmpty()){
             return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: 'Validation error',
                 errors: errors.array()
-            });
+            })
             
         }
-        const {technician_id, service_id,address,scheduled_date,scheduled_time,booking_service_price}=req.body;
+        const {technician_id, service_id,address,scheduled_date,scheduled_time,booking_service_price}=req.body
         // Fetch technician by ID
-const technician = await User.findById(technician_id);
+const technician = await User.findById(technician_id)
         // check if technician exists and is actually a technician
         if(!technician || technician.role != USER_ROLES.TECHNICIAN){
             return res.status(HTTP_STATUS.NOT_FOUND).json({
                 success: false,
                 message: 'Technician not found'
-            });
+            })
         }
          //check if the technician is active
          if(!technician.isActive){
             return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: 'Technician is not currently available'
-            });
+            })
          }
          // Check if service exists and is active
-         const service=await Service.findById(service_id);
+         const service=await Service.findById(service_id)
          if(!service || !service.is_active){
             return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: 'Service not found or not available'
-            });
+            })
          }
          // check technician availability for the selected date and time
-        const isAvailable=await checkTechnicianAvailability(technician_id,scheduled_date,scheduled_time);
+        const isAvailable=await checkTechnicianAvailability(technician_id,scheduled_date,scheduled_time)
         if(!isAvailable){
             return res.status(HTTP_STATUS.BAD_REQUEST).json({
                 success: false,
                 message: 'Technician is not available at the selected date and time'
 
-            });
+            })
          }
           // Generate unique booking ID
-         const booking_id=generateBookingId();
+         const booking_id=generateBookingId()
          // Create new booking
          const newBooking=new Booking({
             booking_id,
@@ -89,13 +89,13 @@ const technician = await User.findById(technician_id);
             booking_service_price: parseFloat(booking_service_price),
             final_price: parseFloat(booking_service_price),
             booking_status: BOOKING_STATUS.PENDING
-         });
-         await newBooking.save();
+         })
+         await newBooking.save()
          // populate the booking with related data
          const populateBooking= await Booking.findById(newBooking._id)
          .populate('technician_id','name email phone profession rating profile_image')
          .populate('service_id','name description category service_price duration_hours')
-         .populate('client_id', 'name email phone');
+         .populate('client_id', 'name email phone')
 
          res.status(HTTP_STATUS.CREATED).json({
             success: true,
@@ -103,34 +103,34 @@ const technician = await User.findById(technician_id);
             data:{
                 booking: populateBooking
             }
-         });
+         })
         
 
     } catch(error){
-        console.error('Error creating booking:',error);
+        console.error('Error creating booking:',error)
         res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: 'Internal server error',
             error: error.message
-        });
+        })
     }
-};
+}
 // Get single booking details
 export const getBookingById=async(req,res)=>{
     try{
-        const {id}=req.params;
-        const client_id=req.user.id;
+        const {id}=req.params
+        const client_id=req.user.id
 
         const booking=await Booking.findOne({_id: id, client_id})
         .populate('technician_id','name email phone profession rating profile_image')
         .populate('service_id','name description category service_price duration_hours')
-        .populate('client_id','name email phone');
+        .populate('client_id','name email phone')
 
         if(!booking){
             return res.status(HTTP_STATUS.NOT_FOUND).json({
                 success: false,
                 message: 'Booking not found'
-            });
+            })
         }
         res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -138,29 +138,29 @@ export const getBookingById=async(req,res)=>{
             data:{
                 booking
             }
-        });
+        })
 
     }catch(error){
-        console.error('Error fetching booking details:',error);
+        console.error('Error fetching booking details:',error)
         res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: 'Internal server error',
             error: error.message
-        });
+        })
     }
-};
+}
 
 // Get client's booking
 export const getClientBookings= async(req,res)=>{
     try{
-        const {status,page=1,limit=10}=req.query;
-        const client_id=req.user.id;
+        const {status,page=1,limit=10}=req.query
+        const client_id=req.user.id
          //Build filter query
-         const filter={client_id};
+         const filter={client_id}
          if(status)
-            filter.booking_status = status;
+            filter.booking_status = status
           // Calculate pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const skip = (parseInt(page) - 1) * parseInt(limit)
 
     // Get bookings
     const bookings = await Booking.find(filter)
@@ -168,11 +168,11 @@ export const getClientBookings= async(req,res)=>{
       .populate('service_id', 'name description category base_price duration_hours')
       .sort({ created_at: -1 })
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
 
     // Get total count for pagination
-    const totalBookings = await Booking.countDocuments(filter);
-    const totalPages = Math.ceil(totalBookings / parseInt(limit));
+    const totalBookings = await Booking.countDocuments(filter)
+    const totalPages = Math.ceil(totalBookings / parseInt(limit))
 
     res.status(HTTP_STATUS.OK).json({
       success: true,
@@ -187,41 +187,41 @@ export const getClientBookings= async(req,res)=>{
           hasPrevPage: parseInt(page) > 1
         }
       }
-    });
+    })
 
   } catch (error) {
-    console.error('Error fetching bookings:', error);
+    console.error('Error fetching bookings:', error)
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Internal server error',
       error: error.message
-    });
+    })
   }
-};
+}
 
 // Cancel booking
 export const cancelBooking = async (req, res) => {
   try {
-    const errors = validationResult(req);
+    const errors = validationResult(req)
     if (!errors.isEmpty()) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: 'Validation error',
         errors: errors.array()
-      });
+      })
     }
 
-    const { id } = req.params;
-    const { cancellation_reason } = req.body;
-    const client_id = req.user.id;
+    const { id } = req.params
+    const { cancellation_reason } = req.body
+    const client_id = req.user.id
 
     // Find the booking
-    const booking = await Booking.findOne({ _id: id, client_id });
+    const booking = await Booking.findOne({ _id: id, client_id })
     if (!booking) {
       return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         message: 'Booking not found'
-      });
+      })
     }
 
     // Check if booking can be cancelled
@@ -229,14 +229,14 @@ export const cancelBooking = async (req, res) => {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: 'Booking is already cancelled'
-      });
+      })
     }
 
     if (booking.booking_status === BOOKING_STATUS.COMPLETED) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: 'Cannot cancel completed booking'
-      });
+      })
     }
 
     // Check cancellation deadline (24 hours before)
@@ -244,22 +244,22 @@ export const cancelBooking = async (req, res) => {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: 'Booking cannot be cancelled within 24 hours of scheduled time'
-      });
+      })
     }
 
     // Update booking status
-    booking.booking_status = BOOKING_STATUS.CANCELLED;
-    booking.cancelled_at = new Date();
-    booking.cancelled_by = client_id;
-    booking.cancellation_reason = cancellation_reason || 'Cancelled by client';
+    booking.booking_status = BOOKING_STATUS.CANCELLED
+    booking.cancelled_at = new Date()
+    booking.cancelled_by = client_id
+    booking.cancellation_reason = cancellation_reason || 'Cancelled by client'
 
-    await booking.save();
+    await booking.save()
 
     // Populate the updated booking
     const updatedBooking = await Booking.findById(booking._id)
       .populate('technician_id', 'name email phone profession rating profile_image')
       .populate('service_id', 'name description category base_price duration_hours')
-      .populate('client_id', 'name email phone');
+      .populate('client_id', 'name email phone')
 
     res.status(HTTP_STATUS.OK).json({
       success: true,
@@ -267,14 +267,14 @@ export const cancelBooking = async (req, res) => {
       data: {
         booking: updatedBooking
       }
-    });
+    })
 
   } catch (error) {
-    console.error('Error cancelling booking:', error);
+    console.error('Error cancelling booking:', error)
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Internal server error',
       error: error.message
-    });
+    })
   }
-};
+}

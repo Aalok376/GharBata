@@ -1,6 +1,6 @@
-import React from "react";
-import { Calendar, Clock, MapPin, Mail, Phone, Star, DollarSign, ChevronLeft, X, MessageSquare } from 'lucide-react';
-import { getStatusColor, getStatusIcon, formatDate, formatTime } from '../utils/helpers.jsx';
+import React from "react"
+import { Calendar, Clock, MapPin, Mail, Phone, Star, DollarSign, ChevronLeft, X, MessageSquare } from 'lucide-react'
+import { getStatusColor, getStatusIcon, formatDate, formatTime } from '../utils/helpers.jsx'
 
 const BookingDetailsView = ({ booking, onBack, onNegotiate, canNegotiate, canCancel }) => {
   return (
@@ -119,7 +119,7 @@ const BookingDetailsView = ({ booking, onBack, onNegotiate, canNegotiate, canCan
 
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default BookingDetailsView;
+export default BookingDetailsView

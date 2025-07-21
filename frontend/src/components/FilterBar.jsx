@@ -1,11 +1,5 @@
-/**
- * File: src/components/FilterBar.jsx
- * Folder: src/components/
- * Description: Filter controls component for booking dashboard
- */
-
-import React from 'react';
-import { Filter, Search } from 'lucide-react';
+import React from 'react'
+import { Filter, Search } from 'lucide-react'
 
 const FilterBar = ({ filters, setFilters }) => {
   return (
@@ -63,7 +57,7 @@ const FilterBar = ({ filters, setFilters }) => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default FilterBar;
+export default FilterBar

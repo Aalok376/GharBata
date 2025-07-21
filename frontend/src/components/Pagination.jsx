@@ -1,15 +1,9 @@
-/**
- * File: src/components/Pagination.jsx
- * Folder: src/components/
- * Description: Pagination component for booking list
- */
-
-import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import React from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 const Pagination = ({ currentPage, totalPages, onPageChange, totalItems, itemsPerPage }) => {
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
 
   return (
     <div className="flex items-center justify-between bg-white rounded-lg shadow-sm border px-6 py-3 mt-6">
@@ -50,7 +44,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange, totalItems, itemsPe
         </button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Pagination;
+export default Pagination

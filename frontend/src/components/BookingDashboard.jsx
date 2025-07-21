@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Calendar } from 'lucide-react';
+import React, { useEffect, useState } from "react"
+import { Calendar } from 'lucide-react'
 
 import BookingCard from "./BookingCard";
 import BookingDetailsView from './BookingDetailsView';
@@ -12,14 +12,14 @@ const BookingDashboard = () => {
     const [bookings, setBookings] = useState([]);
     const [filteredBookings, setFilteredBookings] = useState([]);
 
-    const [selectedBooking, setSelectedBooking] = useState(null);
-    const [showDetails, setShowDetails] = useState(false);
+    const [selectedBooking, setSelectedBooking] = useState(null)
+    const [showDetails, setShowDetails] = useState(false)
 
     const [filters, setFilters] = useState({
         status: '',
         search: '',
         date: ''
-    });
+    })
 
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages]= useState(1);
@@ -57,10 +57,10 @@ const BookingDashboard = () => {
 
     // Filter bookings whenever filters or bookings change
     useEffect(() => {
-        let filtered = bookings;
+        let filtered = bookings
 
         if (filters.status) {
-            filtered = filtered.filter(booking => booking.booking_status === filters.status);
+            filtered = filtered.filter(booking => booking.booking_status === filters.status)
         }
 
         if (filters.search) {
@@ -68,11 +68,11 @@ const BookingDashboard = () => {
                 booking.booking_id.toLowerCase().includes(filters.search.toLowerCase()) ||
                 booking.technician_id.name.toLowerCase().includes(filters.search.toLowerCase()) ||
                 booking.service_id.name.toLowerCase().includes(filters.search.toLowerCase())
-            );
+            )
         }
 
         if (filters.date) {
-            filtered = filtered.filter(booking => booking.scheduled_date === filters.date);
+            filtered = filtered.filter(booking => booking.scheduled_date === filters.date)
         }
 
         setFilteredBookings(filtered);
@@ -87,36 +87,36 @@ const BookingDashboard = () => {
 
     // Open booking details
     const handleViewDetails = (booking) => {
-        setSelectedBooking(booking);
-        setShowDetails(true);
-    };
+        setSelectedBooking(booking)
+        setShowDetails(true)
+    }
 
     // Open negotiation modal
     const handleNegotiation = (booking) => {
-        setSelectedBooking(booking);
-        setNegotiationPrice(booking.final_price.toString());
-        setShowNegotiationModal(true);
-    };
+        setSelectedBooking(booking)
+        setNegotiationPrice(booking.final_price.toString())
+        setShowNegotiationModal(true)
+    }
 
     // Submit negotiation (replace console with actual API call)
     const submitNegotiation = () => {
-        console.log('Negotiating price:', negotiationPrice, 'for booking:', selectedBooking.booking_id);
-        setShowNegotiationModal(false);
-        setNegotiationPrice('');
-    };
+        console.log('Negotiating price:', negotiationPrice, 'for booking:', selectedBooking.booking_id)
+        setShowNegotiationModal(false)
+        setNegotiationPrice('')
+    }
 
     // Can negotiate if booking is confirmed
     const canNegotiate = (booking) => {
-        return booking.booking_status === 'confirmed';
-    };
+        return booking.booking_status === 'confirmed'
+    }
 
     // Can cancel if >24hrs before scheduled time and not cancelled/completed
     const canCancel = (booking) => {
-        const scheduledDateTime = new Date(`${booking.scheduled_date}T${booking.scheduled_time}`);
-        const now = new Date();
-        const hoursDiff = (scheduledDateTime - now) / (1000 * 60 * 60);
-        return hoursDiff > 24 && !['cancelled', 'completed'].includes(booking.booking_status);
-    };
+        const scheduledDateTime = new Date(`${booking.scheduled_date}T${booking.scheduled_time}`)
+        const now = new Date()
+        const hoursDiff = (scheduledDateTime - now) / (1000 * 60 * 60)
+        return hoursDiff > 24 && !['cancelled', 'completed'].includes(booking.booking_status)
+    }
 
     // Show details view if selected
     if (showDetails && selectedBooking) {
@@ -128,7 +128,7 @@ const BookingDashboard = () => {
                 canNegotiate={canNegotiate}
                 canCancel={canCancel}
             />
-        );
+        )
     }
 
     // Main dashboard layout
@@ -195,7 +195,7 @@ const BookingDashboard = () => {
                 )}
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default BookingDashboard;
+export default BookingDashboard

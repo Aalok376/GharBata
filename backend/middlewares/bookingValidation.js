@@ -1,5 +1,5 @@
-import {body, param,query} from 'express-validator';
-import { validateBookingDate,validateTimeFormat } from '../utils/bookingUtils.js';
+import {body, param,query} from 'express-validator'
+import { validateBookingDate,validateTimeFormat } from '../utils/bookingUtils.js'
 
 // Validation for creating new Booking
 export const validateCreateBooking=[
@@ -30,9 +30,9 @@ export const validateCreateBooking=[
     .withMessage('Invalid date format')
     .custom((value)=>{
         if(!validateBookingDate(value)){
-            throw new Error('Booking date must be today or in the future');
+            throw new Error('Booking date must be today or in the future')
         }
-        return true;
+        return true
     }),
 
     body('scheduled_time')
@@ -40,9 +40,9 @@ export const validateCreateBooking=[
     .withMessage('Scheduled time is required')
     .custom((value)=>{
         if(value && !validateTimeFormat(value)){
-            throw new Error('Time must be in HH:MM format');
+            throw new Error('Time must be in HH:MM format')
         }
-        return true;
+        return true
     }),
 
     body('address')
@@ -58,12 +58,12 @@ export const validateCreateBooking=[
     .withMessage('Service price must be a number')
     .custom((value)=>{
         if(value < 0){
-            throw new Error('Service price cannot be negative');
+            throw new Error('Service price cannot be negative')
         }
-        return true;
+        return true
     })
 
-];
+]
  //Validation for updating booking
  export const validateUpdateBooking=[
     param('id')
@@ -76,18 +76,18 @@ export const validateCreateBooking=[
     .withMessage('Invalid date format')
     .custom((value)=>{
         if(value && !validateBookingDate(value)){
-            throw new Error('Booking date must be today or in the future');
+            throw new Error('Booking date must be today or in the future')
         }
-        return true;
+        return true
     }),
 
     body('scheduled_time')
     .optional()
     .custom((value)=>{
         if(value && !validateTimeFormat(value)){
-            throw new Error('Time must be in HH:MM format');
+            throw new Error('Time must be in HH:MM format')
         }
-        return true;
+        return true
     }),
 
     body('address')
@@ -95,7 +95,7 @@ export const validateCreateBooking=[
     .isLength({min:10 , max:200})
     .withMessage('Address must be between 10 and 200 characters')
     .trim()
- ];
+ ]
 
  // validation for booking queries
  export const validateBookingQuery=[
@@ -118,7 +118,7 @@ export const validateCreateBooking=[
     .optional()
     .isInt({min:1, max:100})
     .withMessage('Limit must be between 1 and 100')
- ];
+ ]
 
  //validation for cancellation
  export const validateCancellation=[
@@ -126,5 +126,5 @@ param('id')
 .isMongoId()
 .withMessage('Invalid booking ID'),
 
- ];
+ ]
  

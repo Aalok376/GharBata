@@ -10,7 +10,7 @@ import HomePageFunc from './pages/IntroductionPage'
 import ProfessionalPage from './pages/professionalHomePage'
 import ClientPage from './pages/clientHomePage'
 import Overlay_Otp from './components/otpOverlay'
-import Chat from './components/chatBox'
+import ChatPage from './pages/Chat_page'
 import ProfessionalProfilePage from './pages/professionalProfile';
 import BookingDashboard from './components/BookingDashboard'
 import PaymentPage from './pages/PaymentPage';
@@ -25,7 +25,6 @@ function App(){
     <Router>
       <Routes>
         <Route path='/' element={<HomePageFunc/>}/>
-        <Route path='/home' element={<HomePageFunc/>}/>
         <Route path='/dashboard' element={<ClientPage/>}/>
         <Route path='/client_login' element={<Client_Login/>}/>
         <Route path='/client_signup' element={<Client_Signup/>}/>
@@ -47,7 +46,7 @@ function App(){
 
     </Router>
     
-  );
+  )
 }
 
-export default App;
+export default App
