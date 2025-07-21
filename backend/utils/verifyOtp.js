@@ -1,8 +1,10 @@
+import user from '../models/user.js'
 import OtpStore from '../models/verificationOtp.js'
 
 export const verifyOtp = async (req, res, next) => {
   try {
     const { username, userInputOtp } = req.body
+    console.log(username,userInputOtp)
 
     const record = await OtpStore.findOne({ username })
     if (!record) {

@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from 'mongoose'
 
 const bookingSchema = new mongoose.Schema({
   booking_id: { 
@@ -76,5 +76,5 @@ const bookingSchema = new mongoose.Schema({
     type: Date, 
     default: Date.now 
   }
-});
-export default mongoose.model('Booking',bookingSchema);
+})
+export default mongoose.model('Booking',bookingSchema)

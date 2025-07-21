@@ -10,7 +10,7 @@ import HomePageFunc from './pages/IntroductionPage'
 import ProfessionalPage from './pages/professionalHomePage'
 import ClientPage from './pages/clientHomePage'
 import Overlay_Otp from './components/otpOverlay'
-import Chat from './components/chatBox'
+import ChatPage from './pages/Chat_page'
 import ProfessionalProfilePage from './pages/professionalProfile';
 
 
@@ -20,7 +20,6 @@ function App(){
     <Router>
       <Routes>
         <Route path='/' element={<HomePageFunc/>}/>
-        <Route path='/home' element={<HomePageFunc/>}/>
         <Route path='/dashboard' element={<ClientPage/>}/>
         <Route path='/client_login' element={<Client_Login/>}/>
         <Route path='/client_signup' element={<Client_Signup/>}/>
@@ -29,13 +28,13 @@ function App(){
         <Route path='/otp' element={<Overlay_Otp/>}/>
         <Route path='/professional' element={<ProfessionalPage/>}/>
         <Route path='/professionalProfilePage' element={<ProfessionalProfilePage/>}/>
-        <Route path='/chat/:bookingId' element={<Chat/>}/>
+        <Route path='/chat/:bookingId' element={<ChatPage/>}/>
       </Routes>
     
 
     </Router>
     
-  );
+  )
 }
 
-export default App;
+export default App

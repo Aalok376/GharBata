@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from 'mongoose'
 const serviceSchema= new mongoose.Schema({
     name:{
         type: String,
@@ -46,5 +46,5 @@ const serviceSchema= new mongoose.Schema({
         ref:'User',
         required: true
     }
-});
-export default mongoose.model('Service',serviceSchema);
+})
+export default mongoose.model('Service',serviceSchema)
