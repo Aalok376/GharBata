@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { Calendar } from 'lucide-react';
 
-import { mockBookings } from "../data/mockData";
 import BookingCard from "./BookingCard";
 import BookingDetailsView from './BookingDetailsView';
 import FilterBar from './FilterBar';
 import Pagination from "./Pagination";
 import NegotiationModal from "./NegotiationModal";
+import { bookingService } from "../services/bookingService";
 
 const BookingDashboard = () => {
-    const [bookings, setBookings] = useState(mockBookings);
-    const [filteredBookings, setFilteredBookings] = useState(mockBookings);
+    const [bookings, setBookings] = useState([]);
+    const [filteredBookings, setFilteredBookings] = useState([]);
 
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [showDetails, setShowDetails] = useState(false);
@@ -22,10 +22,38 @@ const BookingDashboard = () => {
     });
 
     const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages]= useState(1);
+    const [loading,setLoading]= useState(true);
+    const [error, setError]= useState(null);
+
     const [showNegotiationModal, setShowNegotiationModal] = useState(false);
     const [negotiationPrice, setNegotiationPrice] = useState('');
 
     const bookingsPerPage = 5;
+
+    //fetch bookings from backend
+    useEffect(()=>{
+        const fetchBookings= async()=>{
+            try {
+                setLoading(true);
+                const params= {
+                    status: filters.status || undefined,
+                    page: currentPage,
+                    limit: bookingsPerPage,
+                };
+                const response= await bookingService.getClientBookings(params);
+                setBookings(response.bookings || response.data || []);
+                setTotalPages(Math.ceil((response.total || response.count || 0) / bookingsPerPage));
+                setError(null);
+            } catch (error) {
+                setError(error.message || "Failed to fetch bookings");
+                
+            }finally {
+                setLoading(false);
+            }
+        };
+        fetchBookings();
+    },[filters.status, currentPage]);
 
     // Filter bookings whenever filters or bookings change
     useEffect(() => {
@@ -48,14 +76,14 @@ const BookingDashboard = () => {
         }
 
         setFilteredBookings(filtered);
-        setCurrentPage(1);
-    }, [filters, bookings]);
+    
+    }, [filters.search,filters.date,  bookings]);
 
     // Pagination
     const indexOfLastBooking = currentPage * bookingsPerPage;
     const indexOfFirstBooking = indexOfLastBooking - bookingsPerPage;
-    const currentBookings = filteredBookings.slice(indexOfFirstBooking, indexOfLastBooking);
-    const totalPages = Math.ceil(filteredBookings.length / bookingsPerPage);
+    const currentBookings = filteredBookings;
+    
 
     // Open booking details
     const handleViewDetails = (booking) => {
@@ -118,15 +146,20 @@ const BookingDashboard = () => {
                 <FilterBar filters={filters} setFilters={setFilters} />
 
                 {/* Booking List */}
-                <div className="space-y-4">
-                    {currentBookings.length === 0 ? (
-                        <div className="bg-white rounded-lg shadow-sm border p-12 text-center">
+                {loading ? (
+                    <div className="text-center py-10 text-gray-500">Loading bookings...</div>
+                ) : error ? (
+                    <div className="text-center py-10 text-red-500">Error: {error}</div>
+                ) : currentBookings.length === 0 ? (
+                <div className="bg-white rounded-lg shadow-sm border p-12 text-center">
                             <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                             <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings found</h3>
                             <p className="text-gray-600">You haven't made any bookings yet or no results match your filters.</p>
                         </div>
                     ) : (
-                        currentBookings.map((booking) => (
+                        <>
+                        <div className="space-y-4">
+                        {currentBookings.map((booking) => (
                             <BookingCard
                                 key={booking._id}
                                 booking={booking}
@@ -134,12 +167,12 @@ const BookingDashboard = () => {
                                 onNegotiate={handleNegotiation}
                                 canNegotiate={canNegotiate}
                             />
-                        ))
-                    )}
+                        ))}
+                    
                 </div>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
+               
                     <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}
@@ -147,6 +180,7 @@ const BookingDashboard = () => {
                         totalItems={filteredBookings.length}
                         itemsPerPage={bookingsPerPage}
                     />
+                    </>
                 )}
 
                 {/* Negotiation Modal */}

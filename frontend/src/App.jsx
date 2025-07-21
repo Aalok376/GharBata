@@ -13,6 +13,10 @@ import Overlay_Otp from './components/otpOverlay'
 import Chat from './components/chatBox'
 import ProfessionalProfilePage from './pages/professionalProfile';
 import BookingDashboard from './components/BookingDashboard'
+import PaymentPage from './pages/PaymentPage';
+import PaymentSuccess from './components/PaymentSuccess';
+import PaymentFailure from './components/PaymentFailure';
+import PaymentStatus from './components/PaymentStatus';
 
 
 
@@ -32,6 +36,12 @@ function App(){
         <Route path='/professionalProfilePage' element={<ProfessionalProfilePage/>}/>
         <Route path='/chat/:bookingId' element={<Chat/>}/>
            <Route path="/bookings" element={<BookingDashboard />} />
+           <Route path='/payment' element={<PaymentPage/>}/>
+           <Route path='/payment/success' element={<PaymentSuccess/>}/>
+            <Route path="/payment/failure" element={<PaymentFailure />} />
+            <Route path="/payment/status" element={<PaymentStatus />} />
+
+
       </Routes>
     
 

@@ -1,11 +1,11 @@
 import dotenv from 'dotenv'
-import TokenStore from '../models/RefreshToken'
-import User from '../models/user'
+import TokenStore from '../models/RefreshToken.js'
+import User from '../models/user.js'
 import jwt from 'jsonwebtoken'
 dotenv.config()
 
 export const verifyToken = async (req, res, next) => {
-  const accessToken = req.cookies.accessToken || req.headers['authorizarion']?.split(' ')[1]
+  const accessToken = req.cookies.accessToken || req.headers['authorization']?.split(' ')[1]
   const refreshToken = req.cookies.refreshToken
 
   if (!accessToken) {
@@ -48,4 +48,27 @@ export const verifyToken = async (req, res, next) => {
       return res.status(403).json({ msg: 'Invalid access token' })
     }
   }
-}
+};
+
+// token authentication middleware used for payment apis
+export const authenticateToken=(req,res,next)=>{
+  const authHeader= req.headers['authorization'];
+  const token= authHeader && authHeader.split(' ')[1];
+  if(!token){
+    return res.status(401).json({
+      success: false,
+      message: 'Access token required'
+    });
+  }
+  jwt.verify(token,process.env.JWT_SECRET,(err,user)=>{
+    if(err){
+      return res.status(403).json({
+        success: false,
+        message: 'Invalid token'
+      });
+    }
+    req.user= user;
+    next();
+  });
+};
+export default {authenticateToken};

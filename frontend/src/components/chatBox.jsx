@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useRef } from 'react';
 import chatService from '../api/chat';
 
-const ChatBox = ({ bookingId, userId }) => {
+const ChatBox = ({ bookingId, userId ,technicianId}) => {
   const [chat, setChat] = useState(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);

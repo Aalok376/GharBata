@@ -1,6 +1,9 @@
-const nodemailer = require("nodemailer")
 
-require('dotenv').config()
+
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -8,24 +11,20 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-})
+});
 
-export const sendEmail=async(receiptent,verification_code)=>{
-try{
-      // send mail with defined transport object
-  const info = await transporter.sendMail({
-    from: `"GharBata 👻" <${process.env.EMAIL_USER}>`, 
-    to: receiptent,
-    subject: "Verification OTP",
-    text: "Verification OTP",
-    html: verification_code,
-  })
+export const sendEmail = async (recipient, verification_code) => {
+  try {
+    const info = await transporter.sendMail({
+      from: `"GharBata 👻" <${process.env.EMAIL_USER}>`,
+      to: recipient,
+      subject: "Verification OTP",
+      text: "Verification OTP",
+      html: verification_code,
+    });
 
-  console.log("Message sent: %s", info.messageId)
-}
-catch(error){
-    console.log(error)
-}
-}
-
-
+    console.log("Message sent: %s", info.messageId);
+  } catch (error) {
+    console.log(error);
+  }
+};

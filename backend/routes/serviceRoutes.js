@@ -1,11 +1,11 @@
 import express from 'express'
-import { authMiddleware } from '../middlewares/auth.js'
-import {createService,getAllActiveServices,deactiveService,getServiceById} from '../controllers/serviceController.js'
+import { verifyToken } from '../middlewares/auth.js'
+import {createService, getAllServices,deactivateService,getServiceById} from '../controllers/serviceCOntroller.js'
 
 const router=express.Router()
 
-router.post('/create',authMiddleware,createService)
-router.get('/active',getAllActiveServices)
+router.post('/create',verifyToken,createService)
+router.get('/active',getAllServices)
 router.get('/:serviceId',getServiceById)
-router.patch('/:serviceId/deactivate',authMiddleware,deactiveService)
+router.patch('/:serviceId/deactivate',verifyToken,deactivateService)
 export default router
