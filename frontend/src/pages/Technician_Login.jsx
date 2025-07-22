@@ -10,8 +10,9 @@ const Technician_Login = () => {
       const [loading, setLoading] = useState(false)
       const [error, setError] = useState()
     
-      const formData = JSON.parse(sessionStorage.getItem('formData'))
-      const userType = formData.userType
+      const storedFormData= sessionStorage.getItem('formData')
+      const formData =storedFormData ? JSON.parse(storedFormData) : null
+      const userType = formData?.userType || "client"
     
       const navigate = useNavigate()
     

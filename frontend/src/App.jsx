@@ -11,6 +11,7 @@ import ProfessionalPage from './pages/professionalHomePage'
 import ClientPage from './pages/clientHomePage'
 import Overlay_Otp from './components/otpOverlay'
 import ChatPage from './pages/Chat_page'
+
 import ProfessionalProfilePage from './pages/professionalProfile';
 import BookingDashboard from './components/BookingDashboard'
 import PaymentPage from './pages/PaymentPage';
@@ -33,7 +34,7 @@ function App(){
         <Route path='/otp' element={<Overlay_Otp/>}/>
         <Route path='/professional' element={<ProfessionalPage/>}/>
         <Route path='/professionalProfilePage' element={<ProfessionalProfilePage/>}/>
-        <Route path='/chat/:bookingId' element={<Chat/>}/>
+        <Route path='/chat/:bookingId' element={<ChatPage/>}/>
            <Route path="/bookings" element={<BookingDashboard />} />
            <Route path='/payment' element={<PaymentPage/>}/>
            <Route path='/payment/success' element={<PaymentSuccess/>}/>

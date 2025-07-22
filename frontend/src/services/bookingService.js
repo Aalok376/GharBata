@@ -18,10 +18,8 @@ export const bookingService={
                 address: bookingData.address,
                 scheduled_date: bookingData.scheduled_date,
                 scheduled_time: bookingData.scheduled_time,
-                booking_service_price: bookingData.booking_service_price
-                },
-                {
-                    headers: getAuthHeaders()
+                booking_service_price: bookingData.booking_service_price,
+                 final_price: bookingData.final_price,
                 }
             );
             return response.data;
@@ -38,10 +36,10 @@ export const bookingService={
            if(params.status) queryParams.append('status',params.status);
            if(params.page) queryParams.append('page',params.page);
            if(params.limit) queryParams.append('limit',params.limit);
+
            const url= `/api/bookings${queryParams.toString() ? '?' + queryParams.toString(): ''}`;
-           const response= await apiClient.get(url,{
-            headers: getAuthHeaders()
-           });
+           const response= await apiClient.get(url);
+         
            return response.data; 
         } catch (error) {
             console.error("Get bookings error:",error);
@@ -52,9 +50,8 @@ export const bookingService={
     // GET /api/bookings/:id -Get single booking details
     getBookingById: async(id)=>{
         try {
-            const response= await apiClient.get(`/api/bookings/${id}`,{
-                headers: getAuthHeaders()
-            });
+            const response= await apiClient.get(`/api/bookings/${id}`);
+           
             return response.data;
         } catch (error) {
             console.error('Get booking by iD error:',error);
@@ -66,10 +63,8 @@ export const bookingService={
     cancelBooking:async(id, cancellationReason='')=>{
         try {
             const response= await apiClient.put(`/api/bookings/${id}/cancel`,{
-                cancellation_reason:  cancellationReason},
-                {
-                    headers: getAuthHeaders()
-                }
+                cancellation_reason:  cancellationReason
+            }
             );
             return response.data;
         } catch (error) {

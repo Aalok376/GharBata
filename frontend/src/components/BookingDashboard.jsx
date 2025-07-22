@@ -66,7 +66,7 @@ const BookingDashboard = () => {
         if (filters.search) {
             filtered = filtered.filter(booking =>
                 booking.booking_id.toLowerCase().includes(filters.search.toLowerCase()) ||
-                booking.technician_id.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+                booking.technician_id.fname.toLowerCase().includes(filters.search.toLowerCase()) ||
                 booking.service_id.name.toLowerCase().includes(filters.search.toLowerCase())
             )
         }

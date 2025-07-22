@@ -7,7 +7,7 @@ export const createClientProfile= async(req,res)=>{
 
         // Check if user exists and role is client
         const user= await User.findById(userId)
-        if(!user || user.role !== 'client'){
+        if(!user || user.userType !== 'client'){
             return res.status(403).json({
                 message: "Unauthorized or Invalid user role"
             })

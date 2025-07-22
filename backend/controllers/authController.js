@@ -60,13 +60,13 @@ export const login = async (req, res) => {
       return res.status(401).json({success:false, msg: 'Invalid credentials: Incorrect password.' })
     }
 
-    const AccessToken = jwt.sign({ id: user._id }, process.env.JWT_ACCESS_SECRET, { expiresIn: '30m' })
-    res.cookie('accessToken', AccessToken, { httpOnly: true })
+    const AccessToken = jwt.sign({ id: user._id, userType: user.userType }, process.env.JWT_ACCESS_SECRET, { expiresIn: '30m' })
+    res.cookie('accessToken', AccessToken, { httpOnly: true,secure: false, sameSite: 'Lax',maxAge:30 *60*1000, })
 
-    const RefreshToken = jwt.sign({ id: user._id }, process.env.JWT_REFRESH_SECRET)
+    const RefreshToken = jwt.sign({ id: user._id, userType: user.userType}, process.env.JWT_REFRESH_SECRET)
     const tokenStoree = new TokenStore({ username, RefreshToken })
     await tokenStoree.save()
-    res.cookie('refreshToken', RefreshToken, { httpOnly: true, maxAge: 7 * 86400 * 1000 })
+    res.cookie('refreshToken', RefreshToken, { httpOnly: true,secure: false,sameSite: 'Lax', maxAge: 7 * 86400 * 1000 })
 
     return res.status(200).json({ success: true, msg: "Logged in successfully" })
   } catch (error) {

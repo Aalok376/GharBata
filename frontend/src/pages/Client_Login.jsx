@@ -4,15 +4,15 @@ import { Toaster, toast } from 'sonner'
 import { Llogin } from "../api/auth"
 
 const ClientLogin = () => {
-  const [username, setEmail] = useState("")
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState()
 
   const formData = JSON.parse(sessionStorage.getItem('formData'))
-  const userType = formData.userType
+  const userType = formData?.userType || "client"
 
-  sessionStorage.clearItem('formData')
+  sessionStorage.removeItem('formData')
 
   const navigate = useNavigate()
 
@@ -327,7 +327,7 @@ const ClientLogin = () => {
         <form id="loginForm" onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="email">Username</label>
-            <input type="text" id="email" name="email" placeholder="Enter your email or phone number" value={username} onChange={(e) => setEmail(e.target.value)} required></input>
+            <input type="text" id="email" name="email" placeholder="Enter your email or phone number" value={username} onChange={(e) => setUsername(e.target.value)} required></input>
           </div>
 
           <div className="form-group">

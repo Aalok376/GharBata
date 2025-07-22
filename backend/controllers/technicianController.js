@@ -7,7 +7,7 @@ export const createTechnicianProfile = async(req,res)=>{
         const userId = req.user.id
         // Validate user role
         const user= await User.findById(userId)
-        if(!user || user.role !== 'technician'){
+        if(!user || user.userType !== 'technician'){
             return res.status(403).json({message: "Unauthorized or invalid user role"})
 
         }

@@ -3,7 +3,7 @@ import TokenStore from '../models/RefreshToken.js'
 import User from '../models/user.js'
 import jwt from 'jsonwebtoken'
 dotenv.config()
-
+// Middleware to verify access token and refresh token if needed
 export const verifyToken = async (req, res, next) => {
   const accessToken = req.cookies.accessToken || req.headers['authorization']?.split(' ')[1]
   const refreshToken = req.cookies.refreshToken
@@ -31,6 +31,10 @@ export const verifyToken = async (req, res, next) => {
       const userId = payload.id
 
       const TokenUser = await User.findById(userId)
+       if (!TokenUser) {
+        return res.status(403).send("User not found");
+      }
+
       const username = TokenUser.username
 
       const storedToken = await TokenStore.findOne({ username, RefreshToken: refreshToken })
@@ -38,10 +42,10 @@ export const verifyToken = async (req, res, next) => {
         return res.status(403).send("Invalid refresh token")
       }
 
-      const AccessToken = jwt.sign({ id: userId }, process.env.JWT_ACCESS_SECRET, { expiresIn: '30m' })
+      const AccessToken = jwt.sign({ id: userId, userType: TokenUser.userType}, process.env.JWT_ACCESS_SECRET, { expiresIn: '30m' })
       res.cookie('accessToken', AccessToken, { httpOnly: true })
 
-      req.user = { id: payload.id }
+      req.user = { id: payload.id, userType: TokenUser.userType};
       return next()
     }
     else {
@@ -50,7 +54,7 @@ export const verifyToken = async (req, res, next) => {
   }
 };
 
-// token authentication middleware used for payment apis
+// Middleware to authenticate access token from Authorization header (Bearer token)
 export const authenticateToken=(req,res,next)=>{
   const authHeader= req.headers['authorization'];
   const token= authHeader && authHeader.split(' ')[1];
@@ -71,4 +75,26 @@ export const authenticateToken=(req,res,next)=>{
     next();
   });
 };
-export default {authenticateToken};
+
+// Middleware factory to verify token AND check if user role is allowed
+export const verifyTokenAndRole = (allowedRoles = []) => {
+  return (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Access token required' });
+    }
+    jwt.verify(token, process.env.JWT_ACCESS_SECRET, (err, user) => {
+      if (err) {
+        return res.status(403).json({ message: 'Invalid token' });
+      }
+      // user.userType should exist in token payload
+      if (!allowedRoles.includes(user.userType)) {
+        return res.status(403).json({ message: 'Unauthorized or invalid user role' });
+      }
+      req.user = user;
+      next();
+    });
+  };
+};
+export default { authenticateToken, verifyToken, verifyTokenAndRole };

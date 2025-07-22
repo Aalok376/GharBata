@@ -10,14 +10,14 @@ export const SignUp = async ({ username, password, fname, lname }) => {
       body: JSON.stringify({ username, password, fname, lname })
     })
 
-   const result = response.json()
-    return result
+   const result = await response.json();
+    return result;
 
   } catch (error) {
-    console.error(error)
-    return false
+    console.error(error);
+    return false;
   }
-}
+};
 
 export const register = async ({ username, password, fname, lname, userType, userInputOtp }) => {
   try {
@@ -27,11 +27,11 @@ export const register = async ({ username, password, fname, lname, userType, use
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ username, password, fname, lname, userType, userInputOtp })
-    })
+    });
 
     console.log(response)
 
-    const result = response.json()
+    const result =await  response.json()
     return result
 
   } catch (error) {
@@ -48,9 +48,10 @@ export const Llogin = async ({ username, password }) => {
       headers: {
         "Content-Type": "application/json"
       },
+      credentials: 'include',
       body: JSON.stringify({ username, password })
     })
-    const result = response.json()
+    const result =await  response.json()
     return result
 
   } catch (error) {

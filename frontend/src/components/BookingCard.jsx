@@ -8,6 +8,7 @@ const BookingCard = ({
   onNegotiate,
   canNegotiate,
 }) => {
+   
   return (
     <div className="bg-white rounded-2xl shadow-sm border p-6 hover:shadow-md transition-shadow space-y-4">
 
@@ -36,9 +37,9 @@ const BookingCard = ({
         <div>
           <p className="text-sm text-gray-500">Technician</p>
           <div className="flex items-center">
-            <img src={booking.technician_id.profile_image} alt={booking.technician_id.name} className="w-9 h-9 rounded-full object-cover mr-3" />
+            <img src={booking.technician_id.profilePicture} alt={booking.technician_id.fname} className="w-9 h-9 rounded-full object-cover mr-3" />
             <div>
-              <p className="text-gray-800">{booking.technician_id.name}</p>
+              <p className="text-gray-800">{booking.technician_id.fname}</p>
               <div className="flex items-center text-yellow-400">
                 <Star className="h-4 w-4 fill-current" />
                 <span className="ml-1 text-xs text-gray-600">{booking.technician_id.rating}</span>
@@ -50,12 +51,12 @@ const BookingCard = ({
         {/* Client Info */}
         <div>
           <p className="text-sm text-gray-500">Client</p>
-          <p className="font-medium text-gray-900">{booking.client_id.name}</p>
+          <p className="font-medium text-gray-900">{booking.client_id.fname}</p>
           <div className="flex items-center text-gray-600 text-sm">
-            <Phone className="h-4 w-4 mr-1" /> {booking.client_id.phone}
+            <Phone className="h-4 w-4 mr-1" /> {booking.client_id.contactNumber}
           </div>
           <div className="flex items-center text-gray-600 text-sm">
-            <Mail className="h-4 w-4 mr-1" /> {booking.client_id.email}
+            <Mail className="h-4 w-4 mr-1" /> {booking.client_id.username}
           </div>
         </div>
 

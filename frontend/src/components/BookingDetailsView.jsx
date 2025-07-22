@@ -52,10 +52,10 @@ const BookingDetailsView = ({ booking, onBack, onNegotiate, canNegotiate, canCan
         <div className="bg-white rounded-xl shadow-sm border p-6 space-y-4">
           <h3 className="text-lg font-semibold">Technician Information</h3>
           <div className="flex items-start space-x-4">
-            <img src={booking.technician_id.profile_image} alt={booking.technician_id.name} className="w-16 h-16 rounded-full object-cover" />
+            <img src={booking.technician_id.profilePicture} alt={booking.technician_id.fname} className="w-16 h-16 rounded-full object-cover" />
             <div className="flex-1 space-y-1">
               <div className="flex justify-between items-center">
-                <h4 className="text-lg font-medium">{booking.technician_id.name}</h4>
+                <h4 className="text-lg font-medium">{booking.technician_id.fname}</h4>
                 <div className="flex items-center text-yellow-400">
                   <Star className="h-4 w-4 fill-current" />
                   <span className="ml-1 text-sm text-gray-600">{booking.technician_id.rating}</span>
@@ -63,8 +63,8 @@ const BookingDetailsView = ({ booking, onBack, onNegotiate, canNegotiate, canCan
               </div>
               <p className="text-gray-600">{booking.technician_id.profession}</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-gray-700 text-sm">
-                <div className="flex items-center"><Mail className="h-4 w-4 mr-2" /> {booking.technician_id.email}</div>
-                <div className="flex items-center"><Phone className="h-4 w-4 mr-2" /> {booking.technician_id.phone}</div>
+                <div className="flex items-center"><Mail className="h-4 w-4 mr-2" /> {booking.technician_id.username}</div>
+                <div className="flex items-center"><Phone className="h-4 w-4 mr-2" /> {booking.technician_id.contactNumber}</div>
               </div>
             </div>
           </div>
@@ -74,9 +74,9 @@ const BookingDetailsView = ({ booking, onBack, onNegotiate, canNegotiate, canCan
         <div className="bg-white rounded-xl shadow-sm border p-6 space-y-4">
           <h3 className="text-lg font-semibold">Client Information</h3>
           <div className="space-y-1 text-gray-700 text-sm">
-            <p className="font-medium">{booking.client_id.name}</p>
-            <div className="flex items-center"><Mail className="h-4 w-4 mr-2" /> {booking.client_id.email}</div>
-            <div className="flex items-center"><Phone className="h-4 w-4 mr-2" /> {booking.client_id.phone}</div>
+            <p className="font-medium">{booking.client_id.fname}</p>
+            <div className="flex items-center"><Mail className="h-4 w-4 mr-2" /> {booking.client_id.username}</div>
+            <div className="flex items-center"><Phone className="h-4 w-4 mr-2" /> {booking.client_id.contactNumber}</div>
           </div>
         </div>
 

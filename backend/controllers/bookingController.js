@@ -4,6 +4,7 @@ import Service from '../models/Service.js'
 import {validationResult} from 'express-validator'
 import {generateBookingId,canCancelBooking,checkTechnicianAvailability} from '../utils/bookingUtils.js'
 
+
 //HTTP status codes
 const HTTP_STATUS={
     OK : 200,
@@ -42,10 +43,14 @@ export const  createBooking=async(req,res)=>{
             
         }
         const {technician_id, service_id,address,scheduled_date,scheduled_time,booking_service_price}=req.body
+
+           
+
+   
         // Fetch technician by ID
 const technician = await User.findById(technician_id)
         // check if technician exists and is actually a technician
-        if(!technician || technician.role != USER_ROLES.TECHNICIAN){
+        if(!technician || technician.userType != USER_ROLES.TECHNICIAN){
             return res.status(HTTP_STATUS.NOT_FOUND).json({
                 success: false,
                 message: 'Technician not found'
@@ -93,9 +98,9 @@ const technician = await User.findById(technician_id)
          await newBooking.save()
          // populate the booking with related data
          const populateBooking= await Booking.findById(newBooking._id)
-         .populate('technician_id','name email phone profession rating profile_image')
+         .populate('technician_id','fname lname username contactNumber profession rating profilePicture ')
          .populate('service_id','name description category service_price duration_hours')
-         .populate('client_id', 'name email phone')
+         .populate('client_id', 'fname lname  username contactNumber profilePicture')
 
          res.status(HTTP_STATUS.CREATED).json({
             success: true,
@@ -122,10 +127,9 @@ export const getBookingById=async(req,res)=>{
         const client_id=req.user.id
 
         const booking=await Booking.findOne({_id: id, client_id})
-        .populate('technician_id','name email phone profession rating profile_image')
+     .populate('technician_id','fname lname username contactNumber profession rating profilePicture ')
         .populate('service_id','name description category service_price duration_hours')
-        .populate('client_id','name email phone')
-
+       .populate('client_id', 'fname lname  username contactNumber profilePicture')
         if(!booking){
             return res.status(HTTP_STATUS.NOT_FOUND).json({
                 success: false,
@@ -164,7 +168,7 @@ export const getClientBookings= async(req,res)=>{
 
     // Get bookings
     const bookings = await Booking.find(filter)
-      .populate('technician_id', 'name email phone profession rating profile_image')
+        .populate('technician_id','fname lname username contactNumber profession rating profilePicture ')
       .populate('service_id', 'name description category base_price duration_hours')
       .sort({ created_at: -1 })
       .skip(skip)
@@ -257,9 +261,9 @@ export const cancelBooking = async (req, res) => {
 
     // Populate the updated booking
     const updatedBooking = await Booking.findById(booking._id)
-      .populate('technician_id', 'name email phone profession rating profile_image')
+        .populate('technician_id','fname lname username contactNumber profession rating profilePicture ')
       .populate('service_id', 'name description category base_price duration_hours')
-      .populate('client_id', 'name email phone')
+      .populate('client_id', 'fname lname  username contactNumber profilePicture')
 
     res.status(HTTP_STATUS.OK).json({
       success: true,
