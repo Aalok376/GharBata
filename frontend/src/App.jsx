@@ -11,7 +11,8 @@ import ProfessionalPage from './pages/professionalHomePage'
 import ClientPage from './pages/clientHomePage'
 import Overlay_Otp from './components/otpOverlay'
 import ChatPage from './pages/Chat_page'
-import ProfessionalProfilePage from './pages/professionalProfile';
+import ProfessionalProfilePage from './pages/professionalProfile'
+import BookingForm from './pages/bookingform'
 
 
 
@@ -29,6 +30,7 @@ function App(){
         <Route path='/professional' element={<ProfessionalPage/>}/>
         <Route path='/professionalProfilePage' element={<ProfessionalProfilePage/>}/>
         <Route path='/chat/:bookingId' element={<ChatPage/>}/>
+        <Route path='/' element={<BookingForm/>}/>
       </Routes>
     
 
