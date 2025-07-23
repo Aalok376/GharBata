@@ -45,12 +45,14 @@ export default function BookingForm() {
 
         if (step === 1) {
             if (!formData.firstName.trim()) newErrors.firstName = 'First name is required'
-            else if (!/^[A-Za-z]+$/.test(formData.fname)) newErrors.fname = 'First name should contain alphabets only'
+            else if (!/^[A-Za-z]+$/.test(formData.firstName)) newErrors.firstName = 'First name should contain alphabets only'
+
             if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required'
-            else if (!/^[A-Za-z]+$/.test(formData.lname)) newErrors.lname = 'Last name should contain alphabets only'
+            else if (!/^[A-Za-z]+$/.test(formData.lastName)) newErrors.lastName = 'Last name should contain alphabets only'
 
             if (!formData.email.trim()) newErrors.email = 'Email is required'
             else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid'
+
             if (!formData.phone.trim()) newErrors.phone = 'Phone number is required'
         }
 
@@ -63,7 +65,7 @@ export default function BookingForm() {
             if (!formData.date) newErrors.date = 'Date is required'
             if (!formData.timeSlot) newErrors.timeSlot = 'Time slot is required'
         }
-        if(step===4){
+        if (step === 4) {
             if (!agreed) newErrors.checkbox = 'Please accept terms and conditions'
         }
 
@@ -99,8 +101,8 @@ export default function BookingForm() {
                     <div
                         key={step}
                         className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${step <= currentStep
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-200 text-gray-600'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-200 text-gray-600'
                             }`}
                     >
                         {step}
@@ -297,6 +299,19 @@ export default function BookingForm() {
                 </div>
             </div>
 
+            <button
+                type="button"
+                onClick={() => {
+                    // Simulate opening a map and selecting an address
+                    // Replace this with actual map logic if needed
+                    const dummyAddress = "Selected from map: Kathmandu Ring Road, Lalitpur"
+                    setFormData(prev => ({ ...prev, address: dummyAddress }))
+                }}
+                className="px-4 py-3 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg text-sm font-medium"
+            >
+                Select from Map
+            </button>
+
             <div className="bg-blue-50 p-4 rounded-lg">
                 <h3 className="font-semibold text-blue-900 mb-2">Emergency Contact (Optional)</h3>
                 <p className="text-sm text-blue-700 mb-3">
@@ -489,8 +504,8 @@ export default function BookingForm() {
                                     onClick={prevStep}
                                     disabled={currentStep === 1}
                                     className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${currentStep === 1
-                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                         }`}
                                 >
                                     Previous
