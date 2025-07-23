@@ -13,7 +13,7 @@ import Overlay_Otp from './components/otpOverlay'
 import ChatPage from './pages/Chat_page'
 import ProfessionalProfilePage from './pages/professionalProfile'
 import BookingForm from './pages/bookingform'
-
+import TechnicianDisplayPage from './pages/professionalList'
 
 
 function App(){
@@ -30,7 +30,8 @@ function App(){
         <Route path='/professional' element={<ProfessionalPage/>}/>
         <Route path='/professionalProfilePage' element={<ProfessionalProfilePage/>}/>
         <Route path='/chat/:bookingId' element={<ChatPage/>}/>
-        <Route path='/' element={<BookingForm/>}/>
+        <Route path='/booking-from' element={<BookingForm/>}/>
+        <Route path='/technicians' element={<TechnicianDisplayPage/>}/>
       </Routes>
     
 
