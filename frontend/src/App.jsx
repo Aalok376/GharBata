@@ -24,7 +24,7 @@ function App(){
  return (
     <Router>
       <Routes>
-        <Route path='/' element={<OtherClientProfile/>}/>
+        <Route path='/' element={<HomePageFunc/>}/>
         <Route path='/dashboard' element={<ClientPage/>}/>
         <Route path='/client_login' element={<Client_Login/>}/>
         <Route path='/client_signup' element={<Client_Signup/>}/>
@@ -36,6 +36,7 @@ function App(){
         <Route path='/chat/:bookingId' element={<ChatPage/>}/>
         <Route path='/booking-form' element={<BookingForm/>}/>
         <Route path='/technicians' element={<TechnicianDisplayPage/>}/>
+        <Route path='/clientProfileSetupPage' element={<ClientProfilePage/>}/>
       </Routes>
     
 

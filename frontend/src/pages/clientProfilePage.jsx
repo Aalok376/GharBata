@@ -9,9 +9,6 @@ export default function ClientProfile() {
     contactNumber: '+1 (555) 123-4567',
     address: '123 Oak Street, Downtown, NY 10001',
     profilePic: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-    joinDate: 'March 2023',
-    totalOrders: 24,
-    rating: 4.8
   });
 
   const [isEditing, setIsEditing] = useState(false);
@@ -19,12 +16,19 @@ export default function ClientProfile() {
   const [saving, setSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const handleInputChange = (field, value) => {
-    setEditedProfile(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+//  useEffect(() => {
+//     fetch('http://localhost:5000/api/clients/profile')
+//       .then(res => res.json())
+//       .then(data => setProfile(data))
+//       .catch(err => console.error(err));
+//   }, [])
+
+//   const handleInputChange = (field, value) => {
+//     setEditedProfile(prev => ({
+//       ...prev,
+//       [field]: value
+//     }));
+//   };
 
   const handleSave = async () => {
     setSaving(true);
@@ -85,9 +89,6 @@ export default function ClientProfile() {
                   alt="Profile"
                   className="w-28 h-28 rounded-full border-4 border-white object-cover shadow-lg transition-transform group-hover:scale-105"
                 />
-                <div className="absolute -bottom-1 -right-1 bg-emerald-400 w-8 h-8 rounded-full border-3 border-white flex items-center justify-center shadow-lg">
-                  <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                </div>
                 
                 {isEditing && (
                   <label className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
