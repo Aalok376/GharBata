@@ -18,14 +18,16 @@ import PaymentPage from './pages/PaymentPage';
 import PaymentSuccess from './components/PaymentSuccess';
 import PaymentFailure from './components/PaymentFailure';
 import PaymentStatus from './components/PaymentStatus';
-
+import BookingForm from './pages/bookingform'
+import TechnicianDisplayPage from './pages/professionalList'
+import MapPickerModal from './components/MapPicker'
 
 
 function App(){
  return (
     <Router>
       <Routes>
-        <Route path='/' element={<HomePageFunc/>}/>
+        <Route path='/' element={<MapPickerModal/>}/>
         <Route path='/dashboard' element={<ClientPage/>}/>
         <Route path='/client_login' element={<Client_Login/>}/>
         <Route path='/client_signup' element={<Client_Signup/>}/>
@@ -35,13 +37,13 @@ function App(){
         <Route path='/professional' element={<ProfessionalPage/>}/>
         <Route path='/professionalProfilePage' element={<ProfessionalProfilePage/>}/>
         <Route path='/chat/:bookingId' element={<ChatPage/>}/>
-           <Route path="/bookings" element={<BookingDashboard />} />
-           <Route path='/payment' element={<PaymentPage/>}/>
-           <Route path='/payment/success' element={<PaymentSuccess/>}/>
-            <Route path="/payment/failure" element={<PaymentFailure />} />
-            <Route path="/payment/status" element={<PaymentStatus />} />
-
-
+        <Route path="/bookings" element={<BookingDashboard />} />
+        <Route path='/payment' element={<PaymentPage/>}/>
+        <Route path='/payment/success' element={<PaymentSuccess/>}/>
+        <Route path="/payment/failure" element={<PaymentFailure />} />
+        <Route path="/payment/status" element={<PaymentStatus />} />
+        <Route path='/booking-form' element={<BookingForm/>}/>
+        <Route path='/technicians' element={<TechnicianDisplayPage/>}/>
       </Routes>
     
 

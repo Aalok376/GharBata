@@ -72,6 +72,9 @@ const Overlay_Otp = () => {
     const RegisterUser = async (e) => {
         e.preventDefault()
 
+
+        setIsVerifyBtnDisabled(true)
+
         const userInputOtp=otpData.digit1+otpData.digit2+otpData.digit3+otpData.digit4+otpData.digit5+otpData.digit6
         setUsername(username)
 
@@ -88,6 +91,7 @@ const Overlay_Otp = () => {
                 }
             }
             else{
+                setIsVerifyBtnDisabled(false)
                 setError(rresult.msg)
             }
         } catch (error) {
