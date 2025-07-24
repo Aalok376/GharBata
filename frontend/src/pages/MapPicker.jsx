@@ -57,7 +57,7 @@ function formatDistance(meters) {
   return `${(meters / 1000).toFixed(1)} km`
 }
 
-export default function LiveRouteMap() {
+export default function MapPickerModal() {
   const [currentLoc, setCurrentLoc] = useState(null)
   const [destination, setDestination] = useState(null)
   const [routeCoords, setRouteCoords] = useState(null)
