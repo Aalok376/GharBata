@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { Calendar, Clock, MapPin, User, Phone, Mail, CreditCard, Home } from 'lucide-react'
 
+import { SelectLocationOverlay } from './selectLocation'
+
 export default function BookingForm() {
     const [formData, setFormData] = useState({
         firstName: '',
@@ -15,9 +17,12 @@ export default function BookingForm() {
         specialInstructions: '',
         contactPreference: 'phone',
         emergencyContact: '',
-        emergencyPhone: ''
+        emergencyPhone: '',
+        latitude: '',
+        longitude: ''
     })
 
+    const [showMapOverlay, setShowMapOverlay] = useState(false)
     const [currentStep, setCurrentStep] = useState(1)
     const [agreed, setAgreed] = useState(false)
     const [errors, setErrors] = useState({})
@@ -88,7 +93,27 @@ export default function BookingForm() {
 
     const handleSubmit = (e) => {
         e.preventDefault()
+
         if (validateStep(4)) {
+
+            if (!formData.latitude || !formData.longitude) {
+                const location = formData.address;
+
+                console.log(location)
+
+                fetch(`http://localhost:5000/geocode?q=${encodeURIComponent(location)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.error) {
+                            console.error(data.error);
+                            throw new Error(data.error); // Prevent next fetch if there's an error
+                        } else {
+                            formData.latitude = data.lat;
+                            formData.longitude = data.lon;
+                        }
+                    })
+            }
+
             console.log('Booking submitted:', formData)
             alert('Booking request submitted successfully! You will receive a confirmation shortly.')
         }
@@ -244,44 +269,45 @@ export default function BookingForm() {
     )
 
     const renderStep2 = () => (
-        <div className="space-y-6">
-            <div className="flex items-center mb-6">
-                <MapPin className="w-6 h-6 text-blue-600 mr-3" />
-                <h2 className="text-2xl font-bold text-gray-800">Service Address</h2>
-            </div>
+        <>
+            <div className="space-y-6">
+                <div className="flex items-center mb-6">
+                    <MapPin className="w-6 h-6 text-blue-600 mr-3" />
+                    <h2 className="text-2xl font-bold text-gray-800">Service Address</h2>
+                </div>
 
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Street Address *
-                </label>
-                <input
-                    type="text"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    placeholder="123 Main Street"
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.address ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                    required
-                />
-                {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
-            </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Street Address *
+                    </label>
+                    <input
+                        type="text"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        placeholder="123 Main Street"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.address ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                        required
+                    />
+                    {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
+                </div>
 
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Apartment/Unit (Optional)
-                </label>
-                <input
-                    type="text"
-                    name="apartment"
-                    value={formData.apartment}
-                    onChange={handleInputChange}
-                    placeholder="Apt 4B, Unit 205, etc."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-            </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Apartment/Unit (Optional)
+                    </label>
+                    <input
+                        type="text"
+                        name="apartment"
+                        value={formData.apartment}
+                        onChange={handleInputChange}
+                        placeholder="Apt 4B, Unit 205, etc."
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         City *
@@ -291,52 +317,64 @@ export default function BookingForm() {
                         name="city"
                         value={formData.city}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.city ? 'border-red-500' : 'border-gray-300'
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.address ? 'border-red-500' : 'border-gray-300'
                             }`}
                         required
                     />
                     {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
                 </div>
-            </div>
 
-            <button
-                type="button"
-                onClick={() => {
-                    // Simulate opening a map and selecting an address
-                    // Replace this with actual map logic if needed
-                    const dummyAddress = "Selected from map: Kathmandu Ring Road, Lalitpur"
-                    setFormData(prev => ({ ...prev, address: dummyAddress }))
-                }}
-                className="px-4 py-3 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg text-sm font-medium"
-            >
-                Select from Map
-            </button>
+                <button
+                    type="button"
+                    onClick={() => {
+                        setFormData(prev => ({ ...prev, address: prev.address || " ", city: prev.city || ' ' }))
+                        setShowMapOverlay(true)
+                    }}
+                    className="px-4 py-3 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg text-sm font-medium"
+                >
+                    Select from Map
+                </button>
 
-            <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-blue-900 mb-2">Emergency Contact (Optional)</h3>
-                <p className="text-sm text-blue-700 mb-3">
-                    In case we need to reach someone if you're not available during the service.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input
-                        type="text"
-                        name="emergencyContact"
-                        value={formData.emergencyContact}
-                        onChange={handleInputChange}
-                        placeholder="Emergency contact name"
-                        className="px-3 py-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <input
-                        type="tel"
-                        name="emergencyPhone"
-                        value={formData.emergencyPhone}
-                        onChange={handleInputChange}
-                        placeholder="Emergency contact phone"
-                        className="px-3 py-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
+                <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-blue-900 mb-2">Emergency Contact (Optional)</h3>
+                    <p className="text-sm text-blue-700 mb-3">
+                        In case we need to reach someone if you're not available during the service.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input
+                            type="text"
+                            name="emergencyContact"
+                            value={formData.emergencyContact}
+                            onChange={handleInputChange}
+                            placeholder="Emergency contact name"
+                            className="px-3 py-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                        <input
+                            type="tel"
+                            name="emergencyPhone"
+                            value={formData.emergencyPhone}
+                            onChange={handleInputChange}
+                            placeholder="Emergency contact phone"
+                            className="px-3 py-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                    </div>
                 </div>
             </div>
-        </div>
+
+            {showMapOverlay && (
+                <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+                    <div className="relative w-[100vw] h-[100vh] bg-white rounded shadow-xl">
+
+                        <SelectLocationOverlay
+                            onClose={() => setShowMapOverlay(false)}
+                            onLocationConfirm={({ lat, lon, name, cityName }) => {
+                                setFormData(prev => ({ ...prev, address: name, latitude:lat, longitude:lon, city: cityName }))
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
+        </>
     )
 
     const renderStep3 = () => (
@@ -473,8 +511,9 @@ export default function BookingForm() {
                 {errors.checkbox && <p className="text-red-500 text-xs mt-1">{errors.checkbox}</p>}
             </div>
         </div>
-    )
 
+
+    )
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
             <div className="max-w-4xl mx-auto">

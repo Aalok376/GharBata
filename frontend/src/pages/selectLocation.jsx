@@ -65,7 +65,7 @@ function formatDuration(seconds) {
   }
 }
 
-export default function SelectLocationPage() {
+export function SelectLocationOverlay({ onLocationConfirm, onClose }) {
   const [currentLoc, setCurrentLoc] = useState(null)
   const [tempDestination, setTempDestination] = useState(null)
   const [confirmedDestination, setConfirmedDestination] = useState(null)
@@ -196,6 +196,9 @@ const getRouteInfo = async (startLat, startLng, endLat, endLng) => {
         longitude: tempDestination.lng,
         placeName: tempDestinationName
       })
+
+      onLocationConfirm({ lat:tempDestination.lat,lon:tempDestination.lng, name:tempDestinationName,cityName:tempDestinationName })
+      onClose()
     }
   }
 
@@ -210,6 +213,7 @@ const getRouteInfo = async (startLat, startLng, endLat, endLng) => {
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <button className="absolute top-2 right-2 text-red-600 font-bold" onClick={()=>onClose()}>✖</button>
       {/* Header */}
       <div className="bg-white shadow-sm border-b px-6 py-4">
         <div className="flex items-center justify-between">
