@@ -59,6 +59,8 @@ export default function BookingForm() {
             else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid'
 
             if (!formData.phone.trim()) newErrors.phone = 'Phone number is required'
+            else if (!/^\d{10}$/.test(formData.phone.trim())) newErrors.phone = 'Phone number must be of 10 digits'
+
         }
 
         if (step === 2) {
