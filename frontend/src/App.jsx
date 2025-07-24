@@ -14,13 +14,14 @@ import ChatPage from './pages/Chat_page'
 import ProfessionalProfilePage from './pages/professionalProfile'
 import BookingForm from './pages/bookingform'
 import TechnicianDisplayPage from './pages/professionalList'
+import MapPickerModal from './components/MapPicker'
 
 
 function App(){
  return (
     <Router>
       <Routes>
-        <Route path='/' element={<HomePageFunc/>}/>
+        <Route path='/' element={<MapPickerModal/>}/>
         <Route path='/dashboard' element={<ClientPage/>}/>
         <Route path='/client_login' element={<Client_Login/>}/>
         <Route path='/client_signup' element={<Client_Signup/>}/>
