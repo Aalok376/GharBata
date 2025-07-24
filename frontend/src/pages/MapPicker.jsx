@@ -411,7 +411,6 @@ export default function MapPickerModal() {
               <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-4">
                 <h4 className="font-semibold text-gray-900 mb-2">Live Tracking Active</h4>
                 <div className="text-xs text-gray-600 space-y-1">
-                  <p>• Updates every 1 meter movement</p>
                   <p>• Route recalculates automatically</p>
                   <p>• Works for very short distances</p>
                   {currentDistance < 50 && (

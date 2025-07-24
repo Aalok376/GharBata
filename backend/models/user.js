@@ -28,22 +28,14 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  profilePicture: {
-    type: String,
-    default: null,
-  },
-  contactNumber: {
-    type: String,
-    default: null,
-  },
   createdAt: {
     type: Date,
     default: Date.now,
   },
-  isActive: {
+ isProfileComplete: {
     type: Boolean,
-    default: true,
-  },
+    default: false
+  }
 }, { timestamps: true })
 
 

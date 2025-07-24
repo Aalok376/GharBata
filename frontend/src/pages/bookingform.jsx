@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Calendar, Clock, MapPin, User, Phone, Mail, CreditCard, Home } from 'lucide-react'
 
-import { SelectLocationOverlay } from './selectLocation'
+import { SelectLocationOverlay } from '../components/selectLocation'
 
 export default function BookingForm() {
     const [formData, setFormData] = useState({

@@ -11,7 +11,14 @@ const clientSchema = new mongoose.Schema({
     type : String,
     trim: true
   },
-  servicePreferences: [{type: String}]
+  profilePic:{
+    type:String,
+    default:'./Resources/DALL·E 2025-01-19 21.12.44 - A default profile image featuring a simple and professional design. The image should have a circular border with a neutral gray background and an abst.webp'
+  },
+  contactNumber:{
+    type:String,
+    default:null
+  }
 },{
   timestamps: true
 })

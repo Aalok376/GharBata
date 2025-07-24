@@ -15,14 +15,16 @@ import ProfessionalProfilePage from './pages/professionalProfile'
 import BookingForm from './pages/bookingform'
 import TechnicianDisplayPage from './pages/professionalList'
 import MapPickerModal from './pages/MapPicker'
-import { SelectLocationOverlay } from './pages/selectLocation';
+import { SelectLocationOverlay } from './components/selectLocation'
+import ClientProfilePage from './pages/clientProfilePage'
+import OtherClientProfile from './pages/otherClientProfile'
 
 
 function App(){
  return (
     <Router>
       <Routes>
-        <Route path='/' element={<BookingForm/>}/>
+        <Route path='/' element={<OtherClientProfile/>}/>
         <Route path='/dashboard' element={<ClientPage/>}/>
         <Route path='/client_login' element={<Client_Login/>}/>
         <Route path='/client_signup' element={<Client_Signup/>}/>
