@@ -1,12 +1,14 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import styled from "styled-components"
 import ClientNavbar from "../components/NavBarForClientAndProfessional"
 import SideBar from "../components/SideBar"
 import SideBarOverlay from "../components/SideBarOverlay"
 import ServiceCard from "../components/serviceCard"
+import api from "../utils/api"
 
-const ClientPage = () => {
+export const ClientPage = () => {
     const [isSideBarOpenC, setIsSideBarOpenC] = useState(false)
+    const [services, setServices] = useState([])
 
     const Componentss = [
         { id: '/dashboard', icon: '📊', text: 'Dashboard' },
@@ -17,66 +19,50 @@ const ClientPage = () => {
         { id: '/settings', icon: '⚙️', text: 'Settings' },
     ]
 
-    const Service1 = [
-        { id: 1, name: 'Deep cleaning services', },
-        { id: 2, name: 'Regular weekly/monthly cleaning', },
-        { id: 3, name: 'Move-in/move-out cleaning', },
-        { id: 4, name: 'Eco-friendly products', },
-    ]
+    useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                const res = await api.get("/api/services/active")
+                setServices(res.data)
+            } catch (error) {
+                console.error("Error fetching services:", error)
+            }
+        }
 
-    const Service2 = [
-        { id: 1, name: 'Plumbing & electrical', },
-        { id: 2, name: 'Furniture assembly', },
-        { id: 3, name: 'Painting & touch-ups', },
-        { id: 4, name: 'Emergency repairs', },
-    ]
+        fetchServices()
+    }, [])
 
-    const Service3 = [
-        { id: 1, name: 'Lawn mowing & trimming', },
-        { id: 2, name: 'Garden maintenance', },
-        { id: 3, name: 'Tree & shrub care', },
-        { id: 4, name: 'Seasonal cleanup', },
-    ]
+    // Transform services data to match ServiceCard props
+    const transformServices = (services) => {
+        if (!Array.isArray(services)) return []
+        
+        return services.map(service => ({
+            icon: service.icon || '🔧',
+            header: service.category || service.name,
+            description: service.description || '',
+            services: service.services || []
+        }))
+    }
 
-    const Service4 = [
-        { id: 1, name: 'TV mounting & setup', },
-        { id: 2, name: 'Smart home installation', },
-        { id: 3, name: 'Wi-Fi optimization', },
-        { id: 4, name: 'Device troubleshooting', },
-    ]
-
-    const Service5 = [
-        { id: 1, name: 'HVAC maintenance', },
-        { id: 2, name: 'Gutter cleaning', },
-        { id: 3, name: 'Pressure washing', },
-        { id: 4, name: 'Safety inspections', },
-    ]
-
-    const Service6 = [
-        { id: 1, name: 'Furniture assembly', },
-        { id: 2, name: 'Packing & unpacking', },
-        { id: 3, name: 'Home organization', },
-        { id: 4, name: 'Heavy item moving', },
-    ]
+    const serviceCards = transformServices(services)
 
     return (
         <>
             <style>
                 {`
-
                 .dashboard {
-                           display: flex;
-                           grid-template-columns: 280px 1fr;
-                           margin-top: 70px;
-                           min-height: calc(100vh - 70px);
-                        }
+                    display: flex;
+                    grid-template-columns: 280px 1fr;
+                    margin-top: 70px;
+                    min-height: calc(100vh - 70px);
+                }
         
                 .main-content {
-                          margin-left: 280px;
-                          padding: 2rem;
-                          overflow-y: auto;
-                          transition: all 0.3s ease;
-                          flex: 1;
+                    margin-left: 280px;
+                    padding: 2rem;
+                    overflow-y: auto;
+                    transition: all 0.3s ease;
+                    flex: 1;
                 }
         
                 .main-content.expanded {
@@ -149,7 +135,7 @@ const ClientPage = () => {
         
                 .order-item {
                     display: flex;
-                    justify-content: between;
+                    justify-content: space-between;
                     align-items: center;
                     padding: 1.5rem;
                     background: rgba(255, 255, 255, 0.7);
@@ -234,20 +220,20 @@ const ClientPage = () => {
         
                 @media (max-width: 768px) {
                     .dashboard {
-                                    grid-template-columns: 1fr;
-                                }
+                        grid-template-columns: 1fr;
+                    }
                     
                     .main-content {
-                                    margin-left: 0;
-                                }
+                        margin-left: 0;
+                    }
                 }
-`}
+                `}
             </style>
             <CBody>
-                <ClientNavbar isOpen={isSideBarOpenC} setIsOpen={setIsSideBarOpenC}></ClientNavbar>
+                <ClientNavbar isOpen={isSideBarOpenC} setIsOpen={setIsSideBarOpenC} />
                 <SideBarOverlay isSideBarOpen={isSideBarOpenC} setIsSideBarOpen={setIsSideBarOpenC} />
                 <div className="dashboard">
-                    <SideBar components={Componentss} isOpen={isSideBarOpenC}></SideBar>
+                    <SideBar components={Componentss} isOpen={isSideBarOpenC} />
                     <main className="main-content">
                         <header className="header">
                             <div className="welcome">
@@ -256,12 +242,19 @@ const ClientPage = () => {
                             </div>
                         </header>
                         <section className="services-grid">
-                            <ServiceCard icon='🧽' header={'Home Cleaning'} description={'Deep cleaning, regular maintenance, and specialized cleaning services'} services={Service1}></ServiceCard>
-                            <ServiceCard icon='🔧' header={'Home Repairs'} description={'Plumbing, electrical, carpentry, and general home repair services'} services={Service2}></ServiceCard>
-                            <ServiceCard icon='🌿' header={'Garden & Lawn Care'} description={'Landscaping, lawn maintenance, and garden care services'} services={Service3}></ServiceCard>
-                            <ServiceCard icon='📱' header={'Tech Installation'} description={'Smart home setup, TV mounting, and tech support services'} services={Service4}></ServiceCard>
-                            <ServiceCard icon='🏠' header={'Home Maintenance'} description={'Regular upkeep, inspections, and preventive maintenance'} services={Service5}></ServiceCard>
-                            <ServiceCard icon='📦' header={'Moving & Assembly'} description={'Furniture assembly, moving assistance, and organization'} services={Service6}></ServiceCard>
+                            {serviceCards.length > 0 ? (
+                                serviceCards.map((serviceGroup, idx) => (
+                                    <ServiceCard
+                                        key={idx}
+                                        icon={serviceGroup.icon}
+                                        header={serviceGroup.header}
+                                        description={serviceGroup.description}
+                                        services={serviceGroup.services}
+                                    />
+                                ))
+                            ) : (
+                                <p>Loading services...</p>
+                            )}
                         </section>
                         <section className="recent-orders">
                             <div className="section-header">
@@ -312,7 +305,6 @@ const ClientPage = () => {
                                 Contact Support
                             </button>
                         </section>
-
                     </main>
                 </div>
             </CBody>
@@ -320,10 +312,10 @@ const ClientPage = () => {
     )
 }
 
-const CBody = styled.div` 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            min-height: 100vh;
-            color: #333;`
-
-export default ClientPage
+const CBody = styled.div`
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    min-height: 100vh;
+    color: #333;
+`
+export default ClientPage;

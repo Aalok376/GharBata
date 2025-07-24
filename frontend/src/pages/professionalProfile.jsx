@@ -1,11 +1,46 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
+import toast from "react-hot-toast"          // or your toast lib
 import ClientNavbar from "../components/NavBarForClientAndProfessional"
 import SideBar from "../components/SideBar"
 import SideBarOverlay from "../components/SideBarOverlay"
+import profileAPI from "../api/profile"   // adjust path
 
 const ProfessionalProfilePage = () => {
 
     const [isSideBarOpenP, setIsSideBarOpenP] = useState(false)
+    const [formData, setFormData] = useState({
+        firstName: "",
+        lastName: "",
+        phone: "",
+        email: "",
+        businessName: "",
+        experience: "",
+        profession: "",
+        licenseNumber: "",
+        insuranceProvider: "",
+        hourlyRate: "",
+        bio: "",
+        skills: [],
+        serviceArea: "",
+        maxDistance: "",
+        emergencyAvailable: false,
+        weekendAvailable: false,
+        profileVisibility: "Public",
+        instantBooking: false,
+    });
+
+    useEffect(() => {
+    const load = async () => {
+        try {
+        const data = await profileAPI.getProfile();
+        setFormData((prev) => ({ ...prev, ...data }));
+        } catch (err) {
+        toast.error(err?.message || "Could not load profile");
+        }
+    };
+    load();
+    }, []);
+
 
     const PComponents = [
         { id: '/dashboard', icon: '📊', text: 'Dashboard' },
@@ -17,6 +52,38 @@ const ProfessionalProfilePage = () => {
         { id: '/messages', icon: '📱', text: 'Messages' },
         { id: '/settings', icon: '⚙️', text: 'Settings' },
     ]
+
+// one generic handler for every text / select / number field
+    const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+    }));
+    };
+
+    const handleSubmit = async e => {
+        e.preventDefault();
+        try {
+        await profileAPI.updateProfile(formData);
+        toast.success("Profile updated successfully!");
+        } catch (error) {
+        toast.error(error.message);
+        }
+    };
+
+    const addSkill = () => {
+    const skill = prompt("Enter skill");
+    if (skill && !formData.skills.includes(skill)) {
+        setFormData((p) => ({ ...p, skills: [...p.skills, skill] }));
+    }
+    };
+
+    const removeSkill = (skill) =>
+    setFormData((p) => ({
+        ...p,
+        skills: p.skills.filter((s) => s !== skill),
+    }));
 
     return (
         <>
@@ -583,7 +650,7 @@ const ProfessionalProfilePage = () => {
                                             <h2>Professional Profile</h2>
                                             <p>Manage your business information and credentials</p>
                                         </div>
-                                        <button className="save-changes-btn" onClick={() => { }}>Save Changes</button>
+                                        <button className="save-changes-btn" onClick={handleSubmit}>Save Changes</button>
                                     </header>
                                 </div>
 
@@ -598,31 +665,27 @@ const ProfessionalProfilePage = () => {
                                     <div className="form-grid">
                                         <div className="form-group">
                                             <label className="form-label">First Name</label>
-                                            <input type="text" className="form-input"
-                                                placeholder="Enter first name"></input>
+                                            <input type="text" name="firstName" value={formData.firstName || ""} onChange={handleChange} className="form-input" placeholder="Enter first name" />
                                         </div>
                                         <div className="form-group">
                                             <label className="form-label">Last Name</label>
-                                            <input type="text" className="form-input" placeholder="Enter last name"></input>
+                                            <input type="text" name="lastName" value={formData.lastName || ""} onChange={handleChange} className="form-input" placeholder="Enter last name" />
                                         </div>
                                         <div className="form-group">
                                             <label className="form-label">Phone Number</label>
-                                            <input type="tel" className="form-input"
-                                                placeholder="Enter phone number"></input>
+                                            <input type="tel" name="phoneNumber" value={formData.phoneNumber || ""} onChange={handleChange} className="form-input" placeholder="Enter phone number" />
                                         </div>
                                         <div className="form-group">
                                             <label className="form-label">Email Address</label>
-                                            <input type="email" className="form-input"
-                                                placeholder="Enter email address"></input>
+                                            <input type="email" name="email" value={formData.email || ""} onChange={handleChange} className="form-input" placeholder="Enter email address" />
                                         </div>
                                         <div className="form-group">
                                             <label className="form-label">Business Name</label>
-                                            <input type="text" className="form-input"
-                                                placeholder="Enter business name"></input>
+                                            <input type="text" name="businessName" value={formData.businessName || ""} onChange={handleChange} className="form-input" placeholder="Enter business name" />
                                         </div>
                                         <div className="form-group">
                                             <label className="form-label">Years of Experience</label>
-                                            <select className="form-input form-select">
+                                            <select name="yearsOfExperience" value={formData.yearsOfExperience || ""} onChange={handleChange} className="form-input form-select">
                                                 <option>Less than 1 year</option>
                                                 <option>1-2 years</option>
                                                 <option >3-5 years</option>
@@ -714,17 +777,25 @@ const ProfessionalProfilePage = () => {
                                                 placeholder="Enter maximum distance"></input>
                                         </div>
                                         <div className="form-group">
-                                            <label className="form-label">Emergency Services Available</label>
                                             <label className="toggle-switch">
-                                                <input type="checkbox" ></input>
-                                                <span className="slider"></span>
-
-                                            </label>
+                                                <input
+                                                    name="emergencyAvailable"
+                                                    type="checkbox"
+                                                    checked={formData.emergencyAvailable}
+                                                    onChange={handleChange}
+                                                />
+                                                <span className="slider" />
+                                                </label>
                                         </div>
                                         <div className="form-group">
                                             <label className="form-label">Weekend Availability</label>
                                             <label className="toggle-switch">
-                                                <input type="checkbox"></input>
+                                                <input
+                                                    name="weekendAvailable"
+                                                    type="checkbox"
+                                                    checked={formData.weekendAvailable}
+                                                    onChange={handleChange}
+                                                />      
                                                 <span className="slider"></span>
 
                                             </label>
