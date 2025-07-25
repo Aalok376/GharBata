@@ -18,7 +18,20 @@ const ClientLogin = () => {
 
     if (rresult.success) {
       setLoading(true)
-      navigate("/dashboard")
+
+      const navi = await fetch('http://localhost:5000/api/clients/getClientprofilestatus', {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username })
+      })
+
+      if (navi.status === 200) {
+        navigate('/clientProfileSetupPage')
+      } else {
+        navigate("/dashboard")
+      }
     } else {
       setError(rresult.msg)
     }

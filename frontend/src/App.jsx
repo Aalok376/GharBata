@@ -13,7 +13,11 @@ import Overlay_Otp from './components/otpOverlay'
 import ChatPage from './pages/Chat_page'
 import ProfessionalProfilePage from './pages/professionalProfile'
 import BookingForm from './pages/bookingform'
-
+import TechnicianDisplayPage from './pages/professionalList'
+import MapPickerModal from './pages/MapPicker'
+import { SelectLocationOverlay } from './components/selectLocation'
+import ClientProfilePage from './pages/clientProfilePage'
+import OtherClientProfile from './pages/otherClientProfile'
 
 
 function App(){
@@ -30,7 +34,9 @@ function App(){
         <Route path='/professional' element={<ProfessionalPage/>}/>
         <Route path='/professionalProfilePage' element={<ProfessionalProfilePage/>}/>
         <Route path='/chat/:bookingId' element={<ChatPage/>}/>
-        <Route path='/' element={<BookingForm/>}/>
+        <Route path='/booking-form' element={<BookingForm/>}/>
+        <Route path='/technicians' element={<TechnicianDisplayPage/>}/>
+        <Route path='/clientProfileSetupPage' element={<ClientProfilePage/>}/>
       </Routes>
     
 

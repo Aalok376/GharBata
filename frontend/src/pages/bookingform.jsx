@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { Calendar, Clock, MapPin, User, Phone, Mail, CreditCard, Home } from 'lucide-react'
 
+import { SelectLocationOverlay } from '../components/selectLocation'
+
 export default function BookingForm() {
     const [formData, setFormData] = useState({
         firstName: '',
@@ -15,9 +17,12 @@ export default function BookingForm() {
         specialInstructions: '',
         contactPreference: 'phone',
         emergencyContact: '',
-        emergencyPhone: ''
+        emergencyPhone: '',
+        latitude: '',
+        longitude: ''
     })
 
+    const [showMapOverlay, setShowMapOverlay] = useState(false)
     const [currentStep, setCurrentStep] = useState(1)
     const [agreed, setAgreed] = useState(false)
     const [errors, setErrors] = useState({})
@@ -45,13 +50,17 @@ export default function BookingForm() {
 
         if (step === 1) {
             if (!formData.firstName.trim()) newErrors.firstName = 'First name is required'
-            else if (!/^[A-Za-z]+$/.test(formData.fname)) newErrors.fname = 'First name should contain alphabets only'
+            else if (!/^[A-Za-z]+$/.test(formData.firstName)) newErrors.firstName = 'First name should contain alphabets only'
+
             if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required'
-            else if (!/^[A-Za-z]+$/.test(formData.lname)) newErrors.lname = 'Last name should contain alphabets only'
+            else if (!/^[A-Za-z]+$/.test(formData.lastName)) newErrors.lastName = 'Last name should contain alphabets only'
 
             if (!formData.email.trim()) newErrors.email = 'Email is required'
             else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid'
+
             if (!formData.phone.trim()) newErrors.phone = 'Phone number is required'
+            else if (!/^\d{10}$/.test(formData.phone.trim())) newErrors.phone = 'Phone number must be of 10 digits'
+
         }
 
         if (step === 2) {
@@ -63,7 +72,7 @@ export default function BookingForm() {
             if (!formData.date) newErrors.date = 'Date is required'
             if (!formData.timeSlot) newErrors.timeSlot = 'Time slot is required'
         }
-        if(step===4){
+        if (step === 4) {
             if (!agreed) newErrors.checkbox = 'Please accept terms and conditions'
         }
 
@@ -86,7 +95,27 @@ export default function BookingForm() {
 
     const handleSubmit = (e) => {
         e.preventDefault()
+
         if (validateStep(4)) {
+
+            if (!formData.latitude || !formData.longitude) {
+                const location = formData.address;
+
+                console.log(location)
+
+                fetch(`http://localhost:5000/geocode?q=${encodeURIComponent(location)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.error) {
+                            console.error(data.error);
+                            throw new Error(data.error); // Prevent next fetch if there's an error
+                        } else {
+                            formData.latitude = data.lat;
+                            formData.longitude = data.lon;
+                        }
+                    })
+            }
+
             console.log('Booking submitted:', formData)
             alert('Booking request submitted successfully! You will receive a confirmation shortly.')
         }
@@ -99,8 +128,8 @@ export default function BookingForm() {
                     <div
                         key={step}
                         className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${step <= currentStep
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-200 text-gray-600'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-200 text-gray-600'
                             }`}
                     >
                         {step}
@@ -242,44 +271,45 @@ export default function BookingForm() {
     )
 
     const renderStep2 = () => (
-        <div className="space-y-6">
-            <div className="flex items-center mb-6">
-                <MapPin className="w-6 h-6 text-blue-600 mr-3" />
-                <h2 className="text-2xl font-bold text-gray-800">Service Address</h2>
-            </div>
+        <>
+            <div className="space-y-6">
+                <div className="flex items-center mb-6">
+                    <MapPin className="w-6 h-6 text-blue-600 mr-3" />
+                    <h2 className="text-2xl font-bold text-gray-800">Service Address</h2>
+                </div>
 
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Street Address *
-                </label>
-                <input
-                    type="text"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    placeholder="123 Main Street"
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.address ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                    required
-                />
-                {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
-            </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Street Address *
+                    </label>
+                    <input
+                        type="text"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        placeholder="123 Main Street"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.address ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                        required
+                    />
+                    {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
+                </div>
 
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Apartment/Unit (Optional)
-                </label>
-                <input
-                    type="text"
-                    name="apartment"
-                    value={formData.apartment}
-                    onChange={handleInputChange}
-                    placeholder="Apt 4B, Unit 205, etc."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-            </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Apartment/Unit (Optional)
+                    </label>
+                    <input
+                        type="text"
+                        name="apartment"
+                        value={formData.apartment}
+                        onChange={handleInputChange}
+                        placeholder="Apt 4B, Unit 205, etc."
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         City *
@@ -289,39 +319,64 @@ export default function BookingForm() {
                         name="city"
                         value={formData.city}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.city ? 'border-red-500' : 'border-gray-300'
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.address ? 'border-red-500' : 'border-gray-300'
                             }`}
                         required
                     />
                     {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
                 </div>
-            </div>
 
-            <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-blue-900 mb-2">Emergency Contact (Optional)</h3>
-                <p className="text-sm text-blue-700 mb-3">
-                    In case we need to reach someone if you're not available during the service.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input
-                        type="text"
-                        name="emergencyContact"
-                        value={formData.emergencyContact}
-                        onChange={handleInputChange}
-                        placeholder="Emergency contact name"
-                        className="px-3 py-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <input
-                        type="tel"
-                        name="emergencyPhone"
-                        value={formData.emergencyPhone}
-                        onChange={handleInputChange}
-                        placeholder="Emergency contact phone"
-                        className="px-3 py-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
+                <button
+                    type="button"
+                    onClick={() => {
+                        setFormData(prev => ({ ...prev, address: prev.address || " ", city: prev.city || ' ' }))
+                        setShowMapOverlay(true)
+                    }}
+                    className="px-4 py-3 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg text-sm font-medium"
+                >
+                    Select from Map
+                </button>
+
+                <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-blue-900 mb-2">Emergency Contact (Optional)</h3>
+                    <p className="text-sm text-blue-700 mb-3">
+                        In case we need to reach someone if you're not available during the service.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input
+                            type="text"
+                            name="emergencyContact"
+                            value={formData.emergencyContact}
+                            onChange={handleInputChange}
+                            placeholder="Emergency contact name"
+                            className="px-3 py-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                        <input
+                            type="tel"
+                            name="emergencyPhone"
+                            value={formData.emergencyPhone}
+                            onChange={handleInputChange}
+                            placeholder="Emergency contact phone"
+                            className="px-3 py-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                    </div>
                 </div>
             </div>
-        </div>
+
+            {showMapOverlay && (
+                <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+                    <div className="relative w-[100vw] h-[100vh] bg-white rounded shadow-xl">
+
+                        <SelectLocationOverlay
+                            onClose={() => setShowMapOverlay(false)}
+                            onLocationConfirm={({ lat, lon, name, cityName }) => {
+                                setFormData(prev => ({ ...prev, address: name, latitude:lat, longitude:lon, city: cityName }))
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
+        </>
     )
 
     const renderStep3 = () => (
@@ -458,8 +513,9 @@ export default function BookingForm() {
                 {errors.checkbox && <p className="text-red-500 text-xs mt-1">{errors.checkbox}</p>}
             </div>
         </div>
-    )
 
+
+    )
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
             <div className="max-w-4xl mx-auto">
@@ -489,8 +545,8 @@ export default function BookingForm() {
                                     onClick={prevStep}
                                     disabled={currentStep === 1}
                                     className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${currentStep === 1
-                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                         }`}
                                 >
                                     Previous
