@@ -4,6 +4,7 @@ export const SignUp = async ({ username, password, fname, lname }) => {
   try {
     const response = await fetch(`${BASE_URL}/api/auth/emailVerification`, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         "Content-Type": "application/json",
       },
@@ -23,6 +24,7 @@ export const register = async ({ username, password, fname, lname, userType, use
   try {
     const response = await fetch(`${BASE_URL}/api/auth/register`, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         "Content-Type": "application/json",
       },
@@ -45,6 +47,7 @@ export const Llogin = async ({ username, password }) => {
   try {
     const response = await fetch(`${BASE_URL}/api/auth/login`, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         "Content-Type": "application/json"
       },
