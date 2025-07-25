@@ -12,8 +12,8 @@ const clientSchema = new mongoose.Schema({
     trim: true
   },
   profilePic: {
-    data: Buffer,
-    contentType: String
+   type:String,
+   default:null
   },
   contactNumber: {
     type: String,

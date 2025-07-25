@@ -551,7 +551,7 @@ const Technician_Signup = () => {
                 </div>
 
                 <div className="login-link">
-                    Already have an account? <NavLink to="/client_login">Sign in</NavLink>
+                    Already have an account? <NavLink to="/technician_login">Sign in</NavLink>
                 </div>
             </div>
             {isOverlayOpen && (

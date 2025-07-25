@@ -19,7 +19,7 @@ const Technician_Login = () => {
 
     if (rresult.success) {
       setLoading(true)
-      navigate("/professional")
+      navigate("/professionalProfilePage")
     } else {
       setError(rresult.msg)
     }

@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken'
 dotenv.config()
 
 export const verifyToken = async (req, res, next) => {
-  const accessToken = req.cookies.accessToken || req.headers['authorizarion']?.split(' ')[1]
+  const accessToken = req.cookies.accessToken || req.headers['authorization']?.split(' ')[1]
   const refreshToken = req.cookies.refreshToken
 
   if (!accessToken) {

@@ -1,833 +1,547 @@
-import React, { useState } from "react"
-import ClientNavbar from "../components/NavBarForClientAndProfessional"
-import SideBar from "../components/SideBar"
-import SideBarOverlay from "../components/SideBarOverlay"
+import React, { useState, useEffect } from 'react'
+import { User, Phone, Mail, Save, Edit3, X, Camera, MapPin, Wrench, Star, Clock, DollarSign } from 'lucide-react'
 
-const ProfessionalProfilePage = () => {
+export default function TechnicianProfile() {
+  const [profile, setProfile] = useState({})
+  const [isEditing, setIsEditing] = useState(false)
+  const [forFirstTime, setForFirstTime] = useState(false)
+  const [editedProfile, setEditedProfile] = useState({})
+  const [saving, setSaving] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [selectedFile, setSelectedFile] = useState(null)
 
-    const [isSideBarOpenP, setIsSideBarOpenP] = useState(false)
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const formDataStr = sessionStorage.getItem('formData')
+      const uusername = sessionStorage.getItem('username')
 
-    const PComponents = [
-        { id: '/dashboard', icon: '📊', text: 'Dashboard' },
-        { id: '/schedule', icon: '📅', text: 'Schedule' },
-        { id: '/jobs', icon: '💼', text: 'Jobs' },
-        { id: '/customers', icon: '👥', text: 'Customers' },
-        { id: '/earnings', icon: '💰', text: 'Earnings' },
-        { id: '/reviews', icon: '⭐', text: 'Reviews' },
-        { id: '/messages', icon: '📱', text: 'Messages' },
-        { id: '/settings', icon: '⚙️', text: 'Settings' },
-    ]
+      let username = uusername || '' 
+      let user = null
 
-    return (
-        <>
-            <style>
-                {`
-             .dashboard {
-                           display: flex;
-                           grid-template-columns: 280px 1fr;
-                           margin-top: 70px;
-                           min-height: calc(100vh - 70px);
-                        }
-        
-                .main-content {
-                          margin-top:20px;
-                          margin-left: 280px;
-                          padding: 2rem;
-                          overflow-y: auto;
-                          transition: all 0.3s ease;
-                          flex: 1;
-                          background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-                }
-                .header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 0.5rem 0.5rem;
-                    border-radius: 20px;
-                }
-        
-                .page-title h2 {
-                    font-size: 2rem;
-                    margin-bottom: 0.5rem;
-                    color: #333;
-                }
-        
-                .page-title p {
-                    color: #666;
-                    font-size: 1.1rem;
-                }
-        
-                .save-changes-btn {
-                    background: linear-gradient(135deg, #2ecc71, #27ae60);
-                    color: white;
-                    border: none;
-                    padding: 1rem 2rem;
-                    border-radius: 10px;
-                    cursor: pointer;
-                    font-weight: 600;
-                    font-size: 1rem;
-                    transition: all 0.3s ease;
-                }
-        
-                .save-changes-btn:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
-                }
-        
-                .profile-grid {
-                    display: flex;
-                    margin-bottom: 3rem;
-                }
-        
-                .profile-card {
-                    background: rgba(255, 255, 255, 0.9);
-                    backdrop-filter: blur(20px);
-                    border-radius: 20px;
-                    padding: 2rem;
-                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-                    text-align: center;
-                    height: fit-content;
-                    position: fixed;
-                }
-        
-                .profile-photo {
-                    position: relative;
-                    margin-bottom: 2rem;
-                }
-        
-                .profile-avatar {
-                    width: 150px;
-                    height: 150px;
-                    border-radius: 50%;
-                    background: linear-gradient(135deg, #1e3c72, #2a5298);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    font-size: 3rem;
-                    font-weight: 700;
-                    margin: 0 auto;
-                    position: relative;
-                    overflow: hidden;
-                }
-        
-                .photo-upload-btn {
-                    position: absolute;
-                    bottom: 10px;
-                    right: 10px;
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    background: #2ecc71;
-                    color: white;
-                    border: none;
-                    cursor: pointer;
-                    font-size: 1.2rem;
-                    transition: all 0.3s ease;
-                }
-        
-                .photo-upload-btn:hover {
-                    transform: scale(1.1);
-                    background: #27ae60;
-                }
-        
-                .profile-name {
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                    color: #333;
-                    margin-bottom: 0.5rem;
-                }
-        
-                .profile-specialty {
-                    color: #1e3c72;
-                    font-weight: 600;
-                    margin-bottom: 1rem;
-                }
-        
-                .profile-rating {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 0.5rem;
-                    margin-bottom: 2rem;
-                }
-        
-                .stars {
-                    color: #f39c12;
-                    font-size: 1.2rem;
-                }
-        
-                .rating-text {
-                    color: #666;
-                    font-size: 0.9rem;
-                }
-        
-                .profile-stats {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 1rem;
-                    margin-bottom: 2rem;
-                }
-        
-                .stat-item {
-                    text-align: center;
-                    padding: 1rem;
-                    background: rgba(30, 60, 114, 0.1);
-                    border-radius: 15px;
-                }
-        
-                .stat-number {
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                    color: #1e3c72;
-                }
-        
-                .stat-label {
-                    font-size: 0.8rem;
-                    color: #666;
-                    margin-top: 0.5rem;
-                }
-        
-                .verification-badges {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 0.5rem;
-                    justify-content: center;
-                }
-        
-                .badge {
-                    padding: 0.5rem 1rem;
-                    border-radius: 20px;
-                    font-size: 0.8rem;
-                    font-weight: 600;
-                }
-        
-                .verified {
-                    background: rgba(46, 204, 113, 0.2);
-                    color: #27ae60;
-                }
-        
-                .licensed {
-                    background: rgba(52, 152, 219, 0.2);
-                    color: #3498db;
-                }
-        
-                .insured {
-                    background: rgba(155, 89, 182, 0.2);
-                    color: #9b59b6;
-                }
-        
-                .makeItScrollable {
-                    margin-left: 400px;
-                    position: fixed;
-                    height: 76%;
-                    width: 52%;
-                    overflow: hidden;
-                    display: flex;
-                    flex-direction: column;
-                    gap: zero;
-                    border-radius: 20px;
-                }
-        
-                .form-sections {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 2rem;
-                    flex: 1;
-                    overflow-y: auto;
-                    padding-right: 12px;
-                    margin-right: 16px;
-                }
-        
-                .form-section {
-                    background: rgba(255, 255, 255, 0.9);
-                    backdrop-filter: blur(20px);
-                    border-radius: 20px;
-                    padding: 2rem;
-                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-                }
-        
-                .section-header {
-                    display: flex;
-                    justify-content: between;
-                    align-items: center;
-                    margin-bottom: 2rem;
-                    padding-bottom: 1rem;
-                    border-bottom: 2px solid rgba(30, 60, 114, 0.1);
-                }
-        
-                .section-title {
-                    font-size: 1.3rem;
-                    font-weight: 600;
-                    color: #333;
-                    display: flex;
-                    align-items: center;
-                    gap: 1rem;
-                }
-        
-                .section-icon {
-                    font-size: 1.5rem;
-                    color: #1e3c72;
-                }
-        
-                .form-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                    gap: 1.5rem;
-                }
-        
-                .form-group {
-                    display: flex;
-                    flex-direction: column;
-                }
-        
-                .form-label {
-                    font-weight: 600;
-                    color: #333;
-                    margin-bottom: 0.5rem;
-                    font-size: 0.9rem;
-                }
-        
-                .form-input {
-                    padding: 1rem;
-                    border: 2px solid rgba(30, 60, 114, 0.1);
-                    border-radius: 10px;
-                    font-size: 1rem;
-                    transition: all 0.3s ease;
-                    background: rgba(255, 255, 255, 0.8);
-                }
-        
-                .form-input:focus {
-                    outline: none;
-                    border-color: #1e3c72;
-                    background: white;
-                    box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
-                }
-        
-                .form-textarea {
-                    min-height: 120px;
-                    resize: vertical;
-                }
-        
-                .form-select {
-                    appearance: none;
-                    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-                    background-position: right 0.5rem center;
-                    background-repeat: no-repeat;
-                    background-size: 1.5em 1.5em;
-                    padding-right: 2.5rem;
-                }
-        
-                .skills-container {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 1rem;
-                    margin-top: 1rem;
-                }
-        
-                .skill-tag {
-                    padding: 0.5rem 1rem;
-                    background: rgba(30, 60, 114, 0.1);
-                    color: #1e3c72;
-                    border-radius: 20px;
-                    font-size: 0.9rem;
-                    font-weight: 600;
-                    display: flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                }
-        
-                .skill-tag:hover {
-                    background: rgba(30, 60, 114, 0.2);
-                    transform: scale(1.05);
-                }
-        
-                .remove-skill {
-                    color: #e74c3c;
-                    cursor: pointer;
-                    font-weight: bold;
-                }
-        
-                .add-skill-btn {
-                    padding: 0.5rem 1rem;
-                    background: rgba(46, 204, 113, 0.2);
-                    color: #27ae60;
-                    border: 2px dashed #27ae60;
-                    border-radius: 20px;
-                    font-size: 0.9rem;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                }
-        
-                .add-skill-btn:hover {
-                    background: rgba(46, 204, 113, 0.3);
-                    transform: scale(1.05);
-                }
-        
-                .availability-grid {
-                    display: grid;
-                    grid-template-columns: repeat(7, 1fr);
-                    gap: 1rem;
-                    margin-top: 1rem;
-                }
-        
-                .day-availability {
-                    text-align: center;
-                    padding: 1rem;
-                    background: rgba(255, 255, 255, 0.8);
-                    border-radius: 15px;
-                    border: 2px solid transparent;
-                    transition: all 0.3s ease;
-                    cursor: pointer;
-                }
-        
-                .day-availability.active {
-                    border-color: #1e3c72;
-                    background: rgba(30, 60, 114, 0.1);
-                }
-        
-                .day-name {
-                    font-weight: 600;
-                    color: #333;
-                    margin-bottom: 0.5rem;
-                }
-        
-                .day-hours {
-                    font-size: 0.8rem;
-                    color: #666;
-                }
-        
-                /* Portfolio Section */
-                .portfolio-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 1rem;
-                    margin-top: 1rem;
-                }
-        
-                .portfolio-item {
-                    position: relative;
-                    aspect-ratio: 1;
-                    background: rgba(30, 60, 114, 0.1);
-                    border-radius: 15px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                    overflow: hidden;
-                }
-        
-                .portfolio-item:hover {
-                    transform: scale(1.05);
-                }
-        
-                .portfolio-placeholder {
-                    color: #1e3c72;
-                    font-size: 2rem;
-                }
-        
-                .add-portfolio-btn {
-                    border: 2px dashed #1e3c72;
-                    background: rgba(30, 60, 114, 0.05);
-                }
-        
-                .add-portfolio-btn:hover {
-                    background: rgba(30, 60, 114, 0.1);
-                }
-        
-                /* Toggle Switch */
-                .toggle-switch {
-                    position: relative;
-                    display: inline-block;
-                    width: 60px;
-                    height: 34px;
-                }
-        
-                .toggle-switch input {
-                    opacity: 0;
-                    width: 0;
-                    height: 0;
-                }
-        
-                .slider {
-                    position: absolute;
-                    cursor: pointer;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background-color: #ccc;
-                    transition: .4s;
-                    border-radius: 34px;
-                }
-        
-                .slider:before {
-                    position: absolute;
-                    content: "";
-                    height: 26px;
-                    width: 26px;
-                    left: 4px;
-                    bottom: 4px;
-                    background-color: white;
-                    transition: .4s;
-                    border-radius: 50%;
-                }
-        
-                input:checked+.slider {
-                    background-color: #1e3c72;
-                }
-        
-                input:checked+.slider:before {
-                    transform: translateX(26px);
-                }
-        
-                @media (max-width: 1024px) {
-                    .profile-grid {
-                        grid-template-columns: 1fr;
-                    }
-                }
-        
-                @media (max-width: 768px) {
-                    .dashboard {
-                        display:grid;
-                        grid-template-columns: 1fr;
-                    }
+      if (formDataStr) {
+        try {
+          user = JSON.parse(formDataStr)
+          if (user && user.username) {
+            username = user.username
+          }
+        } catch (error) {
+          console.error('Error parsing formData from sessionStorage:', error)
+        }
+      }
 
-                    .profile-grid{
-                    display:grid;
-                    }
+      console.log('Resolved username:', username)
+      const fname = user?.fname || ''
+      const lname = user?.lname || ''
 
-                    .profile-card{
-                    position:static;
-                    height:auto;
-                    }
+      // Check if technician profile exists
+      const statusResponse = await fetch('http://localhost:5000/api/technicians/getTechnicianprofilestatus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username }),
+      })
 
-                    .makeItScrollable{
-                    margin-top:30px;
-                    position:static;
-                    margin-left: 0px;
-                    height:auto;
-                    width:auto;
-                    }
+      const statusData = await statusResponse.json()
+      const isFirstTime = statusResponse.status === 200 && statusData?.msg?.includes('has not been created')
 
-                    .form-sections{
-                    margin-right:0px;
-                    padding-right:0px;
-                    }
-        
-                    .form-grid {
-                        grid-template-columns: 1fr;
-                    }
-        
-                    .availability-grid {
-                        grid-template-columns: 1fr;
-                    }
-                    .main-content {
-                            margin-left: 0;
-                    }
-                }
-    
-            `}
-            </style>
-            <ClientNavbar isOpen={isSideBarOpenP} setIsOpen={setIsSideBarOpenP}></ClientNavbar>
-            <SideBarOverlay isSideBarOpen={isSideBarOpenP} setIsSideBarOpen={setIsSideBarOpenP} />
-            <div className="dashboard">
-                <SideBar components={PComponents} isOpen={isSideBarOpenP}></SideBar>
-                <main className="main-content">
+      setForFirstTime(isFirstTime)
+      setIsEditing(isFirstTime)
 
-                    <div className="profile-grid">
+      if (isFirstTime) {
+        const prof = {
+          username,
+          fname,
+          lname,
+        }
+        setProfile(prof)
+        setEditedProfile({
+          username: prof.username || '',
+          fname: prof.fname || '',
+          lname: prof.lname || '',
+          profession: '',
+          serviceLocation: '',
+          availability: '',
+          currentLocation: '',
+          specialties: [],
+          experience: '0 years',
+          hourlyRate: 0,
+          responseTime: 'Not specified',
+          profilePic: '',
+        })
+      } else {
+        // Fetch existing technician profile
+        const profileResponse = await fetch('http://localhost:5000/api/technicians/getTechnicianProfile', {
+          method: 'GET',
+          credentials: 'include',
+        })
 
-                        <div className="profile-card">
-                            <div className="profile-photo">
-                                <div className="profile-avatar">MS</div>
-                                <button className="photo-upload-btn" onClick={() => { }}>📷</button>
-                            </div>
+        let profileData = await profileResponse.json()
+        profileData = Array.isArray(profileData) ? profileData : [profileData]
+        const prof = profileData[0].user || {}
 
-                            <div className="profile-name">Michael Smith</div>
-                            <div className="profile-specialty">Licensed Plumber</div>
+        const techData = prof.technician_id
 
-                            <div className="profile-rating">
-                                <div className="stars">⭐⭐⭐⭐⭐</div>
-                                <span className="rating-text">4.9 (127 reviews)</span>
-                            </div>
+        const mergedProfile = {
+          fname: techData.fname,
+          lname: techData.lname,
+          username: techData.username,
+          profession: prof.profession,
+          serviceLocation: prof.serviceLocation,
+          availability: prof.availability,
+          currentLocation: prof.currentLocation,
+          specialties: prof.specialties || [],
+          experience: prof.experience,
+          hourlyRate: prof.hourlyRate,
+          responseTime: prof.responseTime,
+          profilePic: prof.profilePic,
+          rating: prof.rating,
+          tasksCompleted: prof.tasksCompleted,
+          reviews: prof.reviews,
+          _id: prof._id
+        }
+        setProfile(mergedProfile)
+        setEditedProfile(mergedProfile)
+      }
+    }
 
-                            <div className="profile-stats">
-                                <div className="stat-item">
-                                    <div className="stat-number">245</div>
-                                    <div className="stat-label">Jobs Completed</div>
-                                </div>
-                                <div className="stat-item">
-                                    <div className="stat-number">3.2</div>
-                                    <div className="stat-label">Years Experience</div>
-                                </div>
-                            </div>
+    fetchProfile()
+  }, [])
 
-                            <div className="verification-badges">
-                                <span className="badge verified">✓ ID Verified</span>
-                                <span className="badge licensed">✓ Licensed</span>
-                                <span className="badge insured">✓ Insured</span>
-                            </div>
-                        </div>
+  const handleInputChange = (field, value) => {
+    setEditedProfile(prev => ({
+      ...prev,
+      [field]: value,
+    }))
+  }
 
+  const handleSpecialtyAdd = (specialty) => {
+    if (specialty && !editedProfile.specialties.includes(specialty)) {
+      setEditedProfile(prev => ({
+        ...prev,
+        specialties: [...prev.specialties, specialty]
+      }))
+    }
+  }
 
-                        <div className="makeItScrollable">
-                            <div className="form-sections">
+  const handleSpecialtyRemove = (specialty) => {
+    setEditedProfile(prev => ({
+      ...prev,
+      specialties: prev.specialties.filter(s => s !== specialty)
+    }))
+  }
 
-                                <div className="form-section">
-                                    <header className="header">
-                                        <div className="page-title">
-                                            <h2>Professional Profile</h2>
-                                            <p>Manage your business information and credentials</p>
-                                        </div>
-                                        <button className="save-changes-btn" onClick={() => { }}>Save Changes</button>
-                                    </header>
-                                </div>
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const formData = new FormData()
+      formData.append('username', editedProfile.username)
+      formData.append('fname', editedProfile.fname)
+      formData.append('lname', editedProfile.lname)
+      formData.append('profession', editedProfile.profession)
+      formData.append('serviceLocation', editedProfile.serviceLocation)
+      formData.append('availability', editedProfile.availability)
+      formData.append('currentLocation', editedProfile.currentLocation)
+      formData.append('specialties', JSON.stringify(editedProfile.specialties))
+      formData.append('experience', editedProfile.experience)
+      formData.append('hourlyRate', editedProfile.hourlyRate)
+      formData.append('responseTime', editedProfile.responseTime)
+      
+      if (selectedFile) {
+        formData.append('profilePic', selectedFile)
+      }
 
-                                <div className="form-section">
-                                    <div className="section-header">
-                                        <div className="section-title">
-                                            <span className="section-icon">👤</span>
-                                            Personal Information
-                                        </div>
-                                    </div>
+      const endpoint = forFirstTime
+        ? 'http://localhost:5000/api/technicians/createTechnician'
+        : 'http://localhost:5000/api/technicians/updateTechnician'
 
-                                    <div className="form-grid">
-                                        <div className="form-group">
-                                            <label className="form-label">First Name</label>
-                                            <input type="text" className="form-input"
-                                                placeholder="Enter first name"></input>
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="form-label">Last Name</label>
-                                            <input type="text" className="form-input" placeholder="Enter last name"></input>
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="form-label">Phone Number</label>
-                                            <input type="tel" className="form-input"
-                                                placeholder="Enter phone number"></input>
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="form-label">Email Address</label>
-                                            <input type="email" className="form-input"
-                                                placeholder="Enter email address"></input>
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="form-label">Business Name</label>
-                                            <input type="text" className="form-input"
-                                                placeholder="Enter business name"></input>
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="form-label">Years of Experience</label>
-                                            <select className="form-input form-select">
-                                                <option>Less than 1 year</option>
-                                                <option>1-2 years</option>
-                                                <option >3-5 years</option>
-                                                <option>5-10 years</option>
-                                                <option>10+ years</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      })
 
-                                <div className="form-section">
-                                    <div className="section-header">
-                                        <div className="section-title">
-                                            <span className="section-icon">🔧</span>
-                                            Professional Details
-                                        </div>
-                                    </div>
+      if (response.ok) {
+        const data = await response.json()
+        const updatedTechnician = data.technician || editedProfile
+        const updatedProfile = {
+          ...updatedTechnician,
+          fname: updatedTechnician.fname || editedProfile.fname,
+          lname: updatedTechnician.lname || editedProfile.lname,
+          username: updatedTechnician.username || editedProfile.username,
+        }
+        setProfile(updatedProfile)
+        setEditedProfile(updatedProfile)
+        setIsEditing(false)
+        setForFirstTime(false)
+        setShowSuccess(true)
 
-                                    <div className="form-grid">
-                                        <div className="form-group">
-                                            <label className="form-label">Primary Service Category</label>
-                                            <select className="form-input form-select">
-                                                <option>Plumbing</option>
-                                                <option>Electrical</option>
-                                                <option>HVAC</option>
-                                                <option>Handyman</option>
-                                                <option>Cleaning</option>
-                                                <option>Gardening</option>
-                                            </select>
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="form-label">License Number</label>
-                                            <input type="text" className="form-input"
-                                                placeholder="Enter license number"></input>
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="form-label">Insurance Provider</label>
-                                            <input type="text" className="form-input"
-                                                placeholder="Enter insurance provider"></input>
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="form-label">Hourly Rate ($)</label>
-                                            <input type="number" className="form-input" placeholder="Enter hourly rate"></input>
-                                        </div>
-                                    </div>
+        sessionStorage.removeItem('formData')
+      } else {
+        console.error('Failed to save profile')
+      }
+    } catch (error) {
+      console.error('Save error:', error)
+    }
 
-                                    <div className="form-group">
-                                        <label className="form-label">Professional Bio</label>
-                                        <textarea className="form-input form-textarea"
-                                            placeholder="Tell customers about your experience, specialties, and what makes you unique..."></textarea>
-                                    </div>
+    setSaving(false)
+    setTimeout(() => setShowSuccess(false), 3000)
+  }
 
-                                    <div className="form-group">
-                                        <label className="form-label">Skills & Specialties</label>
-                                        <div className="skills-container">
-                                            <span className="skill-tag">Pipe Repair <span className="remove-skill"
-                                                onClick={() => { }}>×</span></span>
-                                            <span className="skill-tag">Drain Cleaning <span className="remove-skill"
-                                                onClick={() => { }}>×</span></span>
-                                            <span className="skill-tag">Water Heater Installation <span className="remove-skill"
-                                                onClick={() => { }}>×</span></span>
-                                            <span className="skill-tag">Emergency Repairs <span className="remove-skill"
-                                                onClick={() => { }}>×</span></span>
-                                            <span className="skill-tag">Bathroom Renovation <span className="remove-skill"
-                                                onClick={() => { }}>×</span></span>
-                                            <button className="add-skill-btn" onClick={() => { }}>+ Add Skill</button>
-                                        </div>
-                                    </div>
-                                </div>
+  const handleCancel = () => {
+    setEditedProfile(profile)
+    setIsEditing(false)
+    setSelectedFile(null)
+  }
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setSelectedFile(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        handleInputChange('profilePic', e.target.result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
 
-                                <div className="form-section">
-                                    <div className="section-header">
-                                        <div className="section-title">
-                                            <span className="section-icon">📍</span>
-                                            Service Area & Availability
-                                        </div>
-                                    </div>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8 px-4">
+      {/* Success Notification */}
+      <div className={`fixed top-4 right-4 z-50 transform transition-all duration-300 ${showSuccess ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
+        <div className="bg-emerald-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center space-x-2">
+          <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+          <span>Profile updated successfully!</span>
+        </div>
+      </div>
 
-                                    <div className="form-grid">
-                                        <div className="form-group">
-                                            <label className="form-label">Primary Service Area</label>
-                                            <input type="text" className="form-input"
-                                                placeholder="Enter service areas"></input>
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="form-label">Maximum Travel Distance (miles)</label>
-                                            <input type="number" className="form-input"
-                                                placeholder="Enter maximum distance"></input>
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="form-label">Emergency Services Available</label>
-                                            <label className="toggle-switch">
-                                                <input type="checkbox" ></input>
-                                                <span className="slider"></span>
+      <div className="max-w-md mx-auto">
+        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden backdrop-blur-sm border border-white/20">
+          {/* Header Section */}
+          <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 px-6 py-8 text-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent"></div>
+            <div className="absolute -top-4 -right-4 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
+            <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-white/10 rounded-full blur-lg"></div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
 
-                                            </label>
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="form-label">Weekend Availability</label>
-                                            <label className="toggle-switch">
-                                                <input type="checkbox"></input>
-                                                <span className="slider"></span>
-
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="form-label">Weekly Availability</label>
-                                        <div className="availability-grid">
-                                            <div className="day-availability active" onClick={() => { }}>
-                                                <div className="day-name">Mon</div>
-                                                <div className="day-hours">8AM-6PM</div>
-                                            </div>
-                                            <div className="day-availability active" onClick={() => { }}>
-                                                <div className="day-name">Tue</div>
-                                                <div className="day-hours">8AM-6PM</div>
-                                            </div>
-                                            <div className="day-availability active" onClick={() => { }}>
-                                                <div className="day-name">Wed</div>
-                                                <div className="day-hours">8AM-6PM</div>
-                                            </div>
-                                            <div className="day-availability active" onClick={() => { }}>
-                                                <div className="day-name">Thu</div>
-                                                <div className="day-hours">8AM-6PM</div>
-                                            </div>
-                                            <div className="day-availability active" onClick={() => { }}>
-                                                <div className="day-name">Fri</div>
-                                                <div className="day-hours">8AM-6PM</div>
-                                            </div>
-                                            <div className="day-availability active" onClick={() => { }}>
-                                                <div className="day-name">Sat</div>
-                                                <div className="day-hours">9AM-3PM</div>
-                                            </div>
-                                            <div className="day-availability" onClick={() => { }}>
-                                                <div className="day-name">Sun</div>
-                                                <div className="day-hours">Closed</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="form-section">
-                                    <div className="section-header">
-                                        <div className="section-title">
-                                            <span className="section-icon">📸</span>
-                                            Work Portfolio
-                                        </div>
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="form-label">Showcase Your Best Work</label>
-                                        <div className="portfolio-grid">
-                                            <div className="portfolio-item">
-                                                <div className="portfolio-placeholder">🚿</div>
-                                            </div>
-                                            <div className="portfolio-item">
-                                                <div className="portfolio-placeholder">🔧</div>
-                                            </div>
-                                            <div className="portfolio-item">
-                                                <div className="portfolio-placeholder">🚰</div>
-                                            </div>
-                                            <div className="portfolio-item add-portfolio-btn" onClick={() => { }}>
-                                                <div className="portfolio-placeholder">+</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="form-section">
-                                    <div className="section-header">
-                                        <div className="section-title">
-                                            <span className="section-icon">⚙️</span>
-                                            Account Settings
-                                        </div>
-                                    </div>
-
-                                    <div className="form-grid">
-                                        <div className="form-group">
-                                            <label className="form-label">Profile Visibility</label>
-                                            <select className="form-input form-select">
-                                                <option >Public - Anyone can find me</option>
-                                                <option>Private - Only invited customers</option>
-                                                <option>Limited - Verified customers only</option>
-                                            </select>
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="form-label">Instant Booking</label>
-                                            <label className="toggle-switch">
-                                                <input type="checkbox"></input>
-                                                <span className="slider"></span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </main>
+            <div className="relative">
+              <div className="relative inline-block group">
+                {(isEditing ? editedProfile?.profilePic : profile?.profilePic) ? (
+                  <img
+                    src={isEditing ? editedProfile.profilePic : profile.profilePic}
+                    alt="Profile"
+                    className="w-28 h-28 rounded-full border-4 border-white object-cover shadow-lg transition-transform group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="w-28 h-28 rounded-full border-4 border-white bg-gray-300 shadow-lg flex items-center justify-center text-gray-500 text-xl font-semibold">
+                    {(isEditing ? editedProfile?.fname : profile?.fname)?.charAt(0) || 'T'}
+                    {(isEditing ? editedProfile?.lname : profile?.lname)?.charAt(0) || 'P'}
+                  </div>
+                )}
+                {isEditing && (
+                  <label className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="w-6 h-6 text-white" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+              <h1 className="text-white text-2xl font-bold mt-4 tracking-wide">
+                {isEditing ? editedProfile?.fname : profile?.fname} {isEditing ? editedProfile?.lname : profile?.lname}
+              </h1>
+              <p className="text-indigo-100 text-sm mt-1 font-medium">
+                {(isEditing ? editedProfile?.profession : profile?.profession) || 'Professional Technician'}
+              </p>
             </div>
+          </div>
 
-        </>
-    )
+          {/* Stats Section */}
+          <div className="p-6 bg-gradient-to-br from-slate-50 to-gray-50 border-b">
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="text-center p-4 bg-white rounded-xl shadow-sm">
+                <div className="text-2xl font-bold text-indigo-600 flex items-center justify-center">
+                  <Star className="w-5 h-5 text-yellow-500 mr-1" />
+                  {profile?.rating || '0.0'}
+                </div>
+                <div className="text-sm text-gray-600">Rating</div>
+              </div>
+              <div className="text-center p-4 bg-white rounded-xl shadow-sm">
+                <div className="text-2xl font-bold text-green-600">{profile?.tasksCompleted || '0'}</div>
+                <div className="text-sm text-gray-600">Jobs Done</div>
+              </div>
+            </div>
+            
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center text-gray-600">
+                <Clock className="w-4 h-4 mr-2 text-indigo-600" />
+                <span>{profile?.responseTime || 'Not specified'}</span>
+              </div>
+              <div className="flex items-center text-gray-600">
+                <DollarSign className="w-4 h-4 mr-2 text-indigo-600" />
+                <span>${profile?.hourlyRate || '0'}/hour</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Form Content */}
+          <div className="p-6 space-y-6">
+            {/* Personal Information */}
+            <InputGroup icon={<User />} label="Full Name" isEditing={isEditing}>
+              {isEditing ? (
+                <>
+                  <input
+                    type="text"
+                    value={editedProfile?.fname || ''}
+                    onChange={(e) => handleInputChange('fname', e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                    placeholder="Enter your first name"
+                  />
+                  <input
+                    type="text"
+                    value={editedProfile?.lname || ''}
+                    onChange={(e) => handleInputChange('lname', e.target.value)}
+                    className="w-full mt-2 px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                    placeholder="Enter your last name"
+                  />
+                </>
+              ) : (
+                <p className="text-slate-900 font-medium text-lg">{profile?.fname} {profile?.lname}</p>
+              )}
+            </InputGroup>
+
+            <InputGroup icon={<Mail />} label="Email Address" isEditing={isEditing}>
+              <input
+                type="email"
+                value={editedProfile?.username || ''}
+                readOnly
+                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl bg-gray-100 text-gray-600 cursor-not-allowed"
+              />
+            </InputGroup>
+
+            <InputGroup icon={<Wrench />} label="Profession" isEditing={isEditing}>
+              {isEditing ? (
+                <select
+                  value={editedProfile?.profession || ''}
+                  onChange={(e) => handleInputChange('profession', e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                >
+                  <option value="">Select Profession</option>
+                  <option value="Plumber">Plumber</option>
+                  <option value="Electrician">Electrician</option>
+                  <option value="HVAC">HVAC Technician</option>
+                  <option value="Handyman">Handyman</option>
+                  <option value="Cleaner">Cleaner</option>
+                  <option value="Gardener">Gardener</option>
+                </select>
+              ) : (
+                <p className="text-slate-900 font-medium">{profile?.profession}</p>
+              )}
+            </InputGroup>
+
+            <InputGroup icon={<Clock />} label="Experience" isEditing={isEditing}>
+              {isEditing ? (
+                <select
+                  value={editedProfile?.experience || ''}
+                  onChange={(e) => handleInputChange('experience', e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                >
+                  <option value="0 years">Less than 1 year</option>
+                  <option value="1-2 years">1-2 years</option>
+                  <option value="3-5 years">3-5 years</option>
+                  <option value="5-10 years">5-10 years</option>
+                  <option value="10+ years">10+ years</option>
+                </select>
+              ) : (
+                <p className="text-slate-900 font-medium">{profile?.experience}</p>
+              )}
+            </InputGroup>
+
+            <InputGroup icon={<DollarSign />} label="Hourly Rate ($)" isEditing={isEditing}>
+              {isEditing ? (
+                <input
+                  type="number"
+                  value={editedProfile?.hourlyRate || ''}
+                  onChange={(e) => handleInputChange('hourlyRate', e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                  placeholder="Enter your hourly rate"
+                />
+              ) : (
+                <p className="text-slate-900 font-medium">${profile?.hourlyRate}</p>
+              )}
+            </InputGroup>
+
+            <InputGroup icon={<Clock />} label="Response Time" isEditing={isEditing}>
+              {isEditing ? (
+                <select
+                  value={editedProfile?.responseTime || ''}
+                  onChange={(e) => handleInputChange('responseTime', e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                >
+                  <option value="Within 1 hour">Within 1 hour</option>
+                  <option value="Within 2 hours">Within 2 hours</option>
+                  <option value="Same day">Same day</option>
+                  <option value="Within 24 hours">Within 24 hours</option>
+                </select>
+              ) : (
+                <p className="text-slate-900 font-medium">{profile?.responseTime}</p>
+              )}
+            </InputGroup>
+
+            <InputGroup icon={<MapPin />} label="Service Location" isEditing={isEditing}>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editedProfile?.serviceLocation || ''}
+                  onChange={(e) => handleInputChange('serviceLocation', e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                  placeholder="Enter service areas"
+                />
+              ) : (
+                <p className="text-slate-900 font-medium">{profile?.serviceLocation}</p>
+              )}
+            </InputGroup>
+
+            <InputGroup icon={<MapPin />} label="Current Location" isEditing={isEditing}>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editedProfile?.currentLocation || ''}
+                  onChange={(e) => handleInputChange('currentLocation', e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                  placeholder="Enter current location"
+                />
+              ) : (
+                <p className="text-slate-900 font-medium">{profile?.currentLocation}</p>
+              )}
+            </InputGroup>
+
+            <InputGroup icon={<Clock />} label="Availability" isEditing={isEditing}>
+              {isEditing ? (
+                <textarea
+                  value={editedProfile?.availability || ''}
+                  onChange={(e) => handleInputChange('availability', e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none resize-none"
+                  rows="2"
+                  placeholder="Describe your availability (e.g., Mon-Fri 9AM-6PM)"
+                />
+              ) : (
+                <p className="text-slate-900 font-medium">{profile?.availability}</p>
+              )}
+            </InputGroup>
+
+            {/* Specialties */}
+            <div className="group">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+                  <Wrench className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Specialties</label>
+                  {isEditing ? (
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        {editedProfile?.specialties?.map((specialty, index) => (
+                          <div
+                            key={index}
+                            className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium flex items-center"
+                          >
+                            {specialty}
+                            <button
+                              onClick={() => handleSpecialtyRemove(specialty)}
+                              className="ml-2 text-indigo-600 hover:text-red-500"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Add a specialty and press Enter"
+                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            handleSpecialtyAdd(e.target.value.trim())
+                            e.target.value = ''
+                          }
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {profile?.specialties?.map((specialty, index) => (
+                        <div
+                          key={index}
+                          className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium"
+                        >
+                          {specialty}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="p-6 bg-gradient-to-br from-slate-50 to-gray-50 space-y-3">
+            {isEditing ? (
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex-1 flex items-center justify-center space-x-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-4 px-6 rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg font-semibold"
+                >
+                  {saving ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <Save className="w-5 h-5" />
+                  )}
+                  <span>{saving ? 'Saving...' : 'Save Changes'}</span>
+                </button>
+                {!forFirstTime && (
+                  <button
+                    onClick={handleCancel}
+                    className="flex-1 flex items-center justify-center space-x-2 bg-slate-200 text-slate-700 py-4 px-6 rounded-xl hover:bg-slate-300 transition-all duration-200 font-semibold"
+                  >
+                    <X className="w-5 h-5" />
+                    <span>Cancel</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="w-full flex items-center justify-center space-x-2 bg-white border-2 border-slate-200 text-slate-700 py-4 px-6 rounded-xl hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-200 font-semibold shadow-sm hover:shadow-md"
+              >
+                <Edit3 className="w-5 h-5" />
+                <span>Edit Profile</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
-export default ProfessionalProfilePage
+function InputGroup({ icon, label, isEditing, children }) {
+  return (
+    <div className="group">
+      <div className="flex items-center space-x-3">
+        <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+          {icon}
+        </div>
+        <div className="flex-1">
+          <label className="block text-sm font-semibold text-slate-700 mb-2">{label}</label>
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
