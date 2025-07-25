@@ -16,6 +16,8 @@ const ClientLogin = () => {
 
     const rresult = await Llogin({ username, password })
 
+    sessionStorage.setItem('username',username)
+
     if (rresult.success) {
       setLoading(true)
 
@@ -30,7 +32,7 @@ const ClientLogin = () => {
       if (navi.status === 200) {
         navigate('/clientProfileSetupPage')
       } else {
-        navigate("/dashboard")
+        navigate("/clientProfileSetupPage")
       }
     } else {
       setError(rresult.msg)

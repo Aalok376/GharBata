@@ -12,13 +12,26 @@ export default function ClientProfile() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const user = JSON.parse(sessionStorage.getItem('formData'))
+      const formDataStr = sessionStorage.getItem('formData')
+      const uusername = sessionStorage.getItem('username')
 
-      const username=user.username
-      const fname = user.fname
-      const lname = user.lname
+      let username = uusername || '' 
+      let user = null
 
-      console.log(username)
+      if (formDataStr) {
+        try {
+          user = JSON.parse(formDataStr)
+          if (user && user.username) {
+            username = user.username
+          }
+        } catch (error) {
+          console.error('Error parsing formData from sessionStorage:', error)
+        }
+      }
+
+      console.log('Resolved username:', username)
+      const fname = user?.fname||''
+      const lname = user?.lname||''
 
       const statusResponse = await fetch('http://localhost:5000/api/clients/getClientprofilestatus', {
         method: 'POST',
@@ -58,8 +71,19 @@ export default function ClientProfile() {
         profileData = Array.isArray(profileData) ? profileData : [profileData]
         const prof = profileData[0].user || {}
 
-        setProfile(prof)
-        setEditedProfile(prof)
+        const profData = prof.client_id
+
+        const mergedProfile = {
+          fname: profData.fname,
+          lname: profData.lname,
+          username: profData.username,
+          address: prof.address,
+          profilePic: prof.profilePic,
+          contactNumber: prof.contactNumber,
+          _id: prof._id
+        }
+        setProfile(mergedProfile)
+        setEditedProfile(mergedProfile)
       }
     }
 
@@ -86,7 +110,11 @@ export default function ClientProfile() {
         formData.append('profilePic', selectedFile)
       }
 
-      const response = await fetch('http://localhost:5000/api/clients/createClient', {
+      const endpoint = forFirstTime
+        ? 'http://localhost:5000/api/clients/createClient'
+        : 'http://localhost:5000/api/clients/updateClient'
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         credentials: 'include',
         body: formData,
@@ -94,10 +122,20 @@ export default function ClientProfile() {
 
       if (response.ok) {
         const data = await response.json()
-        setProfile(data.client || editedProfile)
+        const updatedClient = data.client || editedProfile
+        const updatedProfile = {
+          ...updatedClient,
+          fname: updatedClient.fname || editedProfile.fname,
+          lname: updatedClient.lname || editedProfile.lname,
+          username: updatedClient.username || editedProfile.username,
+        }
+        setProfile(updatedProfile)
+        setEditedProfile(updatedProfile)
         setIsEditing(false)
         setForFirstTime(false)
         setShowSuccess(true)
+
+        sessionStorage.removeItem('formData')
       } else {
         console.error('Failed to save profile')
       }
@@ -201,17 +239,12 @@ export default function ClientProfile() {
             </InputGroup>
 
             <InputGroup icon={<Mail />} label="Email Address" isEditing={isEditing}>
-              {isEditing ? (
-                <input
-                  type="email"
-                  value={editedProfile?.username || ''}
-                  onChange={(e) => handleInputChange('username', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                  placeholder="Enter your email"
-                />
-              ) : (
-                <p className="text-slate-900 font-medium">{profile?.username}</p>
-              )}
+              <input
+                type="email"
+                value={editedProfile?.username || ''}
+                readOnly
+                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl bg-gray-100 text-gray-600 cursor-not-allowed"
+              />
             </InputGroup>
 
             <InputGroup icon={<Phone />} label="Phone Number" isEditing={isEditing}>

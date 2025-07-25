@@ -69,18 +69,72 @@ export const isClientProfileComplete = async (req, res) => {
 }
 
 export const profile = async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id)
+  try {
+    const user = await Client.findOne({ client_id: req.user.id })
+      .populate('client_id', '-password')
 
-        if (!user) {
-            return res.status(404).json({ msg: 'User not found' });
-        }
-
-        const { fname,lname,username,_id } = user;
-
-        return res.status(200).json({ user:{fname,lname,username,_id} });
-    } catch (error) {
-        console.error('Error fetching profile:', error);
-        return res.status(500).json({ msg: 'Error fetching profile', error });
+    if (!user) {
+      return res.status(404).json({ success:false,msg: 'User not found' })
     }
+
+    return res.status(200).json({success:true, user })
+  } catch (error) {
+    console.error('Error fetching profile:', error)
+    return res.status(500).json({success:false, msg: 'Error fetching profile', error })
+  }
 }
+
+export const updateClientProfile = async (req, res) => {
+  try {
+    const userId = req.user.id
+
+    // Check if the user exists
+    const user = await User.findById(userId)
+    if (!user || user.userType !== "client") {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized or invalid user role",
+      })
+    }
+
+    // Get the existing client
+    const client = await Client.findOne({ client_id: userId })
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        message: "Client profile not found",
+      })
+    }
+
+    // Handle profile picture
+    const profilePicUrl = req.file?.path
+
+    // Update client fields
+    client.address = req.body.address || client.address
+    client.contactNumber = req.body.contactNumber || client.contactNumber
+    if (profilePicUrl) {
+      client.profilePic = profilePicUrl
+    }
+    await client.save()
+
+    // Update user fields (fname/lname)
+    user.fname = req.body.fname || user.fname
+    user.lname = req.body.lname || user.lname
+    await user.save()
+
+    res.status(200).json({
+      success: true,
+      message: "Client profile updated successfully",
+      client,
+    })
+  } catch (error) {
+    console.error("Error updating client profile:", error)
+    res.status(500).json({
+      success: false,
+      message: "Error updating client profile",
+      error: error.message,
+    })
+  }
+}
+
+
