@@ -12,8 +12,13 @@ import ClientPage from './pages/clientHomePage'
 import Overlay_Otp from './components/otpOverlay'
 import ChatPage from './pages/Chat_page'
 
-import ProfessionalProfilePage from './pages/professionalProfile';
-import BookingDashboard from './components/BookingDashboard'
+import ProfessionalProfilePage from './pages/professionalProfile'
+import BookingForm from './pages/bookingform'
+import TechnicianDisplayPage from './pages/professionalList'
+import MapPickerModal from './pages/MapPicker'
+import { SelectLocationOverlay } from './components/selectLocation'
+import ClientProfilePage from './pages/clientProfilePage'
+import OtherClientProfile from './pages/otherClientProfile'import BookingDashboard from './components/BookingDashboard'
 import PaymentPage from './pages/PaymentPage';
 import PaymentSuccess from './components/PaymentSuccess';
 import PaymentFailure from './components/PaymentFailure';
@@ -35,6 +40,9 @@ function App(){
         <Route path='/professional' element={<ProfessionalPage/>}/>
         <Route path='/professionalProfilePage' element={<ProfessionalProfilePage/>}/>
         <Route path='/chat/:bookingId' element={<ChatPage/>}/>
+        <Route path='/booking-form' element={<BookingForm/>}/>
+        <Route path='/technicians' element={<TechnicianDisplayPage/>}/>
+        <Route path='/clientProfileSetupPage' element={<ClientProfilePage/>}/>
            <Route path="/bookings" element={<BookingDashboard />} />
            <Route path='/payment' element={<PaymentPage/>}/>
            <Route path='/payment/success' element={<PaymentSuccess/>}/>

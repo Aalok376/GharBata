@@ -1,18 +1,25 @@
 import mongoose from 'mongoose'
 
 const clientSchema = new mongoose.Schema({
-  client_id: { 
-    type: mongoose.Schema.Types.ObjectId, 
+  client_id: {
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-     required: true, 
-     unique: true
-     },
+    required: true,
+    unique: true
+  },
   address: {
-    type : String,
+    type: String,
     trim: true
   },
-  servicePreferences: [{type: String}]
-},{
+  profilePic: {
+    data: Buffer,
+    contentType: String
+  },
+  contactNumber: {
+    type: String,
+    default: null
+  }
+}, {
   timestamps: true
 })
 export default mongoose.model('Client', clientSchema)

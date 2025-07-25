@@ -9,25 +9,29 @@ const ClientLogin = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState()
 
-  const formData = JSON.parse(sessionStorage.getItem('formData'))
-  const userType = formData?.userType || "client"
-
-  sessionStorage.removeItem('formData')
-
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
-    const rresult = await Llogin({username, password})
-    
+
+    const rresult = await Llogin({ username, password })
+
     if (rresult.success) {
       setLoading(true)
-      if (userType === "client") {
+
+      const navi = await fetch('http://localhost:5000/api/clients/getClientprofilestatus', {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username })
+      })
+
+      if (navi.status === 200) {
+        navigate('/clientProfileSetupPage')
+      } else {
         navigate("/dashboard")
-      } else if (userType === "technician") {
-        navigate("/professional")
-      } 
+      }
     } else {
       setError(rresult.msg)
     }
@@ -340,14 +344,14 @@ const ClientLogin = () => {
           </div>
 
           <button type="submit" className="login-btn" disabled={loading}>
-              <span className="btn-text">Sign In</span>
+            <span className="btn-text">Sign In</span>
           </button>
 
           {error && (
-                        <p id="error-message" style={{ color: "red" }}>
-                            {error}
-                        </p>
-                    )}
+            <p id="error-message" style={{ color: "red" }}>
+              {error}
+            </p>
+          )}
         </form>
 
         <div className="divider">

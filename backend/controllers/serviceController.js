@@ -4,7 +4,7 @@ import Service from '../models/Service.js';
 export const createService = async (req, res) => {
   try {
     const serviceData = req.body;
-    serviceData.created_by = req.user.id; // Assuming user info is attached by auth middleware
+    serviceData.created_by = req.user._id; // Assuming user info is attached by auth middleware
 
     const newService = new Service(serviceData);
     await newService.save();
