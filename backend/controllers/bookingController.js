@@ -44,7 +44,11 @@ export const  createBooking=async(req,res)=>{
         }
         const {technician_id, service_id,address,scheduled_date,scheduled_time,booking_service_price}=req.body
 
-           
+        //Get Bookings
+           const userId=req.user.id;
+
+           const Bookingss=await boooking.find({technician_id:userId})
+           const Bookingc=await booking.find({client_id:userId})
 
    
         // Fetch technician by ID
@@ -57,12 +61,12 @@ const technician = await User.findById(technician_id)
             })
         }
          //check if the technician is active
-         if(!technician.isActive){
-            return res.status(HTTP_STATUS.BAD_REQUEST).json({
-                success: false,
-                message: 'Technician is not currently available'
-            })
-         }
+        //  if(!technician.isActive){
+        //     return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        //         success: false,
+        //         message: 'Technician is not currently available'
+        //     })
+        //  }
          // Check if service exists and is active
          const service=await Service.findById(service_id)
          if(!service || !service.is_active){
