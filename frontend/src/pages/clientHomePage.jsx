@@ -371,7 +371,7 @@ const ClientPage = () => {
 
                             <ServiceCard
                                 icon='🚪'
-                                header={'Window/Door Installer'}
+                                header={'Door Installer'}
                                 description={'Installs and replaces doors and windows for security, aesthetics, and insulation'}
                                 services={[
                                     { id: 1, name: 'Door Installation' },

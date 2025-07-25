@@ -14,7 +14,7 @@ export default function TechnicianProfile() {
   const professionOptions = [
     'Plumber', 'Electrician', 'HVAC Technician', 'Handyman', 'Cleaner', 'Gardener',
     'Carpenter', 'Painter', 'Appliance Repair', 'Locksmith', 'Pest Control',
-    'Roofing Specialist', 'Flooring Specialist', 'Window/Door Installer'
+    'Roofing Specialist', 'Flooring Specialist', 'Door Installer'
   ]
 
   const daysOfWeek = [

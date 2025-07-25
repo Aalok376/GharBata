@@ -17,8 +17,6 @@ import TechnicianDisplayPage from './pages/professionalList'
 import MapPickerModal from './pages/MapPicker'
 import { SelectLocationOverlay } from './components/selectLocation'
 import ClientProfilePage from './pages/clientProfilePage'
-import OtherClientProfile from './pages/otherClientProfile'
-
 
 function App(){
  return (
@@ -35,8 +33,9 @@ function App(){
         <Route path='/professionalProfilePage' element={<ProfessionalProfilePage/>}/>
         <Route path='/chat/:bookingId' element={<ChatPage/>}/>
         <Route path='/booking-form' element={<BookingForm/>}/>
-        <Route path='/technicians' element={<TechnicianDisplayPage/>}/>
+        <Route path="/dashboard/bookservice/:serviceName" element={<TechnicianDisplayPage/>} />
         <Route path='/clientProfileSetupPage' element={<ClientProfilePage/>}/>
+        <Route path="/dashboard/booking/:service/:technicianId" element={<BookingForm/>} />
       </Routes>
     
 

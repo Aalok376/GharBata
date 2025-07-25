@@ -1,9 +1,12 @@
 import React, { useState } from 'react'
 import { Calendar, Clock, MapPin, User, Phone, Mail, CreditCard, Home } from 'lucide-react'
+import { useParams } from 'react-router-dom'
 
 import { SelectLocationOverlay } from '../components/selectLocation'
 
 export default function BookingForm() {
+
+    const { service, technicianId } = useParams()
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
