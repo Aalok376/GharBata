@@ -15,8 +15,11 @@ const Technician_Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    const rresult = await Llogin({ username, password })
+    const userType='technician'
+    const rresult = await Llogin({ username, password,userType })
 
+    sessionStorage.setItem('username',username)
+    
     if (rresult.success) {
       setLoading(true)
       navigate("/professionalProfilePage")

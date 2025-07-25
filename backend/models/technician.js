@@ -1,47 +1,33 @@
-import mongoose from 'mongoose'
+import mongoose from "mongoose"
+
+const availabilitySchema = new mongoose.Schema({
+  available: Boolean,
+  startTime: String,
+  endTime: String
+}, { _id: false })
 
 const technicianSchema = new mongoose.Schema({
-  technician_id: {
-     type: mongoose.Schema.Types.ObjectId,
-      ref: 'User', 
-      required: true,
-       unique: true 
-      },
-  profession:{
-    type: String,
-    required : true
-  } ,
-  serviceStatus:{
-    type: String,
-    default: 'active'  
-  }, 
-  serviceLocation: {
-    type: String
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  professions: [String],
+  serviceLocation: String,
+  availability: {
+    monday: availabilitySchema,
+    tuesday: availabilitySchema,
+    wednesday: availabilitySchema,
+    thursday: availabilitySchema,
+    friday: availabilitySchema,
+    saturday: availabilitySchema,
+    sunday: availabilitySchema
   },
-  availability:{
-type: String
-  },
-  currentLocation: {
-    type: String
-    },
-  rating:{
-   type: Number,
-   default: 0
-  },
-  tasksCompleted: {
-    type: Number,
-    default: 0
-  },
-  isVerified: {
-     type: Boolean,
-      default: false
-     },
-     isActive:{
-      type:Boolean,
-      default: true
-     },
-},{
-  timestamps: true
+  currentLocation: String,
+  specialties: [String],
+  experience: String,
+  hourlyRate: Number,
+  responseTime: String,
+  profilePic: {type:String,default:null},
+  rating: { type: Number, default: 0 },
+  tasksCompleted: { type: Number, default: 0 },
+  reviews: [String]
 })
 
 export default mongoose.model('Technician', technicianSchema)

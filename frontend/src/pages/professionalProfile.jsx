@@ -1,3 +1,4 @@
+// Fixed TechnicianProfile.jsx
 import React, { useState, useEffect } from 'react'
 import { User, Phone, Mail, Save, Edit3, X, Camera, MapPin, Wrench, Star, Clock, DollarSign } from 'lucide-react'
 
@@ -10,9 +11,25 @@ export default function TechnicianProfile() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
 
+  const professionOptions = [
+    'Plumber', 'Electrician', 'HVAC Technician', 'Handyman', 'Cleaner', 'Gardener',
+    'Carpenter', 'Painter', 'Appliance Repair', 'Locksmith', 'Pest Control',
+    'Roofing Specialist', 'Flooring Specialist', 'Window/Door Installer'
+  ]
+
+  const daysOfWeek = [
+    { key: 'monday', label: 'Monday', short: 'Mon' },
+    { key: 'tuesday', label: 'Tuesday', short: 'Tue' },
+    { key: 'wednesday', label: 'Wednesday', short: 'Wed' },
+    { key: 'thursday', label: 'Thursday', short: 'Thu' },
+    { key: 'friday', label: 'Friday', short: 'Fri' },
+    { key: 'saturday', label: 'Saturday', short: 'Sat' },
+    { key: 'sunday', label: 'Sunday', short: 'Sun' }
+  ]
+
   useEffect(() => {
     const fetchProfile = async () => {
-      const formDataStr = sessionStorage.getItem('formData')
+       const formDataStr = sessionStorage.getItem('formData')
       const uusername = sessionStorage.getItem('username')
 
       let username = uusername || '' 
@@ -29,78 +46,77 @@ export default function TechnicianProfile() {
         }
       }
 
+      
       console.log('Resolved username:', username)
+
       const fname = user?.fname || ''
       const lname = user?.lname || ''
 
-      // Check if technician profile exists
-      const statusResponse = await fetch('http://localhost:5000/api/technicians/getTechnicianprofilestatus', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ username }),
-      })
-
-      const statusData = await statusResponse.json()
-      const isFirstTime = statusResponse.status === 200 && statusData?.msg?.includes('has not been created')
-
-      setForFirstTime(isFirstTime)
-      setIsEditing(isFirstTime)
-
-      if (isFirstTime) {
-        const prof = {
-          username,
-          fname,
-          lname,
-        }
-        setProfile(prof)
-        setEditedProfile({
-          username: prof.username || '',
-          fname: prof.fname || '',
-          lname: prof.lname || '',
-          profession: '',
-          serviceLocation: '',
-          availability: '',
-          currentLocation: '',
-          specialties: [],
-          experience: '0 years',
-          hourlyRate: 0,
-          responseTime: 'Not specified',
-          profilePic: '',
-        })
-      } else {
-        // Fetch existing technician profile
-        const profileResponse = await fetch('http://localhost:5000/api/technicians/getTechnicianProfile', {
-          method: 'GET',
+      try {
+        const statusResponse = await fetch('http://localhost:5000/api/clients/getClientprofilestatus', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
+          body: JSON.stringify({ username }),
         })
 
-        let profileData = await profileResponse.json()
-        profileData = Array.isArray(profileData) ? profileData : [profileData]
-        const prof = profileData[0].user || {}
+        if (!statusResponse.ok) throw new Error('Status fetch failed')
 
-        const techData = prof.technician_id
+        const statusData = await statusResponse.json()
+        const isFirstTime = statusData?.msg?.includes('has not been created')
+        setForFirstTime(isFirstTime)
+        setIsEditing(isFirstTime)
 
-        const mergedProfile = {
-          fname: techData.fname,
-          lname: techData.lname,
-          username: techData.username,
-          profession: prof.profession,
-          serviceLocation: prof.serviceLocation,
-          availability: prof.availability,
-          currentLocation: prof.currentLocation,
-          specialties: prof.specialties || [],
-          experience: prof.experience,
-          hourlyRate: prof.hourlyRate,
-          responseTime: prof.responseTime,
-          profilePic: prof.profilePic,
-          rating: prof.rating,
-          tasksCompleted: prof.tasksCompleted,
-          reviews: prof.reviews,
-          _id: prof._id
+        if (isFirstTime) {
+          const prof = {
+            username, fname, lname,
+            professions: [],
+            serviceLocation: '',
+            availability: Object.fromEntries(daysOfWeek.map(day => [day.key, { available: false, startTime: '09:00', endTime: '17:00' }])),
+            currentLocation: '',
+            specialties: [],
+            experience: '0 years',
+            hourlyRate: 0,
+            responseTime: 'Not specified',
+            profilePic: '',
+          }
+          setProfile(prof)
+          setEditedProfile(prof)
+        } else {
+          const profileResponse = await fetch('http://localhost:5000/api/technicians/getTechnicians', {
+            method: 'GET',
+            credentials: 'include',
+          })
+
+          if (!profileResponse.ok) throw new Error('Profile fetch failed')
+
+          let profileData = await profileResponse.json()
+          profileData = Array.isArray(profileData) ? profileData : [profileData]
+          const prof = profileData[0].technician || {}
+
+          console.log(prof)
+
+          const mergedProfile = {
+            fname: prof.user.fname,
+            lname: prof.user.lname,
+            username: prof.user.username,
+            professions: prof.professions || [prof.profession].filter(Boolean),
+            serviceLocation: prof.serviceLocation,
+            availability: prof.availability || Object.fromEntries(daysOfWeek.map(day => [day.key, { available: false, startTime: '09:00', endTime: '17:00' }])),
+            currentLocation: prof.currentLocation,
+            specialties: prof.specialties || [],
+            experience: prof.experience,
+            hourlyRate: prof.hourlyRate,
+            responseTime: prof.responseTime,
+            profilePic: prof.profilePic,
+            rating: prof.rating,
+            tasksCompleted: prof.tasksCompleted
+          }
+          setProfile(mergedProfile)
+          setEditedProfile(mergedProfile)
         }
-        setProfile(mergedProfile)
-        setEditedProfile(mergedProfile)
+      } catch (error) {
+        console.error('Fetch error:', error)
       }
     }
 
@@ -108,17 +124,35 @@ export default function TechnicianProfile() {
   }, [])
 
   const handleInputChange = (field, value) => {
+    setEditedProfile(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleProfessionToggle = (profession) => {
+    setEditedProfile(prev => {
+      const professions = prev.professions || []
+      const exists = professions.includes(profession)
+      return { ...prev, professions: exists ? professions.filter(p => p !== profession) : [...professions, profession] }
+    })
+  }
+
+  const handleAvailabilityChange = (day, field, value) => {
     setEditedProfile(prev => ({
       ...prev,
-      [field]: value,
+      availability: {
+        ...prev.availability,
+        [day]: {
+          ...prev.availability?.[day],
+          [field]: value
+        }
+      }
     }))
   }
 
   const handleSpecialtyAdd = (specialty) => {
-    if (specialty && !editedProfile.specialties.includes(specialty)) {
+    if (specialty && !(editedProfile.specialties || []).includes(specialty)) {
       setEditedProfile(prev => ({
         ...prev,
-        specialties: [...prev.specialties, specialty]
+        specialties: [...(prev.specialties || []), specialty]
       }))
     }
   }
@@ -126,7 +160,7 @@ export default function TechnicianProfile() {
   const handleSpecialtyRemove = (specialty) => {
     setEditedProfile(prev => ({
       ...prev,
-      specialties: prev.specialties.filter(s => s !== specialty)
+      specialties: (prev.specialties || []).filter(s => s !== specialty)
     }))
   }
 
@@ -134,25 +168,17 @@ export default function TechnicianProfile() {
     setSaving(true)
     try {
       const formData = new FormData()
-      formData.append('username', editedProfile.username)
-      formData.append('fname', editedProfile.fname)
-      formData.append('lname', editedProfile.lname)
-      formData.append('profession', editedProfile.profession)
-      formData.append('serviceLocation', editedProfile.serviceLocation)
-      formData.append('availability', editedProfile.availability)
-      formData.append('currentLocation', editedProfile.currentLocation)
-      formData.append('specialties', JSON.stringify(editedProfile.specialties))
-      formData.append('experience', editedProfile.experience)
-      formData.append('hourlyRate', editedProfile.hourlyRate)
-      formData.append('responseTime', editedProfile.responseTime)
-      
-      if (selectedFile) {
-        formData.append('profilePic', selectedFile)
+      for (const key of ['username', 'fname', 'lname', 'serviceLocation', 'currentLocation', 'experience', 'hourlyRate', 'responseTime']) {
+        formData.append(key, editedProfile[key] || '')
       }
+      formData.append('professions', JSON.stringify(editedProfile.professions || []))
+      formData.append('availability', JSON.stringify(editedProfile.availability || {}))
+      formData.append('specialties', JSON.stringify(editedProfile.specialties || []))
+      if (selectedFile) formData.append('profilePic', selectedFile)
 
       const endpoint = forFirstTime
-        ? 'http://localhost:5000/api/technicians/createTechnician'
-        : 'http://localhost:5000/api/technicians/updateTechnician'
+        ? 'http://localhost:5000/api/technicians/createTechnicians'
+        : 'http://localhost:5000/api/technicians/updateTechnicians'
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -174,7 +200,6 @@ export default function TechnicianProfile() {
         setIsEditing(false)
         setForFirstTime(false)
         setShowSuccess(true)
-
         sessionStorage.removeItem('formData')
       } else {
         console.error('Failed to save profile')
@@ -182,7 +207,6 @@ export default function TechnicianProfile() {
     } catch (error) {
       console.error('Save error:', error)
     }
-
     setSaving(false)
     setTimeout(() => setShowSuccess(false), 3000)
   }
@@ -198,9 +222,7 @@ export default function TechnicianProfile() {
     if (file) {
       setSelectedFile(file)
       const reader = new FileReader()
-      reader.onload = (e) => {
-        handleInputChange('profilePic', e.target.result)
-      }
+      reader.onload = (e) => handleInputChange('profilePic', e.target.result)
       reader.readAsDataURL(file)
     }
   }
@@ -215,10 +237,10 @@ export default function TechnicianProfile() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden backdrop-blur-sm border border-white/20">
           {/* Header Section */}
-          <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 px-6 py-8 text-center relative overflow-hidden">
+          <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 px-8 py-12 text-center relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent"></div>
             <div className="absolute -top-4 -right-4 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
             <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-white/10 rounded-full blur-lg"></div>
@@ -230,17 +252,17 @@ export default function TechnicianProfile() {
                   <img
                     src={isEditing ? editedProfile.profilePic : profile.profilePic}
                     alt="Profile"
-                    className="w-28 h-28 rounded-full border-4 border-white object-cover shadow-lg transition-transform group-hover:scale-105"
+                    className="w-32 h-32 rounded-full border-4 border-white object-cover shadow-lg transition-transform group-hover:scale-105"
                   />
                 ) : (
-                  <div className="w-28 h-28 rounded-full border-4 border-white bg-gray-300 shadow-lg flex items-center justify-center text-gray-500 text-xl font-semibold">
+                  <div className="w-32 h-32 rounded-full border-4 border-white bg-gray-300 shadow-lg flex items-center justify-center text-gray-500 text-2xl font-semibold">
                     {(isEditing ? editedProfile?.fname : profile?.fname)?.charAt(0) || 'T'}
                     {(isEditing ? editedProfile?.lname : profile?.lname)?.charAt(0) || 'P'}
                   </div>
                 )}
                 {isEditing && (
                   <label className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Camera className="w-6 h-6 text-white" />
+                    <Camera className="w-8 h-8 text-white" />
                     <input
                       type="file"
                       accept="image/*"
@@ -250,248 +272,328 @@ export default function TechnicianProfile() {
                   </label>
                 )}
               </div>
-              <h1 className="text-white text-2xl font-bold mt-4 tracking-wide">
+              <h1 className="text-white text-3xl font-bold mt-6 tracking-wide">
                 {isEditing ? editedProfile?.fname : profile?.fname} {isEditing ? editedProfile?.lname : profile?.lname}
               </h1>
-              <p className="text-indigo-100 text-sm mt-1 font-medium">
-                {(isEditing ? editedProfile?.profession : profile?.profession) || 'Professional Technician'}
-              </p>
+              <div className="text-indigo-100 text-lg mt-2 font-medium">
+                {(isEditing ? editedProfile?.professions : profile?.professions)?.length > 0 
+                  ? (isEditing ? editedProfile.professions : profile.professions).join(' • ')
+                  : 'Professional Technician'}
+              </div>
             </div>
           </div>
 
           {/* Stats Section */}
-          <div className="p-6 bg-gradient-to-br from-slate-50 to-gray-50 border-b">
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="text-center p-4 bg-white rounded-xl shadow-sm">
-                <div className="text-2xl font-bold text-indigo-600 flex items-center justify-center">
-                  <Star className="w-5 h-5 text-yellow-500 mr-1" />
+          <div className="p-8 bg-gradient-to-br from-slate-50 to-gray-50 border-b">
+            <div className="grid grid-cols-2 gap-6 mb-6">
+              <div className="text-center p-6 bg-white rounded-xl shadow-sm">
+                <div className="text-3xl font-bold text-indigo-600 flex items-center justify-center">
+                  <Star className="w-6 h-6 text-yellow-500 mr-1" />
                   {profile?.rating || '0.0'}
                 </div>
-                <div className="text-sm text-gray-600">Rating</div>
+                <div className="text-sm text-gray-600 mt-1">Rating</div>
               </div>
-              <div className="text-center p-4 bg-white rounded-xl shadow-sm">
-                <div className="text-2xl font-bold text-green-600">{profile?.tasksCompleted || '0'}</div>
-                <div className="text-sm text-gray-600">Jobs Done</div>
+              <div className="text-center p-6 bg-white rounded-xl shadow-sm">
+                <div className="text-3xl font-bold text-green-600">{profile?.tasksCompleted || '0'}</div>
+                <div className="text-sm text-gray-600 mt-1">Jobs Done</div>
               </div>
             </div>
             
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center text-gray-600">
-                <Clock className="w-4 h-4 mr-2 text-indigo-600" />
-                <span>{profile?.responseTime || 'Not specified'}</span>
+            <div className="grid grid-cols-2 gap-6 text-sm">
+              <div className="flex items-center text-gray-600 p-4 bg-white rounded-xl shadow-sm">
+                <Clock className="w-5 h-5 mr-3 text-indigo-600" />
+                <span className="font-medium">{profile?.responseTime || 'Not specified'}</span>
               </div>
-              <div className="flex items-center text-gray-600">
-                <DollarSign className="w-4 h-4 mr-2 text-indigo-600" />
-                <span>${profile?.hourlyRate || '0'}/hour</span>
+              <div className="flex items-center text-gray-600 p-4 bg-white rounded-xl shadow-sm">
+                <DollarSign className="w-5 h-5 mr-3 text-indigo-600" />
+                <span className="font-medium">${profile?.hourlyRate || '0'}/hour</span>
               </div>
             </div>
           </div>
 
           {/* Form Content */}
-          <div className="p-6 space-y-6">
-            {/* Personal Information */}
-            <InputGroup icon={<User />} label="Full Name" isEditing={isEditing}>
-              {isEditing ? (
-                <>
-                  <input
-                    type="text"
-                    value={editedProfile?.fname || ''}
-                    onChange={(e) => handleInputChange('fname', e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                    placeholder="Enter your first name"
-                  />
-                  <input
-                    type="text"
-                    value={editedProfile?.lname || ''}
-                    onChange={(e) => handleInputChange('lname', e.target.value)}
-                    className="w-full mt-2 px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                    placeholder="Enter your last name"
-                  />
-                </>
-              ) : (
-                <p className="text-slate-900 font-medium text-lg">{profile?.fname} {profile?.lname}</p>
-              )}
-            </InputGroup>
+          <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column */}
+            <div className="space-y-8">
+              {/* Personal Information */}
+              <InputGroup icon={<User className="w-5 h-5 text-indigo-600" />} label="Full Name" isEditing={isEditing}>
+                {isEditing ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      value={editedProfile?.fname || ''}
+                      onChange={(e) => handleInputChange('fname', e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                      placeholder="First name"
+                    />
+                    <input
+                      type="text"
+                      value={editedProfile?.lname || ''}
+                      onChange={(e) => handleInputChange('lname', e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                      placeholder="Last name"
+                    />
+                  </div>
+                ) : (
+                  <p className="text-slate-900 font-medium text-lg">{profile?.fname} {profile?.lname}</p>
+                )}
+              </InputGroup>
 
-            <InputGroup icon={<Mail />} label="Email Address" isEditing={isEditing}>
-              <input
-                type="email"
-                value={editedProfile?.username || ''}
-                readOnly
-                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl bg-gray-100 text-gray-600 cursor-not-allowed"
-              />
-            </InputGroup>
-
-            <InputGroup icon={<Wrench />} label="Profession" isEditing={isEditing}>
-              {isEditing ? (
-                <select
-                  value={editedProfile?.profession || ''}
-                  onChange={(e) => handleInputChange('profession', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                >
-                  <option value="">Select Profession</option>
-                  <option value="Plumber">Plumber</option>
-                  <option value="Electrician">Electrician</option>
-                  <option value="HVAC">HVAC Technician</option>
-                  <option value="Handyman">Handyman</option>
-                  <option value="Cleaner">Cleaner</option>
-                  <option value="Gardener">Gardener</option>
-                </select>
-              ) : (
-                <p className="text-slate-900 font-medium">{profile?.profession}</p>
-              )}
-            </InputGroup>
-
-            <InputGroup icon={<Clock />} label="Experience" isEditing={isEditing}>
-              {isEditing ? (
-                <select
-                  value={editedProfile?.experience || ''}
-                  onChange={(e) => handleInputChange('experience', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                >
-                  <option value="0 years">Less than 1 year</option>
-                  <option value="1-2 years">1-2 years</option>
-                  <option value="3-5 years">3-5 years</option>
-                  <option value="5-10 years">5-10 years</option>
-                  <option value="10+ years">10+ years</option>
-                </select>
-              ) : (
-                <p className="text-slate-900 font-medium">{profile?.experience}</p>
-              )}
-            </InputGroup>
-
-            <InputGroup icon={<DollarSign />} label="Hourly Rate ($)" isEditing={isEditing}>
-              {isEditing ? (
+              <InputGroup icon={<Mail className="w-5 h-5 text-indigo-600" />} label="Email Address" isEditing={isEditing}>
                 <input
-                  type="number"
-                  value={editedProfile?.hourlyRate || ''}
-                  onChange={(e) => handleInputChange('hourlyRate', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                  placeholder="Enter your hourly rate"
+                  type="email"
+                  value={editedProfile?.username || ''}
+                  readOnly
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl bg-gray-100 text-gray-600 cursor-not-allowed"
                 />
-              ) : (
-                <p className="text-slate-900 font-medium">${profile?.hourlyRate}</p>
-              )}
-            </InputGroup>
+              </InputGroup>
 
-            <InputGroup icon={<Clock />} label="Response Time" isEditing={isEditing}>
-              {isEditing ? (
-                <select
-                  value={editedProfile?.responseTime || ''}
-                  onChange={(e) => handleInputChange('responseTime', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                >
-                  <option value="Within 1 hour">Within 1 hour</option>
-                  <option value="Within 2 hours">Within 2 hours</option>
-                  <option value="Same day">Same day</option>
-                  <option value="Within 24 hours">Within 24 hours</option>
-                </select>
-              ) : (
-                <p className="text-slate-900 font-medium">{profile?.responseTime}</p>
-              )}
-            </InputGroup>
-
-            <InputGroup icon={<MapPin />} label="Service Location" isEditing={isEditing}>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editedProfile?.serviceLocation || ''}
-                  onChange={(e) => handleInputChange('serviceLocation', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                  placeholder="Enter service areas"
-                />
-              ) : (
-                <p className="text-slate-900 font-medium">{profile?.serviceLocation}</p>
-              )}
-            </InputGroup>
-
-            <InputGroup icon={<MapPin />} label="Current Location" isEditing={isEditing}>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editedProfile?.currentLocation || ''}
-                  onChange={(e) => handleInputChange('currentLocation', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                  placeholder="Enter current location"
-                />
-              ) : (
-                <p className="text-slate-900 font-medium">{profile?.currentLocation}</p>
-              )}
-            </InputGroup>
-
-            <InputGroup icon={<Clock />} label="Availability" isEditing={isEditing}>
-              {isEditing ? (
-                <textarea
-                  value={editedProfile?.availability || ''}
-                  onChange={(e) => handleInputChange('availability', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none resize-none"
-                  rows="2"
-                  placeholder="Describe your availability (e.g., Mon-Fri 9AM-6PM)"
-                />
-              ) : (
-                <p className="text-slate-900 font-medium">{profile?.availability}</p>
-              )}
-            </InputGroup>
-
-            {/* Specialties */}
-            <div className="group">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
-                  <Wrench className="w-5 h-5 text-indigo-600" />
-                </div>
-                <div className="flex-1">
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Specialties</label>
-                  {isEditing ? (
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap gap-2">
-                        {editedProfile?.specialties?.map((specialty, index) => (
-                          <div
-                            key={index}
-                            className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium flex items-center"
-                          >
-                            {specialty}
-                            <button
-                              onClick={() => handleSpecialtyRemove(specialty)}
-                              className="ml-2 text-indigo-600 hover:text-red-500"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ))}
+              {/* Professions */}
+              <InputGroup icon={<Wrench className="w-5 h-5 text-indigo-600" />} label="Professions" isEditing={isEditing}>
+                {isEditing ? (
+                  <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto p-4 border-2 border-slate-200 rounded-xl">
+                    {professionOptions.map((profession) => (
+                      <label key={profession} className="flex items-center space-x-3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={editedProfile?.professions?.includes(profession) || false}
+                          onChange={() => handleProfessionToggle(profession)}
+                          className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">
+                          {profession}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {profile?.professions?.map((profession, index) => (
+                      <div
+                        key={index}
+                        className="bg-indigo-100 text-indigo-800 px-3 py-2 rounded-full text-sm font-medium"
+                      >
+                        {profession}
                       </div>
-                      <input
-                        type="text"
-                        placeholder="Add a specialty and press Enter"
-                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            handleSpecialtyAdd(e.target.value.trim())
-                            e.target.value = ''
-                          }
-                        }}
-                      />
-                    </div>
+                    ))}
+                  </div>
+                )}
+              </InputGroup>
+
+              <InputGroup icon={<Clock className="w-5 h-5 text-indigo-600" />} label="Experience" isEditing={isEditing}>
+                {isEditing ? (
+                  <select
+                    value={editedProfile?.experience || ''}
+                    onChange={(e) => handleInputChange('experience', e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                  >
+                    <option value="Less than 1 year">Less than 1 year</option>
+                    <option value="1-2 years">1-2 years</option>
+                    <option value="3-5 years">3-5 years</option>
+                    <option value="5-10 years">5-10 years</option>
+                    <option value="10+ years">10+ years</option>
+                  </select>
+                ) : (
+                  <p className="text-slate-900 font-medium">{profile?.experience}</p>
+                )}
+              </InputGroup>
+
+              <div className="grid grid-cols-2 gap-6">
+                <InputGroup icon={<DollarSign className="w-5 h-5 text-indigo-600" />} label="Hourly Rate ($)" isEditing={isEditing}>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      value={editedProfile?.hourlyRate || ''}
+                      onChange={(e) => handleInputChange('hourlyRate', e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                      placeholder="Rate"
+                    />
                   ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {profile?.specialties?.map((specialty, index) => (
+                    <p className="text-slate-900 font-medium">${profile?.hourlyRate}</p>
+                  )}
+                </InputGroup>
+
+                <InputGroup icon={<Clock className="w-5 h-5 text-indigo-600" />} label="Response Time" isEditing={isEditing}>
+                  {isEditing ? (
+                    <select
+                      value={editedProfile?.responseTime || ''}
+                      onChange={(e) => handleInputChange('responseTime', e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                    >
+                      <option value="Within 1 hour">Within 1 hour</option>
+                      <option value="Within 2 hours">Within 2 hours</option>
+                      <option value="Same day">Same day</option>
+                      <option value="Within 24 hours">Within 24 hours</option>
+                    </select>
+                  ) : (
+                    <p className="text-slate-900 font-medium">{profile?.responseTime}</p>
+                  )}
+                </InputGroup>
+              </div>
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-8">
+              <InputGroup icon={<MapPin className="w-5 h-5 text-indigo-600" />} label="Service Location" isEditing={isEditing}>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editedProfile?.serviceLocation || ''}
+                    onChange={(e) => handleInputChange('serviceLocation', e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                    placeholder="Enter service areas"
+                  />
+                ) : (
+                  <p className="text-slate-900 font-medium">{profile?.serviceLocation}</p>
+                )}
+              </InputGroup>
+
+              <InputGroup icon={<MapPin className="w-5 h-5 text-indigo-600" />} label="Current Location" isEditing={isEditing}>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editedProfile?.currentLocation || ''}
+                    onChange={(e) => handleInputChange('currentLocation', e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                    placeholder="Enter current location"
+                  />
+                ) : (
+                  <p className="text-slate-900 font-medium">{profile?.currentLocation}</p>
+                )}
+              </InputGroup>
+
+              {/* Weekly Availability */}
+              <InputGroup icon={<Clock className="w-5 h-5 text-indigo-600" />} label="Weekly Availability" isEditing={isEditing}>
+                {isEditing ? (
+                  <div className="space-y-3 border-2 border-slate-200 rounded-xl p-4 max-h-80 overflow-y-auto">
+                    {daysOfWeek.map((day) => (
+                      <div key={day.key} className={`p-4 rounded-xl border-2 transition-all ${
+                        editedProfile?.availability?.[day.key]?.available 
+                          ? 'border-green-300 bg-green-50' 
+                          : 'border-gray-200 bg-gray-50'
+                      }`}>
+                        <div className="flex items-center justify-between mb-3">
+                          <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={editedProfile?.availability?.[day.key]?.available || false}
+                              onChange={(e) => handleAvailabilityChange(day.key, 'available', e.target.checked)}
+                              className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                            />
+                            <span className={`font-semibold ${
+                              editedProfile?.availability?.[day.key]?.available 
+                                ? 'text-green-800' 
+                                : 'text-gray-600'
+                            }`}>
+                              {day.label}
+                            </span>
+                          </label>
+                          {editedProfile?.availability?.[day.key]?.available && (
+                            <div className="flex items-center space-x-2 text-sm">
+                              <input
+                                type="time"
+                                value={editedProfile?.availability?.[day.key]?.startTime || '09:00'}
+                                onChange={(e) => handleAvailabilityChange(day.key, 'startTime', e.target.value)}
+                                className="px-2 py-1 border border-green-300 rounded-lg focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                              />
+                              <span className="text-green-600 font-medium">to</span>
+                              <input
+                                type="time"
+                                value={editedProfile?.availability?.[day.key]?.endTime || '17:00'}
+                                onChange={(e) => handleAvailabilityChange(day.key, 'endTime', e.target.value)}
+                                className="px-2 py-1 border border-green-300 rounded-lg focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-2">
+                    {daysOfWeek.map((day) => {
+                      const dayAvailability = profile?.availability?.[day.key]
+                      return (
+                        <div key={day.key} className={`p-3 rounded-lg border-2 ${
+                          dayAvailability?.available 
+                            ? 'border-green-200 bg-green-50' 
+                            : 'border-gray-200 bg-gray-50'
+                        }`}>
+                          <div className="flex items-center justify-between">
+                            <span className={`font-medium ${
+                              dayAvailability?.available 
+                                ? 'text-green-800' 
+                                : 'text-gray-500'
+                            }`}>
+                              {day.short}
+                            </span>
+                            {dayAvailability?.available ? (
+                              <span className="text-green-700 text-sm font-medium">
+                                {dayAvailability.startTime} - {dayAvailability.endTime}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-sm">Unavailable</span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </InputGroup>
+
+              {/* Specialties */}
+              <InputGroup icon={<Wrench className="w-5 h-5 text-indigo-600" />} label="Specialties" isEditing={isEditing}>
+                {isEditing ? (
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2 min-h-[50px] p-3 border-2 border-slate-200 rounded-xl">
+                      {editedProfile?.specialties?.map((specialty, index) => (
                         <div
                           key={index}
-                          className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-medium"
+                          className="bg-indigo-100 text-indigo-800 px-3 py-2 rounded-full text-sm font-medium flex items-center"
                         >
                           {specialty}
+                          <button
+                            onClick={() => handleSpecialtyRemove(specialty)}
+                            className="ml-2 text-indigo-600 hover:text-red-500"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                         </div>
                       ))}
                     </div>
-                  )}
-                </div>
-              </div>
+                    <input
+                      type="text"
+                      placeholder="Add a specialty and press Enter"
+                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSpecialtyAdd(e.target.value.trim())
+                          e.target.value = ''
+                        }
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {profile?.specialties?.map((specialty, index) => (
+                      <div
+                        key={index}
+                        className="bg-gray-100 text-gray-800 px-3 py-2 rounded-full text-sm font-medium"
+                      >
+                        {specialty}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </InputGroup>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="p-6 bg-gradient-to-br from-slate-50 to-gray-50 space-y-3">
+          <div className="p-8 bg-gradient-to-br from-slate-50 to-gray-50 space-y-4">
             {isEditing ? (
-              <div className="flex space-x-3">
+              <div className="flex space-x-4">
                 <button
                   onClick={handleSave}
                   disabled={saving}
@@ -530,15 +632,16 @@ export default function TechnicianProfile() {
   )
 }
 
+
 function InputGroup({ icon, label, isEditing, children }) {
   return (
     <div className="group">
-      <div className="flex items-center space-x-3">
-        <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+      <div className="flex items-start space-x-4">
+        <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center group-hover:bg-indigo-200 transition-colors mt-1">
           {icon}
         </div>
         <div className="flex-1">
-          <label className="block text-sm font-semibold text-slate-700 mb-2">{label}</label>
+          <label className="block text-sm font-semibold text-slate-700 mb-3">{label}</label>
           {children}
         </div>
       </div>

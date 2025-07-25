@@ -14,7 +14,8 @@ const ClientLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    const rresult = await Llogin({ username, password })
+    const userType='client'
+    const rresult = await Llogin({ username, password ,userType})
 
     sessionStorage.setItem('username',username)
 
