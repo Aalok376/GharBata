@@ -16,6 +16,8 @@ const ClientLogin = () => {
 
     const rresult = await Llogin({ username, password })
 
+    sessionStorage.setItem('username',username)
+
     if (rresult.success) {
       setLoading(true)
 
