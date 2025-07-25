@@ -32,7 +32,7 @@ const ClientLogin = () => {
       if (navi.status === 200) {
         navigate('/clientProfileSetupPage')
       } else {
-        navigate("/clientProfileSetupPage")
+        navigate("/dashboard")
       }
     } else {
       setError(rresult.msg)
