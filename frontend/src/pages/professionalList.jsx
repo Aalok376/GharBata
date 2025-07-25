@@ -1,10 +1,51 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Star, MapPin, Clock, Shield, Phone, Calendar, Filter, Search } from 'lucide-react'
+import api from '../utils/api'
 
 const TechnicianDisplayPage = () => {
-  const [selectedService, setSelectedService] = useState('plumbing')
+  const [selectedService, setSelectedService] = useState('Electrician')
   const [sortBy, setSortBy] = useState('rating')
   const [searchTerm, setSearchTerm] = useState('')
+
+  const [allTechnicians, setAllTechnicians] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchTechnicians = async () => {
+      try {
+        const response = await api.get("/api/technicians");
+        const mappedTechnicians = response.data.map(tech => ({
+          id: tech._id,
+          name: tech.name || "No Name",
+          avatar: tech.avatar || "fallback-url.jpg",
+          rating: tech.rating || 0,
+          reviews: tech.reviews || 0,
+          specialties: tech.specialties || [],
+          experience: tech.experience || "N/A",
+          hourlyRate: tech.hourlyRate || 0,
+          location: tech.serviceLocation || "Unknown",
+          distance: tech.distance || "0", // In miles, string expected for parsing later
+          availableAt: tech.availability || new Date().toISOString(),
+          isVerified: tech.isVerified || false,
+          completedJobs: tech.tasksCompleted || 0,
+          responseTime: tech.responseTime || "N/A",
+          service: tech.profession || "general"
+        }));
+
+        setAllTechnicians(mappedTechnicians);
+      } catch (err) {
+        console.error("Failed to fetch technicians", err);
+        setError("Unable to load technicians. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTechnicians();
+  }, []);
+
+console.log("All Technicians:", allTechnicians);
 
   // Helper function to format availability display
   const formatAvailability = (availableAt) => {
@@ -52,247 +93,6 @@ const TechnicianDisplayPage = () => {
     }
   }
 
-  const allTechnicians = [
-    {
-      id: 1,
-      name: "Mike Rodriguez",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-      rating: 4.9,
-      reviews: 127,
-      specialties: ["Emergency Repairs", "Water Heaters", "Pipe Installation"],
-      experience: "8 years",
-      hourlyRate: 85,
-      location: "Downtown Area",
-      distance: "2.3 miles",
-      availableAt: new Date().toISOString(), // Available now
-      isVerified: true,
-      completedJobs: 350,
-      responseTime: "15 min",
-      service: "plumbing"
-    },
-    {
-      id: 2,
-      name: "Sarah Chen",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b647?w=150&h=150&fit=crop&crop=face",
-      rating: 4.8,
-      reviews: 98,
-      specialties: ["Drain Cleaning", "Fixture Installation", "Leak Repairs"],
-      experience: "6 years",
-      hourlyRate: 75,
-      location: "Midtown",
-      distance: "3.1 miles",
-      availableAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // Available in 2 hours (today)
-      isVerified: true,
-      completedJobs: 280,
-      responseTime: "20 min",
-      service: "plumbing"
-    },
-    {
-      id: 3,
-      name: "David Thompson",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-      rating: 4.7,
-      reviews: 156,
-      specialties: ["Bathroom Remodeling", "Kitchen Plumbing", "Sewer Lines"],
-      experience: "12 years",
-      hourlyRate: 95,
-      location: "North Side",
-      distance: "4.2 miles",
-      availableAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow same time
-      isVerified: true,
-      completedJobs: 520,
-      responseTime: "10 min",
-      service: "plumbing"
-    },
-    {
-      id: 4,
-      name: "Lisa Park",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
-      rating: 4.9,
-      reviews: 89,
-      specialties: ["Smart Home Integration", "Water Filtration", "Green Solutions"],
-      experience: "5 years",
-      hourlyRate: 80,
-      location: "West End",
-      distance: "1.8 miles",
-      availableAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // Available now (30 min ago)
-      isVerified: true,
-      completedJobs: 195,
-      responseTime: "12 min",
-      service: "plumbing"
-    },
-    {
-      id: 5,
-      name: "James Wilson",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
-      rating: 4.8,
-      reviews: 143,
-      specialties: ["Panel Upgrades", "Smart Home Wiring", "Emergency Electrical"],
-      experience: "10 years",
-      hourlyRate: 90,
-      location: "Downtown Area",
-      distance: "1.9 miles",
-      availableAt: new Date().toISOString(), // Available now
-      isVerified: true,
-      completedJobs: 425,
-      responseTime: "18 min",
-      service: "electrical"
-    },
-    {
-      id: 6,
-      name: "Amanda Foster",
-      avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop&crop=face",
-      rating: 4.9,
-      reviews: 87,
-      specialties: ["LED Installation", "Outlet Repair", "Circuit Installation"],
-      experience: "7 years",
-      hourlyRate: 82,
-      location: "Midtown",
-      distance: "2.7 miles",
-      availableAt: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(), // Available in 4 hours (today)
-      isVerified: true,
-      completedJobs: 310,
-      responseTime: "12 min",
-      service: "electrical"
-    },
-    {
-      id: 7,
-      name: "Robert Kim",
-      avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&crop=face",
-      rating: 4.7,
-      reviews: 201,
-      specialties: ["Industrial Electrical", "Generator Installation", "Code Updates"],
-      experience: "15 years",
-      hourlyRate: 105,
-      location: "North Side",
-      distance: "3.8 miles",
-      availableAt: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(), // Tomorrow 8 AM (approximately)
-      isVerified: true,
-      completedJobs: 680,
-      responseTime: "25 min",
-      service: "electrical"
-    },
-    {
-      id: 8,
-      name: "Carlos Martinez",
-      avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face",
-      rating: 4.8,
-      reviews: 112,
-      specialties: ["AC Repair", "Heating Systems", "Duct Cleaning"],
-      experience: "9 years",
-      hourlyRate: 88,
-      location: "South Side",
-      distance: "2.1 miles",
-      availableAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // Available in 30 minutes
-      isVerified: true,
-      completedJobs: 390,
-      responseTime: "16 min",
-      service: "hvac"
-    },
-    {
-      id: 9,
-      name: "Jennifer Adams",
-      avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face",
-      rating: 4.9,
-      reviews: 76,
-      specialties: ["Energy Efficiency", "Smart Thermostats", "System Maintenance"],
-      experience: "6 years",
-      hourlyRate: 85,
-      location: "West End",
-      distance: "1.5 miles",
-      availableAt: new Date().toISOString(), // Available now
-      isVerified: true,
-      completedJobs: 245,
-      responseTime: "14 min",
-      service: "hvac"
-    },
-    {
-      id: 10,
-      name: "Maria Gonzalez",
-      avatar: "https://images.unsplash.com/photo-1559941861-fd316294e32c?w=150&h=150&fit=crop&crop=face",
-      rating: 4.9,
-      reviews: 234,
-      specialties: ["Deep Cleaning", "Move-in/out", "Post-Construction"],
-      experience: "8 years",
-      hourlyRate: 65,
-      location: "Downtown Area",
-      distance: "1.2 miles",
-      availableAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // Available in 15 minutes
-      isVerified: true,
-      completedJobs: 890,
-      responseTime: "10 min",
-      service: "cleaning"
-    },
-    {
-      id: 11,
-      name: "Kevin Johnson",
-      avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face",
-      rating: 4.7,
-      reviews: 156,
-      specialties: ["Carpet Cleaning", "Window Cleaning", "Office Cleaning"],
-      experience: "5 years",
-      hourlyRate: 55,
-      location: "Midtown",
-      distance: "2.8 miles",
-      availableAt: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(), // Available in 6 hours (today)
-      isVerified: true,
-      completedJobs: 420,
-      responseTime: "22 min",
-      service: "cleaning"
-    },
-    {
-      id: 12,
-      name: "Rachel Thompson",
-      avatar: "https://images.unsplash.com/photo-1551836022-deb4988cc6c0?w=150&h=150&fit=crop&crop=face",
-      rating: 4.8,
-      reviews: 98,
-      specialties: ["Green Cleaning", "Sanitization", "Regular Maintenance"],
-      experience: "4 years",
-      hourlyRate: 60,
-      location: "North Side",
-      distance: "3.4 miles",
-      availableAt: new Date().toISOString(), // Available now
-      isVerified: true,
-      completedJobs: 285,
-      responseTime: "15 min",
-      service: "cleaning"
-    },
-    {
-      id: 13,
-      name: "Steve Anderson",
-      avatar: "https://images.unsplash.com/photo-1552058544-f2b08422138a?w=150&h=150&fit=crop&crop=face",
-      rating: 4.8,
-      reviews: 167,
-      specialties: ["Furniture Assembly", "Wall Mounting", "Small Repairs"],
-      experience: "7 years",
-      hourlyRate: 70,
-      location: "West End",
-      distance: "2.0 miles",
-      availableAt: new Date(Date.now() + 45 * 60 * 1000).toISOString(), // Available in 45 minutes
-      isVerified: true,
-      completedJobs: 520,
-      responseTime: "13 min",
-      service: "handyman"
-    },
-    {
-      id: 14,
-      name: "Diana Lee",
-      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=face",
-      rating: 4.9,
-      reviews: 89,
-      specialties: ["Home Organization", "Shelving Installation", "Door Repair"],
-      experience: "6 years",
-      hourlyRate: 68,
-      location: "South Side",
-      distance: "1.7 miles",
-      availableAt: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(), // Available in 3 hours (today)
-      isVerified: true,
-      completedJobs: 340,
-      responseTime: "11 min",
-      service: "handyman"
-    }
-  ]
-
   const services = [
     { id: 'plumbing', name: 'Plumbing', icon: '🔧' },
     { id: 'electrical', name: 'Electrical', icon: '⚡' },
@@ -327,6 +127,14 @@ const TechnicianDisplayPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {loading && (
+        <div className="text-center py-12 text-gray-600">Loading technicians...</div>
+      )}
+
+      {error && (
+        <div className="text-center py-12 text-red-500">{error}</div>
+      )}
+
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-6xl mx-auto px-4 py-6">

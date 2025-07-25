@@ -4,7 +4,7 @@ import Service from '../models/Service.js';
 export const createService = async (req, res) => {
   try {
     const serviceData = req.body;
-    serviceData.created_by = req.user._id; // Assuming user info is attached by auth middleware
+    serviceData.created_by = req.user.id; // Assuming user info is attached by auth middleware
 
     const newService = new Service(serviceData);
     await newService.save();
@@ -19,7 +19,7 @@ export const createService = async (req, res) => {
 export const getAllServices = async (req, res) => {
   try {
     const services = await Service.find({ is_active: true });
-    res.status(200).json({ data: services }); // ✅ wrap with data
+    res.status(200).json({ data: services }); // wrap with data
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch services', error: error.message });
   }

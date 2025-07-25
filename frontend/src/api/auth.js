@@ -1,4 +1,6 @@
-const BASE_URL = 'http://localhost:5000'
+import api from '../utils/api'
+
+const BASE_URL = "http://localhost:5000";
 
 export const SignUp = async ({ username, password, fname, lname }) => {
   try {
