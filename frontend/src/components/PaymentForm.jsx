@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import { useForm } from 'react-hook-form'
 import { CreditCard, User, Wrench, DollarSign, Calculator } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -8,6 +8,10 @@ const PaymentForm=({ serviceData, technicianData,onPaymentSuccess})=>{
     const {register,handleSubmit, watch, formState: {errors}}= useForm();
     const {loading, initiatePayment}= useEsewaPayment();
     const [calculating, setCalculating]= useState(false);
+    // holds the payment data from backend after initiation
+    const [paymentData,setPaymentData]= useState(null);
+    // form ref for auto-submit to Esewa
+    const formRef= useRef();
 
     const amount= watch('amount') || serviceData?.basePrice || 0;
     const taxAmount= watch('taxAmount') || 0;
@@ -30,12 +34,12 @@ const PaymentForm=({ serviceData, technicianData,onPaymentSuccess})=>{
                 deliveryCharge: Number(data.deliveryCharge) || 0
 
             };
-
-            await initiatePayment(paymentData);
+            // call backend to initiate payment and get eSewa payment details
+            const response= await initiatePayment(paymentData);
+            setPaymentData(response); // save payment details
             toast.success('Redirecting to eSewa...');
-
             if(onPaymentSuccess){
-                onPaymentSuccess(paymentData);
+                onPaymentSuccess(response);
             }
         } catch (error) {
             toast.error('Failed to initiate payment');
@@ -45,6 +49,8 @@ const PaymentForm=({ serviceData, technicianData,onPaymentSuccess})=>{
         }
         
     };
+   
+// otherwise show normal payment form input
     return (
         <div className='max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg'>
             <div className='mb-6'>
@@ -87,7 +93,7 @@ const PaymentForm=({ serviceData, technicianData,onPaymentSuccess})=>{
                     <label className='block text-sm font-medium text-gray-700 mb-1'>
                         Service Amount (NPR)
                     </label>
-                    <div className='realtive'>
+                    <div className='relative'>
                         <DollarSign className="absolute left-3 top-3 text-gray-400" size={16} />
                         <input type='number'
                         {...register('amount',{

@@ -56,11 +56,16 @@ const bookingSchema = new mongoose.Schema({
     type: String, 
     required: true,
     enum:{
-     values: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'rescheduled'],
+     values: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'rescheduled','unpaid'],
     message: 'Invalid booking status'
   },
     default: 'pending'
   },
+     status: {
+    type: String,
+    enum :['PENDING', 'COMPLETE', 'FAILED', 'CANCELLED'],
+    default: 'PENDING'
+   },
   cancelled_at: { 
     type: Date 
   },

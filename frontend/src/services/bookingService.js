@@ -1,12 +1,6 @@
 
 import { apiClient } from "./bookingapi";
 
-//Helper: Attach auth headers
-const getAuthHeaders=()=>{
-    const token = localStorage.getItem("token");
-    return token ? {Authorization: `Bearer ${token}`} : {};
-};
-
 export const bookingService={
     //POST/api/bookings- Create a new booking
     createBooking: async(bookingData)=>{
@@ -22,10 +16,24 @@ export const bookingService={
                  final_price: bookingData.final_price,
                 }
             );
-            return response.data;
+            console.log("Create booking response", response);
+            const booking= response.data.booking || response.data;
+            // Initiate eSewa payment using booking details
+            const paymentResponse= await apiClient.post('/api/esewa/initiate',{
+                amount:booking.final_price,
+                bookingId: booking._id,
+                productName: booking.service_id?.name || "Service payment",
+            });
+            // Redirect to eSewa
+            if(paymentResponse.data.redirectUrl){
+                window.location.href= paymentResponse.data.redirectUrl;
+            }else{
+                throw new Error("Failed to get eSewa redirect URL");
+            }
+            return booking;
         } catch (error){
-            console.error('Create booking error:', error);
-            throw new Error(error.response?.data?.message || error.message ||  'Failed to create booking');
+            console.error('Create booking or payment initiation error:', error);
+            throw new Error(error.response?.data?.message || error.message ||  'Failed to create booking or redirect to payment');
         }
     },
 

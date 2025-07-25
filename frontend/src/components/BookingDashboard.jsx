@@ -8,10 +8,11 @@ import Pagination from "./Pagination";
 import NegotiationModal from "./NegotiationModal";
 import { bookingService } from "../services/bookingService";
 
+
 const BookingDashboard = () => {
     const [bookings, setBookings] = useState([]);
     const [filteredBookings, setFilteredBookings] = useState([]);
-
+ 
     const [selectedBooking, setSelectedBooking] = useState(null)
     const [showDetails, setShowDetails] = useState(false)
 

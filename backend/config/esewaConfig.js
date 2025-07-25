@@ -17,4 +17,5 @@ const esewaConfig= {
     }
 };
 const currentConfig= esewaConfig[process.env.NODE_ENV || 'development'];
+
 export default currentConfig;

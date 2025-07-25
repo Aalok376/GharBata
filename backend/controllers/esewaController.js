@@ -1,10 +1,12 @@
-import EsewaService from "../services/esewaService.js";
+import Booking from "../models/Booking.js";
+import EsewaService from "../services/esewaServicessQ.js";
 import Transaction from "../models/Transaction.js";
 import {Buffer} from 'buffer';
 
 
 class EsewaController{
     static async initiatePayment(req,res){
+          console.log(" initiatePayment controller hit"); // <== Log this
         try{
             const{
                 clientId,
@@ -16,9 +18,12 @@ class EsewaController{
                 serviceCharge,
                 deliveryCharge
             }=req.body;
+            
+    console.log("Payment request body:", req.body); // <== Log body
 
             // Validate required fields
             if(!clientId || !serviceId || !technicianId || !amount || !bookingId){
+                     
                 return res.status(400).json({
                     success: false,
                     message: 'Missing required fields'
@@ -34,13 +39,28 @@ class EsewaController{
                 serviceCharge,
                 deliveryCharge
             });
-            res.json({
-                success: true,
-                message:'Payment request created successfully',
-                data: paymentData
-            });
+               
+      const formHtml =` 
+     <html>
+  <body onload="document.forms['esewaForm'].submit()">
+    <form id="esewaForm" name="esewaForm" action="${paymentData.payment_url}" method="POST">
+      <input type="hidden" name="amount" value="${paymentData.amount}" />
+      <input type="hidden" name="tax_amount" value="${paymentData.tax_amount}" />
+      <input type="hidden" name="total_amount" value="${paymentData.total_amount}" />
+      <input type="hidden" name="transaction_uuid" value="${paymentData.transaction_uuid}" />
+      <input type="hidden" name="product_code" value="${paymentData.product_code}" />
+      <input type="hidden" name="product_service_charge" value="${paymentData.product_service_charge}" />
+      <input type="hidden" name="product_delivery_charge" value="${paymentData.product_delivery_charge}" />
+      <input type="hidden" name="success_url" value="${paymentData.success_url}" />
+      <input type="hidden" name="failure_url" value="${paymentData.failure_url}" />
+    </form>
+      </body>
+      </html>`;
+      //send html form to browser
+      res.send(formHtml);
             
         }catch (error){
+         console.error(" initiatePayment error:", error.message);      
             res.status(500).json({
                 success: false,
                 message: error.message
@@ -62,24 +82,20 @@ class EsewaController{
             const responseData= JSON.parse(decodedData);
             // verify payment
             const verificationResult= await EsewaService.verifyPaymentResponse(responseData);
+
+
             if(verificationResult.success){
-                res.json({
-                    success: true,
-                    message: 'Payment verified successfully',
-                    transaction: verificationResult.transaction
+                const transaction= verificationResult.transaction;
+                await Booking.findByIdAndUpdate(transaction.booking_id,{
+                    paymentStatus:'COMPLETE',
                 });
+                res.redirect(`${process.env.FRONTEND_URL}/payment/success?data=${data}`);
             }else{
-                res.status(400).json({
-                    success: false,
-                    message: 'payment verification failed'
-                });
+                res.redirect(`${process.env.FRONTEND_URL}/payment/failure?transaction_uuid=${responseData.transaction_uuid}`);
             }
-        } catch (error) {
-            res.status(500).json({
-                success: false,
-                message: error.message
-            });
-            
+        }catch(error){
+             console.error("❌ handleSuccessCallback error:", error.message);
+      res.status(500).send("Payment verification failed.");
         }
     }
 
@@ -92,10 +108,8 @@ class EsewaController{
                 {status: 'FAILED'}
             );
            } 
-           res.json({
-            success: false,
-            message: 'Payment failed or cancelled'
-           });
+       
+      res.redirect(`${process.env.FRONTEND_URL}/payment/failure?transaction_uuid=${transaction_uuid}`);
 
         } catch (error) {
             res.status(500).json({

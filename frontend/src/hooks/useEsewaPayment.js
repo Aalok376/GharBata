@@ -12,27 +12,28 @@ export const useEsewaPayment=()=>{
         setError(null);
         try {
            const response= await EsewaService.initiatePayment(paymentDetails);
+           if(response.success && response.data){
            setPaymentData(response.data);
-           
-           // auto-submit to esewa
-           if(response.success){
-            submitToEsewa(response.data);
+           submitToEsewa(response.data); // auto submit to eSewa
+           }else{
+            throw new Error("Failed to initiate payment");
            }
            return response;
-        } catch (err) {
+        }catch(err){
             setError(err.message);
             toast.error(err.message);
             throw err;
-        } finally {
+        } finally{
             setLoading(false);
         }
-    },[]);
-
+        },[]);
+           
     const submitToEsewa= useCallback((formData)=>{
         // create form and submit to eSewa
         const form= document.createElement('form');
         form.method= 'POST';
         form.action= formData.payment_url;
+        form.style.display= "none";
 
         // Add all form fields
         const fields=[
@@ -59,12 +60,12 @@ export const useEsewaPayment=()=>{
                 form.submit();
     },[]);
 
-    const checkPaymentStatus = useCallback(async (transactionUuid)=>{
+    const checkPaymentStatus = useCallback(async (transaction_uuid)=>{
         setLoading(true);
         setError(null);
 
         try {
-            const response= await EsewaService.checkPaymentStatus(transactionUuid);
+            const response= await EsewaService.checkPaymentStatus(transaction_uuid);
             return response;
         } catch (err) {
             setError(err.message);

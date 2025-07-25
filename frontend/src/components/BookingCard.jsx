@@ -1,13 +1,24 @@
 import React from "react"
-import { Calendar, Clock, MapPin, Star, Eye, DollarSign, MessageSquare, Phone, Mail } from 'lucide-react'
+import { Calendar, Clock, MapPin, Star, Eye, DollarSign, MessageSquare, Phone, Mail, CreditCard } from 'lucide-react'
 import { getStatusColor, formatDate, formatTime } from '../utils/helpers.jsx'
-
+import { useNavigate } from "react-router-dom"
 const BookingCard = ({
   booking,
   onViewDetails,
   onNegotiate,
   canNegotiate,
 }) => {
+  const navigate= useNavigate()
+ 
+   const handleEsewaPayment = () => {
+    navigate("/payment", {
+      state: {
+        bookingId: booking._id,
+        amount: booking.final_price,
+        clientId: booking.client_id._id,
+      },
+    });
+  };
    
   return (
     <div className="bg-white rounded-2xl shadow-sm border p-6 hover:shadow-md transition-shadow space-y-4">
@@ -95,12 +106,23 @@ const BookingCard = ({
         )}
 
         {booking.booking_status === "confirmed" && (
+          <>
           <button
             onClick={() => console.log("Open Chat for booking:", booking.booking_id)}
             className="flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition"
           >
             <MessageSquare className="h-4 w-4 mr-2" /> Chat
           </button>
+          
+        
+
+
+          <button
+          onClick={handleEsewaPayment}
+          className="flex items-center  px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition">
+            <CreditCard className="h-4 w-4 mr-2"/>Pay Now
+          </button>
+        </>
         )}
       </div>
 

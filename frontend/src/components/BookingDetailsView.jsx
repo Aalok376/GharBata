@@ -1,8 +1,21 @@
-import React from "react"
+import React from "react";
 import { Calendar, Clock, MapPin, Mail, Phone, Star, DollarSign, ChevronLeft, X, MessageSquare } from 'lucide-react'
 import { getStatusColor, getStatusIcon, formatDate, formatTime } from '../utils/helpers.jsx'
+import { useNavigate } from 'react-router-dom';
 
 const BookingDetailsView = ({ booking, onBack, onNegotiate, canNegotiate, canCancel }) => {
+    const navigate = useNavigate();
+
+      // Handler to navigate to payment page with booking info
+  const handleEsewaPayment = () => {
+    navigate('/payment', {
+      state: {
+        bookingId: booking._id,
+        amount: booking.final_price,
+        clientId: booking.client_id._id,
+      },
+    });
+  };
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-6 space-y-8">
@@ -115,11 +128,20 @@ const BookingDetailsView = ({ booking, onBack, onNegotiate, canNegotiate, canCan
               <X className="h-4 w-4 mr-2" /> Cancel Booking
             </button>
           )}
+           {/* Pay Now button shown only if booking is confirmed */}
+          {booking.booking_status === "confirmed" && (
+            <button
+              onClick={handleEsewaPayment}
+              className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition"
+            >
+              <CreditCard className="h-4 w-4 mr-2" /> Pay Now
+            </button>
+          )}
         </div>
 
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default BookingDetailsView
+export default BookingDetailsView;

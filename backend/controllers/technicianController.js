@@ -36,3 +36,12 @@ export const createTechnicianProfile = async(req,res)=>{
         res.status(500).json({ error: error.message})
     }
 }
+// Get all technicians
+export const getAllTechnicians = async (req, res) => {
+  try {
+    const technicians = await Technician.find().populate('technician_id', 'name email'); // Optional: populate user details
+    res.status(200).json({ data: technicians });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch technicians", error: error.message });
+  }
+};

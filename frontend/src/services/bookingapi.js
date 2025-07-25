@@ -1,3 +1,4 @@
+
 const BASE_URL= import.meta.env.VITE_BASE_URL ||'http://localhost:5000';
 // helper to get auth token
 
@@ -49,4 +50,11 @@ export const apiClient={
         return response.json();
         
     }
+};
+// bookingService using apiClient
+export const bookingService = {
+  createBooking: (bookingData) => apiClient.post('/api/bookings', bookingData),
+  getClientBookings: () => apiClient.get('/api/bookings/client'),
+  getBookingById: (id) => apiClient.get(`/api/bookings/${id}`),
+  cancelBooking: (id) => apiClient.put(`/api/bookings/${id}/cancel`),
 };
