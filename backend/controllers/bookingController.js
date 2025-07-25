@@ -44,13 +44,7 @@ export const  createBooking=async(req,res)=>{
         }
         const {technician_id, service_id,address,scheduled_date,scheduled_time,booking_service_price}=req.body
 
-        //Get Bookings
-           const userId=req.user.id;
 
-           const Bookingss=await boooking.find({technician_id:userId})
-           const Bookingc=await booking.find({client_id:userId})
-
-   
         // Fetch technician by ID
 const technician = await User.findById(technician_id)
         // check if technician exists and is actually a technician
