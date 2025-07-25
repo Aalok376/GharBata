@@ -1,8 +1,11 @@
 import React,{useEffect} from "react"
 import styled from "styled-components"
+import { NavLink, useNavigate } from "react-router-dom"
 
 
-const ClientNavbar = ({isOpen,setIsOpen}) => {
+const ClientNavbar = ({isOpen,setIsOpen,fname,lname,profilePic,userType}) => {
+
+    const navigate = useNavigate()
 
     useEffect(() => {
         document.body.style.overflow = isOpen ? 'hidden' : ''
@@ -18,15 +21,17 @@ const ClientNavbar = ({isOpen,setIsOpen}) => {
                 <NavbarLogo>GharBata</NavbarLogo>
             </NavbarLeft>
             <NavbarRight>
-                <NotiBtn>🔔
-                    <NotiBadge>3</NotiBadge>
-                </NotiBtn>
-
-                <UserProfile>
-                    <UserAvatar>A</UserAvatar>
+                <UserProfile onClick={()=>{
+                    if(userType==='client'){
+                    navigate('/clientProfileSetupPage')
+                    }
+                    else{
+                        navigate('/professionalProfilePage')
+                    }
+                }}>
+                    <UserAvatar><img src={profilePic || '/default-avatar.png'} alt="A" className="w-10 h-10 rounded-full object-cover"></img></UserAvatar>
                     <UserInfo>
-                        <UserName>Aalok Yadav ku logo</UserName>
-                        <UserStatus>Available</UserStatus>
+                        <UserName>{fname} {lname}</UserName>
                     </UserInfo>
                 </UserProfile>
             </NavbarRight>
@@ -87,35 +92,6 @@ const NavbarRight = styled.div`
             align-items: center;
             gap: 1.5rem;`
 
-const NotiBtn = styled.button`  
-            position: relative;
-            background: none;
-            border: none;
-            font-size: 1.3rem;
-            cursor: pointer;
-            color: #1e3c72;
-            padding: 0.5rem;
-            border-radius: 50%;
-            transition: all 0.3s ease;
-            
-            &:hover {
-            background: rgba(30, 60, 114, 0.1);
-        }`
-
-const NotiBadge = styled.span` 
-            position: absolute;
-            top: 0;
-            right: 0;
-            background: #e74c3c;
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 0.7rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;`
-
 const UserProfile = styled.div` 
             display: flex;
             align-items: center;
@@ -154,9 +130,5 @@ const UserName = styled.div`
             font-weight: 600;
             font-size: 0.9rem;
             color: #333;`
-
-const UserStatus = styled.div` 
-            font-size: 0.75rem;
-            color: #2ecc71;`
 
 export default ClientNavbar

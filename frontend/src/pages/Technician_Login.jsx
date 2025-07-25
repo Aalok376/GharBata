@@ -22,7 +22,19 @@ const Technician_Login = () => {
     
     if (rresult.success) {
       setLoading(true)
-      navigate("/professionalProfilePage")
+      const navi = await fetch('http://localhost:5000/api/clients/getClientprofilestatus', {
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username })
+      })
+
+      if (navi.status === 200) {
+        navigate('/professionalProfilePage')
+      } else {
+        navigate("/professional")
+      }
     } else {
       setError(rresult.msg)
     }

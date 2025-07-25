@@ -7,7 +7,7 @@ export const createClientProfile = async (req, res) => {
 
     const profilePicUrl = req.file?.path
     console.log(profilePicUrl)
-    
+
     // Check if user exists and role is 'client'
     const user = await User.findById(userId)
     if (!user || user.userType !== "client") {
@@ -70,17 +70,19 @@ export const isClientProfileComplete = async (req, res) => {
 
 export const profile = async (req, res) => {
   try {
+
     const user = await Client.findOne({ client_id: req.user.id })
       .populate('client_id', '-password')
 
+
     if (!user) {
-      return res.status(404).json({ success:false,msg: 'User not found' })
+      return res.status(404).json({ success: false, msg: 'User not found' })
     }
 
-    return res.status(200).json({success:true, user })
+    return res.status(200).json({ success: true, user })
   } catch (error) {
     console.error('Error fetching profile:', error)
-    return res.status(500).json({success:false, msg: 'Error fetching profile', error })
+    return res.status(500).json({ success: false, msg: 'Error fetching profile', error })
   }
 }
 

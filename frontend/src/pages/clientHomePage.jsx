@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import styled from "styled-components"
 import ClientNavbar from "../components/NavBarForClientAndProfessional"
 import SideBar from "../components/SideBar"
@@ -7,58 +7,46 @@ import ServiceCard from "../components/serviceCard"
 
 const ClientPage = () => {
     const [isSideBarOpenC, setIsSideBarOpenC] = useState(false)
+     const [fname, setFname] = useState('')
+  const [lname, setLname] = useState('')
+  const [profilePic, setProfilePic] = useState('')
 
-    const Componentss = [
-        { id: '/dashboard', icon: '📊', text: 'Dashboard' },
-        { id: '/schedule', icon: '📋', text: 'My Orders' },
-        { id: '/earnings', icon: '💰', text: 'Payment' },
-        { id: '/favourites', icon: '⭐', text: 'Favourites' },
-        { id: '/messages', icon: '📱', text: 'Messages' },
-        { id: '/settings', icon: '⚙️', text: 'Settings' },
-    ]
+  const Componentss = [
+    { id: '/dashboard', icon: '📊', text: 'Dashboard' },
+    { id: '/schedule', icon: '📋', text: 'My Orders' },
+    { id: '/earnings', icon: '💰', text: 'Payment' },
+    { id: '/messages', icon: '📱', text: 'Messages' },
+    { id: '/logout', icon: '⚙️', text: 'Logout' },
+  ]
 
-    const Service1 = [
-        { id: 1, name: 'Deep cleaning services', },
-        { id: 2, name: 'Regular weekly/monthly cleaning', },
-        { id: 3, name: 'Move-in/move-out cleaning', },
-        { id: 4, name: 'Eco-friendly products', },
-    ]
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const profileResponse = await fetch('http://localhost:5000/api/clients/getClientProfile', {
+          method: 'GET',
+          credentials: 'include',
+        })
 
-    const Service2 = [
-        { id: 1, name: 'Plumbing & electrical', },
-        { id: 2, name: 'Furniture assembly', },
-        { id: 3, name: 'Painting & touch-ups', },
-        { id: 4, name: 'Emergency repairs', },
-    ]
+        let profileData = await profileResponse.json()
+        profileData = Array.isArray(profileData) ? profileData : [profileData]
 
-    const Service3 = [
-        { id: 1, name: 'Lawn mowing & trimming', },
-        { id: 2, name: 'Garden maintenance', },
-        { id: 3, name: 'Tree & shrub care', },
-        { id: 4, name: 'Seasonal cleanup', },
-    ]
+        const prof = profileData[0]?.user || {}
+        const profData = prof?.client_id
 
-    const Service4 = [
-        { id: 1, name: 'TV mounting & setup', },
-        { id: 2, name: 'Smart home installation', },
-        { id: 3, name: 'Wi-Fi optimization', },
-        { id: 4, name: 'Device troubleshooting', },
-    ]
+        if (profData) {
+          setFname(profData.fname || '')
+          setLname(profData.lname || '')
+        }
 
-    const Service5 = [
-        { id: 1, name: 'HVAC maintenance', },
-        { id: 2, name: 'Gutter cleaning', },
-        { id: 3, name: 'Pressure washing', },
-        { id: 4, name: 'Safety inspections', },
-    ]
+        setProfilePic(prof?.profilePic || '')
 
-    const Service6 = [
-        { id: 1, name: 'Furniture assembly', },
-        { id: 2, name: 'Packing & unpacking', },
-        { id: 3, name: 'Home organization', },
-        { id: 4, name: 'Heavy item moving', },
-    ]
+      } catch (err) {
+        console.error('Failed to fetch profile:', err)
+      }
+    }
 
+    fetchProfile()
+  }, [])
     return (
         <>
             <style>
@@ -200,38 +188,7 @@ const ClientPage = () => {
                     background: rgba(102, 126, 234, 0.2);
                     color: #667eea;
                 }
-        
-                .quick-actions {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 1rem;
-                    margin-top: 2rem;
-                }
-        
-                .quick-action-btn {
-                    background: rgba(255, 255, 255, 0.9);
-                    backdrop-filter: blur(20px);
-                    border: none;
-                    border-radius: 15px;
-                    padding: 1.5rem;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                    text-align: center;
-                    color: #333;
-                    font-weight: 600;
-                }
-        
-                .quick-action-btn:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-                }
-        
-                .quick-action-icon {
-                    font-size: 2rem;
-                    margin-bottom: 1rem;
-                    color: #667eea;
-                }
-        
+
                 @media (max-width: 768px) {
                     .dashboard {
                                     grid-template-columns: 1fr;
@@ -244,75 +201,188 @@ const ClientPage = () => {
 `}
             </style>
             <CBody>
-                <ClientNavbar isOpen={isSideBarOpenC} setIsOpen={setIsSideBarOpenC}></ClientNavbar>
+                <ClientNavbar isOpen={isSideBarOpenC} setIsOpen={setIsSideBarOpenC} fname={fname} lname={lname} profilePic={profilePic} userType={'client'}></ClientNavbar>
                 <SideBarOverlay isSideBarOpen={isSideBarOpenC} setIsSideBarOpen={setIsSideBarOpenC} />
                 <div className="dashboard">
                     <SideBar components={Componentss} isOpen={isSideBarOpenC}></SideBar>
                     <main className="main-content">
                         <header className="header">
                             <div className="welcome">
-                                <h2>Welcome back, Sarah!</h2>
+                                <h2>Welcome back, {fname}!</h2>
                                 <p>Ready to book your next service?</p>
                             </div>
                         </header>
                         <section className="services-grid">
-                            <ServiceCard icon='🧽' header={'Home Cleaning'} description={'Deep cleaning, regular maintenance, and specialized cleaning services'} services={Service1}></ServiceCard>
-                            <ServiceCard icon='🔧' header={'Home Repairs'} description={'Plumbing, electrical, carpentry, and general home repair services'} services={Service2}></ServiceCard>
-                            <ServiceCard icon='🌿' header={'Garden & Lawn Care'} description={'Landscaping, lawn maintenance, and garden care services'} services={Service3}></ServiceCard>
-                            <ServiceCard icon='📱' header={'Tech Installation'} description={'Smart home setup, TV mounting, and tech support services'} services={Service4}></ServiceCard>
-                            <ServiceCard icon='🏠' header={'Home Maintenance'} description={'Regular upkeep, inspections, and preventive maintenance'} services={Service5}></ServiceCard>
-                            <ServiceCard icon='📦' header={'Moving & Assembly'} description={'Furniture assembly, moving assistance, and organization'} services={Service6}></ServiceCard>
+                            <ServiceCard
+                                icon='🚰'
+                                header={'Plumber'}
+                                description={'Installation, repair, and maintenance of water pipes, faucets, drains, and sewage systems'}
+                                services={[
+                                    { id: 1, name: 'Leak Repairs' },
+                                    { id: 2, name: 'Pipe Installation' },
+                                    { id: 3, name: 'Clog Removal' },
+                                    { id: 4, name: 'Water Heater Setup' }
+                                ]}>
+                            </ServiceCard>
+
+                            <ServiceCard
+                                icon='💡'
+                                header={'Electrician'}
+                                description={'Handles electrical systems, wiring, outlets, lighting, and appliance connections'}
+                                services={[
+                                    { id: 1, name: 'Wiring & Rewiring' },
+                                    { id: 2, name: 'Light Fixture Installation' },
+                                    { id: 3, name: 'Circuit Breaker Repair' },
+                                    { id: 4, name: 'Fan Installation' }
+                                ]}>
+                            </ServiceCard>
+
+                            <ServiceCard
+                                icon='❄️'
+                                header={'HVAC Technician'}
+                                description={'Installs and services heating, ventilation, and air conditioning systems'}
+                                services={[
+                                    { id: 1, name: 'AC Maintenance' },
+                                    { id: 2, name: 'Furnace Repair' },
+                                    { id: 3, name: 'Air Filter Replacement' },
+                                    { id: 4, name: 'Thermostat Setup' }
+                                ]}>
+                            </ServiceCard>
+
+                            <ServiceCard
+                                icon='🧰'
+                                header={'Handyman'}
+                                description={'Versatile professional for general home repairs and maintenance tasks'}
+                                services={[
+                                    { id: 1, name: 'Wall Fixes' },
+                                    { id: 2, name: 'Minor Plumbing Work' },
+                                    { id: 3, name: 'Shelving & Fixtures' },
+                                    { id: 4, name: 'Gutter Cleaning' }
+                                ]}>
+                            </ServiceCard>
+
+                            <ServiceCard
+                                icon='🧽'
+                                header={'Cleaner'}
+                                description={'Performs deep cleaning, routine maintenance, and sanitization for homes and offices'}
+                                services={[
+                                    { id: 1, name: 'Kitchen Cleaning' },
+                                    { id: 2, name: 'Bathroom Cleaning' },
+                                    { id: 3, name: 'Window Cleaning' },
+                                    { id: 4, name: 'Deep Floor Cleaning' }
+                                ]}>
+                            </ServiceCard>
+
+                            <ServiceCard
+                                icon='🌿'
+                                header={'Gardener'}
+                                description={'Maintains lawns, gardens, plants, and landscaping features'}
+                                services={[
+                                    { id: 1, name: 'Lawn Mowing' },
+                                    { id: 2, name: 'Hedge Trimming' },
+                                    { id: 3, name: 'Planting & Watering' },
+                                    { id: 4, name: 'Weed Removal' }
+                                ]}>
+                            </ServiceCard>
+
+                            <ServiceCard
+                                icon='🪚'
+                                header={'Carpenter'}
+                                description={'Works with wood to build, install, and repair furniture, doors, and structures'}
+                                services={[
+                                    { id: 1, name: 'Furniture Repair' },
+                                    { id: 2, name: 'Custom Shelving' },
+                                    { id: 3, name: 'Door Frame Repair' },
+                                    { id: 4, name: 'Wood Panel Installation' }
+                                ]}>
+                            </ServiceCard>
+
+                            <ServiceCard
+                                icon='🎨'
+                                header={'Painter'}
+                                description={'Applies paint to interior/exterior surfaces and performs surface preparation'}
+                                services={[
+                                    { id: 1, name: 'Interior Painting' },
+                                    { id: 2, name: 'Exterior Painting' },
+                                    { id: 3, name: 'Wall Priming' },
+                                    { id: 4, name: 'Touch-up & Finishing' }
+                                ]}>
+                            </ServiceCard>
+
+                            <ServiceCard
+                                icon='🔌'
+                                header={'Appliance Repair'}
+                                description={'Fixes and maintains household appliances like refrigerators, ovens, and washing machines'}
+                                services={[
+                                    { id: 1, name: 'Refrigerator Repair' },
+                                    { id: 2, name: 'Washing Machine Fix' },
+                                    { id: 3, name: 'Microwave Servicing' },
+                                    { id: 4, name: 'Dishwasher Repair' }
+                                ]}>
+                            </ServiceCard>
+
+                            <ServiceCard
+                                icon='🔐'
+                                header={'Locksmith'}
+                                description={'Handles lock installation, key duplication, lockouts, and security upgrades'}
+                                services={[
+                                    { id: 1, name: 'Lock Replacement' },
+                                    { id: 2, name: 'Key Duplication' },
+                                    { id: 3, name: 'Emergency Unlocking' },
+                                    { id: 4, name: 'Smart Lock Installation' }
+                                ]}>
+                            </ServiceCard>
+
+                            <ServiceCard
+                                icon='🐜'
+                                header={'Pest Control'}
+                                description={'Identifies and removes pests like rodents, insects, and termites from properties'}
+                                services={[
+                                    { id: 1, name: 'Termite Treatment' },
+                                    { id: 2, name: 'Cockroach Removal' },
+                                    { id: 3, name: 'Rodent Control' },
+                                    { id: 4, name: 'Bed Bug Elimination' }
+                                ]}>
+                            </ServiceCard>
+
+                            <ServiceCard
+                                icon='🏠'
+                                header={'Roofing Specialist'}
+                                description={'Inspects, repairs, and replaces roofing structures and materials'}
+                                services={[
+                                    { id: 1, name: 'Leak Repair' },
+                                    { id: 2, name: 'Shingle Replacement' },
+                                    { id: 3, name: 'Roof Inspection' },
+                                    { id: 4, name: 'Gutter Installation' }
+                                ]}>
+                            </ServiceCard>
+
+                            <ServiceCard
+                                icon='🧱'
+                                header={'Flooring Specialist'}
+                                description={'Installs, repairs, and maintains flooring of all types including tile, wood, and laminate'}
+                                services={[
+                                    { id: 1, name: 'Tile Installation' },
+                                    { id: 2, name: 'Laminate Flooring' },
+                                    { id: 3, name: 'Floor Repair' },
+                                    { id: 4, name: 'Grouting & Polishing' }
+                                ]}>
+                            </ServiceCard>
+
+                            <ServiceCard
+                                icon='🚪'
+                                header={'Window/Door Installer'}
+                                description={'Installs and replaces doors and windows for security, aesthetics, and insulation'}
+                                services={[
+                                    { id: 1, name: 'Door Installation' },
+                                    { id: 2, name: 'Window Replacement' },
+                                    { id: 3, name: 'Sliding Door Repair' },
+                                    { id: 4, name: 'Weather Sealing' }
+                                ]}>
+                            </ServiceCard>
+
+
                         </section>
-                        <section className="recent-orders">
-                            <div className="section-header">
-                                <h3>Recent Orders</h3>
-                                <a href="#" className="view-all-btn">View All</a>
-                            </div>
-
-                            <div className="order-item">
-                                <div className="order-info">
-                                    <div className="order-title">Deep House Cleaning</div>
-                                    <div className="order-details">March 15, 2025 • Maria's Cleaning Service</div>
-                                </div>
-                                <div className="order-status status-completed">Completed</div>
-                            </div>
-
-                            <div className="order-item">
-                                <div className="order-info">
-                                    <div className="order-title">Kitchen Sink Repair</div>
-                                    <div className="order-details">March 18, 2025 • QuickFix Plumbing</div>
-                                </div>
-                                <div className="order-status status-in-progress">In Progress</div>
-                            </div>
-
-                            <div className="order-item">
-                                <div className="order-info">
-                                    <div className="order-title">Garden Maintenance</div>
-                                    <div className="order-details">March 22, 2025 • GreenThumb Landscaping</div>
-                                </div>
-                                <div className="order-status status-scheduled">Scheduled</div>
-                            </div>
-                        </section>
-
-                        <section className="quick-actions">
-                            <button className="quick-action-btn" onClick={() => { }}>
-                                <div className="quick-action-icon">🚨</div>
-                                Emergency Service
-                            </button>
-                            <button className="quick-action-btn" onClick={() => { }}>
-                                <div className="quick-action-icon">🔄</div>
-                                Repeat Last Order
-                            </button>
-                            <button className="quick-action-btn" onClick={() => { }}>
-                                <div className="quick-action-icon">📅</div>
-                                Schedule Regular
-                            </button>
-                            <button className="quick-action-btn" onClick={() => { }}>
-                                <div className="quick-action-icon">💬</div>
-                                Contact Support
-                            </button>
-                        </section>
-
                     </main>
                 </div>
             </CBody>

@@ -76,7 +76,7 @@ const ServiceCard = ({ icon, header, description, services }) => {
             <h3>{header}</h3>
             <p>{description}</p>
             <ServiceFeaturesWrapper>{ListItems}</ServiceFeaturesWrapper>
-            <StyledLinkFunc dynamicId={'bookservices'} text={'Book Now'}></StyledLinkFunc>
+            <StyledLinkFunc dynamicId={`bookservice/${header}`} text={'Book Now'}></StyledLinkFunc>
         </ServiceCardWrapper>
 
     )
