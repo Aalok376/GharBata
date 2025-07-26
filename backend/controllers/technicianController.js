@@ -6,12 +6,12 @@ export const createTechnicianProfile = async (req, res) => {
     const {
       username,
       professions,
+      hourlyRate,
       serviceLocation,
       availability,
       currentLocation,
       specialties,
       experience,
-      hourlyRate,
       responseTime
     } = req.body
 
@@ -24,12 +24,12 @@ export const createTechnicianProfile = async (req, res) => {
     const technician = new Technician({
       user: user._id,
       professions: JSON.parse(professions || "[]"),
+      hourlyRate: JSON.parse(hourlyRate || "{}"),
       serviceLocation,
       availability: JSON.parse(availability || "{}"),
       currentLocation,
       specialties: JSON.parse(specialties || "[]"),
       experience,
-      hourlyRate: parseFloat(hourlyRate),
       responseTime,
       profilePic: req.file?.path || ""
     })
@@ -53,12 +53,12 @@ export const updateTechniciansProfile = async (req, res) => {
       fname,
       lname,
       professions,
+      hourlyRate,
       serviceLocation,
       availability,
       currentLocation,
       specialties,
       experience,
-      hourlyRate,
       responseTime
     } = req.body
 
@@ -70,12 +70,12 @@ export const updateTechniciansProfile = async (req, res) => {
 
     // Technician updates
     if (professions) technician.professions = JSON.parse(professions)
+    if (hourlyRate) technician.hourlyRate = JSON.parse(hourlyRate)
     if (serviceLocation) technician.serviceLocation = serviceLocation
     if (availability) technician.availability = JSON.parse(availability)
     if (currentLocation) technician.currentLocation = currentLocation
     if (specialties) technician.specialties = JSON.parse(specialties)
     if (experience) technician.experience = experience
-    if (hourlyRate !== undefined) technician.hourlyRate = parseFloat(hourlyRate)
     if (responseTime) technician.responseTime = responseTime
 
     if (req.file) {
@@ -105,6 +105,45 @@ export const getTechnicianProfile = async (req, res) => {
     if (!user) return res.status(404).json({ msg: "User not found" })
 
     const technician = await Technician.findOne({ user: userId }).populate({
+      path: "user",
+      select: "fname lname username ",
+    })
+
+    if (!technician)
+      return res.status(404).json({ msg: "Technician profile not found" })
+
+    res.status(200).json({ technician })
+  } catch (err) {
+    console.error("Fetch profile error:", err)
+    res.status(500).json({ msg: "Internal Server Error" })
+  }
+}
+
+export const getAllTechnicians=async (req, res) => {
+  try {
+    const { category } = req.query
+
+    console.log(category)
+
+    const filter = category ? { professions: category } : {}
+
+    const technicians = await Technician.find(filter).populate({
+      path: 'user',
+      select: '-password'
+    })
+
+    res.status(200).json(technicians)
+  } catch (err) {
+    console.error('Error fetching technicians:', err)
+    res.status(500).json({ message: 'Server error' })
+  }
+}
+
+export const getOtherTechnicianProfile = async (req, res) => {
+  try {
+    const {technicianId}=req.body
+
+    const technician = await Technician.findById(technicianId).populate({
       path: "user",
       select: "fname lname username ",
     })

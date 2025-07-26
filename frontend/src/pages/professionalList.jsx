@@ -6,24 +6,75 @@ const TechnicianDisplayPage = () => {
   const { serviceName } = useParams()
   const navigate = useNavigate()
   const [selectedService, setSelectedService] = useState(serviceName || 'Plumber')
-  const [sortBy, setSortBy] = useState('rating')
+  const [sortBy, setSortBy] = useState('price')
   const [searchTerm, setSearchTerm] = useState('')
   const [initialLoad, setInitialLoad] = useState(true)
+  const [allTechnicians, setTechnicians] = useState([])
 
-  // Only update URL when service changes after initial load
   useEffect(() => {
     if (!initialLoad && serviceName !== selectedService) {
       navigate(`/dashboard/bookservice/${selectedService}`, { replace: true })
     }
   }, [selectedService, serviceName, navigate, initialLoad])
 
-  // Set initial load to false after component mounts
+  useEffect(() => {
+    const getTechnicians = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/technicians/filteredTechnicians?category=${encodeURIComponent(selectedService)}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`)
+        }
+
+        const data = await response.json()
+
+        console.log(data)
+
+        const formatted = data.map((tech) => ({
+          _id: tech._id,
+          userId: tech.user._id,
+          name: `${tech.user.fname} ${tech.user.lname}`,
+          username: tech.user.username,
+          profilePic: tech.profilePic,
+          rating: tech.rating,
+          reviews: tech.reviews,
+          professions: tech.professions,
+          serviceLocation: tech.serviceLocation,
+          currentLocation: tech.currentLocation,
+          specialties: tech.specialties,
+          experience: tech.experience,
+          hourlyRate: tech.hourlyRate, // Keep as object
+          availability: tech.availability,
+          responseTime: tech.responseTime,
+          tasksCompleted: tech.tasksCompleted
+        }))
+
+        setTechnicians(formatted)
+      } catch (err) {
+        console.error('Failed to fetch technicians:', err)
+      }
+    }
+
+    if (selectedService) {
+      getTechnicians()
+    }
+  }, [selectedService])
+
   useEffect(() => {
     setInitialLoad(false)
   }, [])
 
+  // Helper function to get hourly rate for selected service
+  const getHourlyRateForService = (hourlyRateObj, service) => {
+    if (typeof hourlyRateObj === 'object' && hourlyRateObj !== null) {
+      return hourlyRateObj[service] || 0
+    }
+    return hourlyRateObj || 0
+  }
+
   const handleBookNow = (technician) => {
-    // Navigate to booking page with service and technician info
     navigate(`/dashboard/booking/${selectedService}/${technician._id}`, {
       state: {
         service: selectedService,
@@ -33,7 +84,6 @@ const TechnicianDisplayPage = () => {
   }
 
   const handleMessage = (technician) => {
-    // Navigate to chat/message page with technician info
     navigate(`/dashboard/chat/${technician._id}`, {
       state: {
         technician: technician,
@@ -42,39 +92,35 @@ const TechnicianDisplayPage = () => {
     })
   }
 
-  // Helper function to format availability display
   const formatAvailability = (availability, day) => {
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
-    
+
     if (!availability[day] || !availability[day].available) {
       return { text: 'Not Available', status: 'unavailable' }
     }
-    
+
     if (day === today) {
-      return { 
-        text: `Available Today ${availability[day].startTime} - ${availability[day].endTime}`, 
-        status: 'today' 
+      return {
+        text: `Available Today ${availability[day].startTime} - ${availability[day].endTime}`,
+        status: 'today'
       }
     }
-    
-    return { 
-      text: `${day.charAt(0).toUpperCase() + day.slice(1)}: ${availability[day].startTime} - ${availability[day].endTime}`, 
-      status: 'available' 
+
+    return {
+      text: `${day.charAt(0).toUpperCase() + day.slice(1)}: ${availability[day].startTime} - ${availability[day].endTime}`,
+      status: 'available'
     }
   }
 
-  // Get next available slot
   const getNextAvailability = (availability) => {
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
     const todayIndex = days.indexOf(today)
-    
-    // Check today first
+
     if (availability[today] && availability[today].available) {
       return formatAvailability(availability, today)
     }
-    
-    // Check remaining days of the week
+
     for (let i = 1; i < 7; i++) {
       const nextDayIndex = (todayIndex + i) % 7
       const nextDay = days[nextDayIndex]
@@ -82,262 +128,9 @@ const TechnicianDisplayPage = () => {
         return formatAvailability(availability, nextDay)
       }
     }
-    
+
     return { text: 'Not Available This Week', status: 'unavailable' }
   }
-
-  const allTechnicians = [
-    {
-      _id: "507f1f77bcf86cd799439011",
-      user: "507f1f77bcf86cd799439012",
-      name: "Mike Rodriguez",
-      profilePic: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-      rating: 4.9,
-      reviews: ["review1", "review2", "review3"],
-      professions: ["Plumbing", "Emergency Repairs"],
-      serviceLocation: "Downtown Area, Midtown",
-      currentLocation: "Downtown Area",
-      specialties: ["Emergency Repairs", "Water Heaters", "Pipe Installation"],
-      experience: "8+ years",
-      hourlyRate: 85,
-      availability: {
-        monday: { available: true, startTime: '08:00', endTime: '18:00' },
-        tuesday: { available: true, startTime: '08:00', endTime: '18:00' },
-        wednesday: { available: true, startTime: '08:00', endTime: '18:00' },
-        thursday: { available: true, startTime: '08:00', endTime: '18:00' },
-        friday: { available: true, startTime: '08:00', endTime: '18:00' },
-        saturday: { available: true, startTime: '09:00', endTime: '15:00' },
-        sunday: { available: false, startTime: '', endTime: '' }
-      },
-      responseTime: "15 min",
-      tasksCompleted: 350
-    },
-    {
-      _id: "507f1f77bcf86cd799439013",
-      user: "507f1f77bcf86cd799439014",
-      name: "Sarah Chen",
-      profilePic: "https://images.unsplash.com/photo-1494790108755-2616b612b647?w=150&h=150&fit=crop&crop=face",
-      rating: 4.8,
-      reviews: ["review4", "review5"],
-      professions: ["Plumbing", "Drain Cleaning"],
-      serviceLocation: "Midtown, North Side",
-      currentLocation: "Midtown",
-      specialties: ["Drain Cleaning", "Fixture Installation", "Leak Repairs"],
-      experience: "6+ years",
-      hourlyRate: 75,
-      availability: {
-        monday: { available: true, startTime: '09:00', endTime: '17:00' },
-        tuesday: { available: true, startTime: '09:00', endTime: '17:00' },
-        wednesday: { available: false, startTime: '', endTime: '' },
-        thursday: { available: true, startTime: '09:00', endTime: '17:00' },
-        friday: { available: true, startTime: '09:00', endTime: '17:00' },
-        saturday: { available: true, startTime: '10:00', endTime: '14:00' },
-        sunday: { available: false, startTime: '', endTime: '' }
-      },
-      responseTime: "20 min",
-      tasksCompleted: 280
-    },
-    {
-      _id: "507f1f77bcf86cd799439015",
-      user: "507f1f77bcf86cd799439016",
-      name: "David Thompson",
-      profilePic: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-      rating: 4.7,
-      reviews: ["review6", "review7", "review8", "review9"],
-      professions: ["Plumbing", "Bathroom Remodeling"],
-      serviceLocation: "North Side, West End",
-      currentLocation: "North Side",
-      specialties: ["Bathroom Remodeling", "Kitchen Plumbing", "Sewer Lines"],
-      experience: "12+ years",
-      hourlyRate: 95,
-      availability: {
-        monday: { available: true, startTime: '07:00', endTime: '19:00' },
-        tuesday: { available: true, startTime: '07:00', endTime: '19:00' },
-        wednesday: { available: true, startTime: '07:00', endTime: '19:00' },
-        thursday: { available: true, startTime: '07:00', endTime: '19:00' },
-        friday: { available: true, startTime: '07:00', endTime: '19:00' },
-        saturday: { available: true, startTime: '08:00', endTime: '16:00' },
-        sunday: { available: true, startTime: '10:00', endTime: '14:00' }
-      },
-      responseTime: "10 min",
-      tasksCompleted: 520
-    },
-    {
-      _id: "507f1f77bcf86cd799439017",
-      user: "507f1f77bcf86cd799439018",
-      name: "Lisa Park",
-      profilePic: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
-      rating: 4.9,
-      reviews: ["review10", "review11", "review12"],
-      professions: ["Plumbing", "Smart Home Integration"],
-      serviceLocation: "West End, Downtown Area",
-      currentLocation: "West End",
-      specialties: ["Smart Home Integration", "Water Filtration", "Green Solutions"],
-      experience: "5+ years",
-      hourlyRate: 80,
-      availability: {
-        monday: { available: true, startTime: '08:30', endTime: '17:30' },
-        tuesday: { available: true, startTime: '08:30', endTime: '17:30' },
-        wednesday: { available: true, startTime: '08:30', endTime: '17:30' },
-        thursday: { available: false, startTime: '', endTime: '' },
-        friday: { available: true, startTime: '08:30', endTime: '17:30' },
-        saturday: { available: false, startTime: '', endTime: '' },
-        sunday: { available: false, startTime: '', endTime: '' }
-      },
-      responseTime: "12 min",
-      tasksCompleted: 195
-    },
-    {
-      _id: "507f1f77bcf86cd799439019",
-      user: "507f1f77bcf86cd799439020",
-      name: "James Wilson",
-      profilePic: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
-      rating: 4.8,
-      reviews: ["review13", "review14", "review15", "review16", "review17"],
-      professions: ["Electrical", "Smart Home"],
-      serviceLocation: "Downtown Area, Midtown",
-      currentLocation: "Downtown Area",
-      specialties: ["Panel Upgrades", "Smart Home Wiring", "Emergency Electrical"],
-      experience: "10+ years",
-      hourlyRate: 90,
-      availability: {
-        monday: { available: true, startTime: '07:30', endTime: '18:30' },
-        tuesday: { available: true, startTime: '07:30', endTime: '18:30' },
-        wednesday: { available: true, startTime: '07:30', endTime: '18:30' },
-        thursday: { available: true, startTime: '07:30', endTime: '18:30' },
-        friday: { available: true, startTime: '07:30', endTime: '18:30' },
-        saturday: { available: true, startTime: '09:00', endTime: '15:00' },
-        sunday: { available: false, startTime: '', endTime: '' }
-      },
-      responseTime: "18 min",
-      tasksCompleted: 425
-    },
-    {
-      _id: "507f1f77bcf86cd799439021",
-      user: "507f1f77bcf86cd799439022",
-      name: "Amanda Foster",
-      profilePic: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop&crop=face",
-      rating: 4.9,
-      reviews: ["review18", "review19"],
-      professions: ["Electrical", "LED Installation"],
-      serviceLocation: "Midtown, North Side",
-      currentLocation: "Midtown",
-      specialties: ["LED Installation", "Outlet Repair", "Circuit Installation"],
-      experience: "7+ years",
-      hourlyRate: 82,
-      availability: {
-        monday: { available: true, startTime: '08:00', endTime: '16:00' },
-        tuesday: { available: true, startTime: '08:00', endTime: '16:00' },
-        wednesday: { available: true, startTime: '08:00', endTime: '16:00' },
-        thursday: { available: true, startTime: '08:00', endTime: '16:00' },
-        friday: { available: true, startTime: '08:00', endTime: '16:00' },
-        saturday: { available: false, startTime: '', endTime: '' },
-        sunday: { available: false, startTime: '', endTime: '' }
-      },
-      responseTime: "12 min",
-      tasksCompleted: 310
-    },
-    {
-      _id: "507f1f77bcf86cd799439023",
-      user: "507f1f77bcf86cd799439024",
-      name: "Robert Kim",
-      profilePic: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&crop=face",
-      rating: 4.7,
-      reviews: ["review20", "review21", "review22", "review23", "review24", "review25"],
-      professions: ["Electrical", "Industrial"],
-      serviceLocation: "North Side, Industrial District",
-      currentLocation: "North Side",
-      specialties: ["Industrial Electrical", "Generator Installation", "Code Updates"],
-      experience: "15+ years",
-      hourlyRate: 105,
-      availability: {
-        monday: { available: true, startTime: '06:00', endTime: '18:00' },
-        tuesday: { available: true, startTime: '06:00', endTime: '18:00' },
-        wednesday: { available: true, startTime: '06:00', endTime: '18:00' },
-        thursday: { available: true, startTime: '06:00', endTime: '18:00' },
-        friday: { available: true, startTime: '06:00', endTime: '18:00' },
-        saturday: { available: true, startTime: '08:00', endTime: '12:00' },
-        sunday: { available: false, startTime: '', endTime: '' }
-      },
-      responseTime: "25 min",
-      tasksCompleted: 680
-    },
-    {
-      _id: "507f1f77bcf86cd799439025",
-      user: "507f1f77bcf86cd799439026",
-      name: "Carlos Martinez",
-      profilePic: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face",
-      rating: 4.8,
-      reviews: ["review26", "review27", "review28"],
-      professions: ["HVAC", "AC Repair"],
-      serviceLocation: "South Side, West End",
-      currentLocation: "South Side",
-      specialties: ["AC Repair", "Heating Systems", "Duct Cleaning"],
-      experience: "9+ years",
-      hourlyRate: 88,
-      availability: {
-        monday: { available: true, startTime: '08:00', endTime: '18:00' },
-        tuesday: { available: true, startTime: '08:00', endTime: '18:00' },
-        wednesday: { available: true, startTime: '08:00', endTime: '18:00' },
-        thursday: { available: true, startTime: '08:00', endTime: '18:00' },
-        friday: { available: true, startTime: '08:00', endTime: '18:00' },
-        saturday: { available: true, startTime: '09:00', endTime: '15:00' },
-        sunday: { available: true, startTime: '10:00', endTime: '14:00' }
-      },
-      responseTime: "16 min",
-      tasksCompleted: 390
-    },
-    {
-      _id: "507f1f77bcf86cd799439027",
-      user: "507f1f77bcf86cd799439028",
-      name: "Jennifer Adams",
-      profilePic: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face",
-      rating: 4.9,
-      reviews: ["review29", "review30"],
-      professions: ["HVAC", "Energy Efficiency"],
-      serviceLocation: "West End, Downtown Area",
-      currentLocation: "West End",
-      specialties: ["Energy Efficiency", "Smart Thermostats", "System Maintenance"],
-      experience: "6+ years",
-      hourlyRate: 85,
-      availability: {
-        monday: { available: true, startTime: '09:00', endTime: '17:00' },
-        tuesday: { available: true, startTime: '09:00', endTime: '17:00' },
-        wednesday: { available: false, startTime: '', endTime: '' },
-        thursday: { available: true, startTime: '09:00', endTime: '17:00' },
-        friday: { available: true, startTime: '09:00', endTime: '17:00' },
-        saturday: { available: true, startTime: '10:00', endTime: '14:00' },
-        sunday: { available: false, startTime: '', endTime: '' }
-      },
-      responseTime: "14 min",
-      tasksCompleted: 245
-    },
-    {
-      _id: "507f1f77bcf86cd799439029",
-      user: "507f1f77bcf86cd799439030",
-      name: "Maria Gonzalez",
-      profilePic: "https://images.unsplash.com/photo-1559941861-fd316294e32c?w=150&h=150&fit=crop&crop=face",
-      rating: 4.9,
-      reviews: ["review31", "review32", "review33", "review34", "review35", "review36", "review37"],
-      professions: ["Cleaning", "Deep Cleaning"],
-      serviceLocation: "Downtown Area, Midtown, South Side",
-      currentLocation: "Downtown Area",
-      specialties: ["Deep Cleaning", "Move-in/out", "Post-Construction"],
-      experience: "8+ years",
-      hourlyRate: 65,
-      availability: {
-        monday: { available: true, startTime: '08:00', endTime: '18:00' },
-        tuesday: { available: true, startTime: '08:00', endTime: '18:00' },
-        wednesday: { available: true, startTime: '08:00', endTime: '18:00' },
-        thursday: { available: true, startTime: '08:00', endTime: '18:00' },
-        friday: { available: true, startTime: '08:00', endTime: '18:00' },
-        saturday: { available: true, startTime: '09:00', endTime: '17:00' },
-        sunday: { available: true, startTime: '10:00', endTime: '16:00' }
-      },
-      responseTime: "10 min",
-      tasksCompleted: 890
-    }
-  ]
 
   const services = [
     { id: 'Plumber', name: 'Plumber', icon: '🔧', searchTerms: ['plumbing', 'plumber'] },
@@ -359,21 +152,21 @@ const TechnicianDisplayPage = () => {
   const filteredAndSortedTechnicians = allTechnicians
     .filter(tech => {
       // Filter by profession
-      const matchesProfession = tech.professions.some(profession => 
+      const matchesProfession = tech.professions.some(profession =>
         profession.toLowerCase().includes(selectedService.toLowerCase()) ||
         selectedService.toLowerCase().includes(profession.toLowerCase())
       )
-      
+
       // Filter by search term
-      const matchesSearch = searchTerm === '' || 
+      const matchesSearch = searchTerm === '' ||
         tech.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tech.specialties.some(specialty => 
+        tech.specialties.some(specialty =>
           specialty.toLowerCase().includes(searchTerm.toLowerCase())
         ) ||
         tech.professions.some(profession =>
           profession.toLowerCase().includes(searchTerm.toLowerCase())
         )
-      
+
       return matchesProfession && matchesSearch
     })
     .sort((a, b) => {
@@ -381,7 +174,9 @@ const TechnicianDisplayPage = () => {
         case 'rating':
           return b.rating - a.rating
         case 'price':
-          return a.hourlyRate - b.hourlyRate
+          const rateA = getHourlyRateForService(a.hourlyRate, selectedService)
+          const rateB = getHourlyRateForService(b.hourlyRate, selectedService)
+          return rateA - rateB
         case 'availability':
           // Sort by tasks completed as a proxy for availability/popularity
           return b.tasksCompleted - a.tasksCompleted
@@ -400,7 +195,7 @@ const TechnicianDisplayPage = () => {
               <h1 className="text-3xl font-bold text-gray-900 mb-1">Find a Service Provider</h1>
               <p className="text-gray-600">Professional service providers in your area</p>
             </div>
-            
+
             {/* Service Selection */}
             <div className="flex flex-col gap-3">
               <h3 className="text-base font-semibold text-gray-800">Select a Service</h3>
@@ -409,11 +204,10 @@ const TechnicianDisplayPage = () => {
                   <button
                     key={service.id}
                     onClick={() => setSelectedService(service.id)}
-                    className={`flex flex-col items-center gap-1 p-3 rounded-lg text-sm font-medium transition-all hover:scale-105 ${
-                      selectedService === service.id
-                        ? 'bg-blue-600 text-white shadow-lg'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    className={`flex flex-col items-center gap-1 p-3 rounded-lg text-sm font-medium transition-all hover:scale-105 ${selectedService === service.id
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
                   >
                     <span className="text-xl">{service.icon}</span>
                     <span className="text-center leading-tight">{service.name}</span>
@@ -438,7 +232,7 @@ const TechnicianDisplayPage = () => {
               className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          
+
           <div className="flex gap-3">
             <select
               value={sortBy}
@@ -449,7 +243,7 @@ const TechnicianDisplayPage = () => {
               <option value="price">Sort by Price</option>
               <option value="availability">Sort by Experience</option>
             </select>
-            
+
             <button className="px-4 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center gap-2">
               <Filter className="w-4 h-4" />
               Filters
@@ -461,7 +255,8 @@ const TechnicianDisplayPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {filteredAndSortedTechnicians.map(technician => {
             const availability = getNextAvailability(technician.availability)
-            
+            const currentHourlyRate = getHourlyRateForService(technician.hourlyRate, selectedService)
+
             return (
               <div key={technician._id} className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                 <div className="p-6">
@@ -474,15 +269,17 @@ const TechnicianDisplayPage = () => {
                         className="w-16 h-16 rounded-full object-cover"
                       />
                     </div>
-                    
+
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <h3 className="text-xl font-semibold text-gray-900">{technician.name}</h3>
                         <div className="text-right">
-                          <div className="text-lg font-bold text-blue-600">${technician.hourlyRate}/hr</div>
+                          <div className="text-lg font-bold text-blue-600">
+                            Rs.{currentHourlyRate || 'N/A'}/hr
+                          </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-2 mt-1">
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
@@ -545,34 +342,32 @@ const TechnicianDisplayPage = () => {
 
                   {/* Availability */}
                   <div className="mb-4">
-                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-                      availability.status === 'today'
-                        ? 'bg-green-100 text-green-700'
-                        : availability.status === 'available'
+                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${availability.status === 'today'
+                      ? 'bg-green-100 text-green-700'
+                      : availability.status === 'available'
                         ? 'bg-blue-100 text-blue-700'
                         : 'bg-gray-100 text-gray-700'
-                    }`}>
-                      <div className={`w-2 h-2 rounded-full ${
-                        availability.status === 'today'
-                          ? 'bg-green-500'
-                          : availability.status === 'available'
+                      }`}>
+                      <div className={`w-2 h-2 rounded-full ${availability.status === 'today'
+                        ? 'bg-green-500'
+                        : availability.status === 'available'
                           ? 'bg-blue-500'
                           : 'bg-gray-500'
-                      }`} />
+                        }`} />
                       {availability.text}
                     </div>
                   </div>
 
                   {/* Actions */}
                   <div className="flex gap-3">
-                    <button 
+                    <button
                       onClick={() => handleBookNow(technician)}
                       className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                     >
                       <Calendar className="w-4 h-4" />
                       Book Now
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleMessage(technician)}
                       className="px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center"
                       title={`Message ${technician.name}`}

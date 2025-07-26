@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Calendar, Clock, MapPin, User, Phone, Mail, CreditCard, Home } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 
@@ -22,23 +22,28 @@ export default function BookingForm() {
         emergencyContact: '',
         emergencyPhone: '',
         latitude: '',
-        longitude: ''
+        longitude: '',
+        service:service,
+        technicianId:technicianId
     })
 
     const [showMapOverlay, setShowMapOverlay] = useState(false)
+    const [startTime, setStartTime] = useState('')
+    const [endTime, setEndTime] = useState('')
     const [currentStep, setCurrentStep] = useState(1)
     const [agreed, setAgreed] = useState(false)
     const [errors, setErrors] = useState({})
     const totalSteps = 4
 
-    const timeSlots = [
-        '8:00 AM - 10:00 AM',
-        '10:00 AM - 12:00 PM',
-        '12:00 PM - 2:00 PM',
-        '2:00 PM - 4:00 PM',
-        '4:00 PM - 6:00 PM',
-        '6:00 PM - 8:00 PM'
-    ]
+
+    useEffect(() => {
+        if (startTime && endTime) {
+            setFormData((prev) => ({
+                ...prev,
+                timeSlot: `${startTime} - ${endTime}`
+            }));
+        }
+    }, [startTime, endTime])
 
     const handleInputChange = (e) => {
         const { name, value } = e.target
@@ -373,7 +378,7 @@ export default function BookingForm() {
                         <SelectLocationOverlay
                             onClose={() => setShowMapOverlay(false)}
                             onLocationConfirm={({ lat, lon, name, cityName }) => {
-                                setFormData(prev => ({ ...prev, address: name, latitude:lat, longitude:lon, city: cityName }))
+                                setFormData(prev => ({ ...prev, address: name, latitude: lat, longitude: lon, city: cityName }))
                             }}
                         />
                     </div>
@@ -412,23 +417,33 @@ export default function BookingForm() {
                         <Clock className="w-4 h-4 inline mr-1" />
                         Time Slot *
                     </label>
-                    <select
-                        name="timeSlot"
-                        value={formData.timeSlot}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.timeSlot ? 'border-red-500' : 'border-gray-300'
-                            }`}
-                        required
-                    >
-                        <option value="">Select a time slot</option>
-                        {timeSlots.map((slot, index) => (
-                            <option key={index} value={slot}>
-                                {slot}
-                            </option>
-                        ))}
-                    </select>
-                    {errors.timeSlot && <p className="text-red-500 text-xs mt-1">{errors.timeSlot}</p>}
+                    <div className="flex gap-2">
+                        <input
+                            type="time"
+                            name="startTime"
+                            value={startTime}
+                            onChange={handleInputChange}
+                            className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.startTime ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                            required
+                        />
+                        <input
+                            type="time"
+                            name="endTime"
+                            value={endTime}
+                            onChange={handleInputChange}
+                            className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.endTime ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                            required
+                        />
+                    </div>
+                    {(errors.startTime || errors.endTime) && (
+                        <p className="text-red-500 text-xs mt-1">
+                            {errors.startTime || errors.endTime}
+                        </p>
+                    )}
                 </div>
+
             </div>
 
             <div>

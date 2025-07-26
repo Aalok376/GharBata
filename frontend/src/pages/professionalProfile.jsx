@@ -1,4 +1,3 @@
-// Fixed TechnicianProfile.jsx
 import React, { useState, useEffect } from 'react'
 import { User, Phone, Mail, Save, Edit3, X, Camera, MapPin, Wrench, Star, Clock, DollarSign } from 'lucide-react'
 
@@ -12,27 +11,39 @@ export default function TechnicianProfile() {
   const [selectedFile, setSelectedFile] = useState(null)
 
   const professionOptions = [
-    'Plumber', 'Electrician', 'HVAC Technician', 'Handyman', 'Cleaner', 'Gardener',
-    'Carpenter', 'Painter', 'Appliance Repair', 'Locksmith', 'Pest Control',
-    'Roofing Specialist', 'Flooring Specialist', 'Door Installer'
+    'Plumber', 'Electrician', 'HVAC-Technician', 'Handyman', 'Cleaner', 'Gardener',
+    'Carpenter', 'Painter', 'Appliance-Repair', 'Locksmith', 'Pest-Control',
+    'Roofing-Specialist', 'Flooring-Specialist', 'Door-Installer'
   ]
 
   const daysOfWeek = [
+    { key: 'sunday', label: 'Sunday', short: 'Sun' },
     { key: 'monday', label: 'Monday', short: 'Mon' },
     { key: 'tuesday', label: 'Tuesday', short: 'Tue' },
     { key: 'wednesday', label: 'Wednesday', short: 'Wed' },
     { key: 'thursday', label: 'Thursday', short: 'Thu' },
     { key: 'friday', label: 'Friday', short: 'Fri' },
-    { key: 'saturday', label: 'Saturday', short: 'Sat' },
-    { key: 'sunday', label: 'Sunday', short: 'Sun' }
+    { key: 'saturday', label: 'Saturday', short: 'Sat' }
   ]
+
+  // Helper function to get average hourly rate or first available rate
+  const getDisplayRate = (hourlyRate) => {
+    if (!hourlyRate || typeof hourlyRate !== 'object') return '0'
+    
+    const rates = Object.values(hourlyRate).filter(rate => rate && !isNaN(rate))
+    if (rates.length === 0) return '0'
+    
+    // Return average rate
+    const average = rates.reduce((sum, rate) => sum + parseFloat(rate), 0) / rates.length
+    return Math.round(average).toString()
+  }
 
   useEffect(() => {
     const fetchProfile = async () => {
-       const formDataStr = sessionStorage.getItem('formData')
+      const formDataStr = sessionStorage.getItem('formData')
       const uusername = sessionStorage.getItem('username')
 
-      let username = uusername || '' 
+      let username = uusername || ''
       let user = null
 
       if (formDataStr) {
@@ -46,7 +57,6 @@ export default function TechnicianProfile() {
         }
       }
 
-      
       console.log('Resolved username:', username)
 
       const fname = user?.fname || ''
@@ -75,9 +85,9 @@ export default function TechnicianProfile() {
             availability: Object.fromEntries(daysOfWeek.map(day => [day.key, { available: false, startTime: '09:00', endTime: '17:00' }])),
             currentLocation: '',
             specialties: [],
-            experience: '0 years',
-            hourlyRate: 0,
-            responseTime: 'Not specified',
+            experience: 'Less than 1 year',
+            hourlyRate: {},
+            responseTime: 'Within 1 hour',
             profilePic: '',
           }
           setProfile(prof)
@@ -97,20 +107,20 @@ export default function TechnicianProfile() {
           console.log(prof)
 
           const mergedProfile = {
-            fname: prof.user.fname,
-            lname: prof.user.lname,
-            username: prof.user.username,
+            fname: prof.user?.fname || fname,
+            lname: prof.user?.lname || lname,
+            username: prof.user?.username || username,
             professions: prof.professions || [prof.profession].filter(Boolean),
-            serviceLocation: prof.serviceLocation,
+            serviceLocation: prof.serviceLocation || '',
             availability: prof.availability || Object.fromEntries(daysOfWeek.map(day => [day.key, { available: false, startTime: '09:00', endTime: '17:00' }])),
-            currentLocation: prof.currentLocation,
+            currentLocation: prof.currentLocation || '',
             specialties: prof.specialties || [],
-            experience: prof.experience,
-            hourlyRate: prof.hourlyRate,
-            responseTime: prof.responseTime,
-            profilePic: prof.profilePic,
-            rating: prof.rating,
-            tasksCompleted: prof.tasksCompleted
+            experience: prof.experience || 'Less than 1 year',
+            hourlyRate: prof.hourlyRate || {},
+            responseTime: prof.responseTime || 'Within 1 hour',
+            profilePic: prof.profilePic || '',
+            rating: prof.rating || 0,
+            tasksCompleted: prof.tasksCompleted || 0
           }
           setProfile(mergedProfile)
           setEditedProfile(mergedProfile)
@@ -126,12 +136,30 @@ export default function TechnicianProfile() {
   const handleInputChange = (field, value) => {
     setEditedProfile(prev => ({ ...prev, [field]: value }))
   }
+  
+  const handleProfessionRateChange = (profession, rate) => {
+    setEditedProfile(prev => ({
+      ...prev,
+      hourlyRate: {
+        ...prev.hourlyRate,
+        [profession]: rate
+      }
+    }))
+  }
 
   const handleProfessionToggle = (profession) => {
     setEditedProfile(prev => {
       const professions = prev.professions || []
       const exists = professions.includes(profession)
-      return { ...prev, professions: exists ? professions.filter(p => p !== profession) : [...professions, profession] }
+      const updated = exists ? professions.filter(p => p !== profession) : [...professions, profession]
+      const updatedRates = { ...prev.hourlyRate }
+      if (!exists) updatedRates[profession] = prev.hourlyRate?.[profession] || 0
+      else delete updatedRates[profession]
+      return {
+        ...prev,
+        professions: updated,
+        hourlyRate: updatedRates
+      }
     })
   }
 
@@ -168,12 +196,17 @@ export default function TechnicianProfile() {
     setSaving(true)
     try {
       const formData = new FormData()
-      for (const key of ['username', 'fname', 'lname', 'serviceLocation', 'currentLocation', 'experience', 'hourlyRate', 'responseTime']) {
+      const fieldsToAppend = ['username', 'fname', 'lname', 'serviceLocation', 'currentLocation', 'experience', 'responseTime']
+      
+      fieldsToAppend.forEach(key => {
         formData.append(key, editedProfile[key] || '')
-      }
+      })
+      
       formData.append('professions', JSON.stringify(editedProfile.professions || []))
       formData.append('availability', JSON.stringify(editedProfile.availability || {}))
       formData.append('specialties', JSON.stringify(editedProfile.specialties || []))
+      formData.append('hourlyRate', JSON.stringify(editedProfile.hourlyRate || {}))
+      
       if (selectedFile) formData.append('profilePic', selectedFile)
 
       const endpoint = forFirstTime
@@ -237,7 +270,7 @@ export default function TechnicianProfile() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden backdrop-blur-sm border border-white/20">
           {/* Header Section */}
           <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 px-8 py-12 text-center relative overflow-hidden">
@@ -276,7 +309,7 @@ export default function TechnicianProfile() {
                 {isEditing ? editedProfile?.fname : profile?.fname} {isEditing ? editedProfile?.lname : profile?.lname}
               </h1>
               <div className="text-indigo-100 text-lg mt-2 font-medium">
-                {(isEditing ? editedProfile?.professions : profile?.professions)?.length > 0 
+                {(isEditing ? editedProfile?.professions : profile?.professions)?.length > 0
                   ? (isEditing ? editedProfile.professions : profile.professions).join(' • ')
                   : 'Professional Technician'}
               </div>
@@ -298,23 +331,23 @@ export default function TechnicianProfile() {
                 <div className="text-sm text-gray-600 mt-1">Jobs Done</div>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-6 text-sm">
               <div className="flex items-center text-gray-600 p-4 bg-white rounded-xl shadow-sm">
                 <Clock className="w-5 h-5 mr-3 text-indigo-600" />
                 <span className="font-medium">{profile?.responseTime || 'Not specified'}</span>
               </div>
               <div className="flex items-center text-gray-600 p-4 bg-white rounded-xl shadow-sm">
-                <DollarSign className="w-5 h-5 mr-3 text-indigo-600" />
-                <span className="font-medium">${profile?.hourlyRate || '0'}/hour</span>
+                <p className="w-5 h-5 mr-3 text-indigo-600 font-semibold">Rate</p>
+                <span className="font-medium">Rs.{getDisplayRate(profile?.hourlyRate)}/hour</span>
               </div>
             </div>
           </div>
 
           {/* Form Content */}
-          <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="p-8 grid grid-cols-1 xl:grid-cols-2 gap-12">
             {/* Left Column */}
-            <div className="space-y-8">
+            <div className="space-y-10">
               {/* Personal Information */}
               <InputGroup icon={<User className="w-5 h-5 text-indigo-600" />} label="Full Name" isEditing={isEditing}>
                 {isEditing ? (
@@ -335,7 +368,7 @@ export default function TechnicianProfile() {
                     />
                   </div>
                 ) : (
-                  <p className="text-slate-900 font-medium text-lg">{profile?.fname} {profile?.lname}</p>
+                  <p className="text-slate-900 font-medium text-lg">{profile?.fname || ''} {profile?.lname || ''}</p>
                 )}
               </InputGroup>
 
@@ -368,7 +401,7 @@ export default function TechnicianProfile() {
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
-                    {profile?.professions?.map((profession, index) => (
+                    {(profile?.professions || []).map((profession, index) => (
                       <div
                         key={index}
                         className="bg-indigo-100 text-indigo-800 px-3 py-2 rounded-full text-sm font-medium"
@@ -394,22 +427,36 @@ export default function TechnicianProfile() {
                     <option value="10+ years">10+ years</option>
                   </select>
                 ) : (
-                  <p className="text-slate-900 font-medium">{profile?.experience}</p>
+                  <p className="text-slate-900 font-medium">{profile?.experience || 'Not specified'}</p>
                 )}
               </InputGroup>
 
-              <div className="grid grid-cols-2 gap-6">
-                <InputGroup icon={<DollarSign className="w-5 h-5 text-indigo-600" />} label="Hourly Rate ($)" isEditing={isEditing}>
+              <div className="grid grid-cols-2 gap-8">
+                <InputGroup icon={<DollarSign className="w-5 h-5 text-indigo-600" />} label="Hourly Rates" isEditing={isEditing}>
                   {isEditing ? (
-                    <input
-                      type="number"
-                      value={editedProfile?.hourlyRate || ''}
-                      onChange={(e) => handleInputChange('hourlyRate', e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                      placeholder="Rate"
-                    />
+                    <div className="space-y-3">
+                      {(editedProfile?.professions || []).map((profession) => (
+                        <div key={profession} className="flex items-center justify-between border-2 border-slate-200 rounded-xl px-4 py-3">
+                          <span className="font-medium text-slate-800 w-1/2">{profession}</span>
+                          <input
+                            type="number"
+                            value={editedProfile?.hourlyRate?.[profession] || ''}
+                            onChange={(e) => handleProfessionRateChange(profession, e.target.value)}
+                            className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            placeholder="Rs. Rate"
+                          />
+                        </div>
+                      ))}
+                    </div>
                   ) : (
-                    <p className="text-slate-900 font-medium">${profile?.hourlyRate}</p>
+                    <div className="grid grid-cols-1 gap-2">
+                      {(profile?.professions || []).map((profession) => (
+                        <div key={profession} className="flex items-center justify-between border-2 border-slate-200 rounded-xl px-4 py-3">
+                          <span className="font-medium text-slate-800">{profession}</span>
+                          <span className="text-indigo-600 font-semibold">Rs.{profile?.hourlyRate?.[profession] || 0}/hr</span>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </InputGroup>
 
@@ -426,14 +473,14 @@ export default function TechnicianProfile() {
                       <option value="Within 24 hours">Within 24 hours</option>
                     </select>
                   ) : (
-                    <p className="text-slate-900 font-medium">{profile?.responseTime}</p>
+                    <p className="text-slate-900 font-medium">{profile?.responseTime || 'Not specified'}</p>
                   )}
                 </InputGroup>
               </div>
             </div>
 
             {/* Right Column */}
-            <div className="space-y-8">
+            <div className="space-y-10">
               <InputGroup icon={<MapPin className="w-5 h-5 text-indigo-600" />} label="Service Location" isEditing={isEditing}>
                 {isEditing ? (
                   <input
@@ -444,7 +491,7 @@ export default function TechnicianProfile() {
                     placeholder="Enter service areas"
                   />
                 ) : (
-                  <p className="text-slate-900 font-medium">{profile?.serviceLocation}</p>
+                  <p className="text-slate-900 font-medium">{profile?.serviceLocation || 'Not specified'}</p>
                 )}
               </InputGroup>
 
@@ -458,7 +505,7 @@ export default function TechnicianProfile() {
                     placeholder="Enter current location"
                   />
                 ) : (
-                  <p className="text-slate-900 font-medium">{profile?.currentLocation}</p>
+                  <p className="text-slate-900 font-medium">{profile?.currentLocation || 'Not specified'}</p>
                 )}
               </InputGroup>
 
@@ -467,11 +514,10 @@ export default function TechnicianProfile() {
                 {isEditing ? (
                   <div className="space-y-3 border-2 border-slate-200 rounded-xl p-4 max-h-80 overflow-y-auto">
                     {daysOfWeek.map((day) => (
-                      <div key={day.key} className={`p-4 rounded-xl border-2 transition-all ${
-                        editedProfile?.availability?.[day.key]?.available 
-                          ? 'border-green-300 bg-green-50' 
-                          : 'border-gray-200 bg-gray-50'
-                      }`}>
+                      <div key={day.key} className={`p-4 rounded-xl border-2 transition-all ${editedProfile?.availability?.[day.key]?.available
+                        ? 'border-green-300 bg-green-50'
+                        : 'border-gray-200 bg-gray-50'
+                        }`}>
                         <div className="flex items-center justify-between mb-3">
                           <label className="flex items-center space-x-3 cursor-pointer">
                             <input
@@ -480,11 +526,10 @@ export default function TechnicianProfile() {
                               onChange={(e) => handleAvailabilityChange(day.key, 'available', e.target.checked)}
                               className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                             />
-                            <span className={`font-semibold ${
-                              editedProfile?.availability?.[day.key]?.available 
-                                ? 'text-green-800' 
-                                : 'text-gray-600'
-                            }`}>
+                            <span className={`font-semibold ${editedProfile?.availability?.[day.key]?.available
+                              ? 'text-green-800'
+                              : 'text-gray-600'
+                              }`}>
                               {day.label}
                             </span>
                           </label>
@@ -514,17 +559,15 @@ export default function TechnicianProfile() {
                     {daysOfWeek.map((day) => {
                       const dayAvailability = profile?.availability?.[day.key]
                       return (
-                        <div key={day.key} className={`p-3 rounded-lg border-2 ${
-                          dayAvailability?.available 
-                            ? 'border-green-200 bg-green-50' 
-                            : 'border-gray-200 bg-gray-50'
-                        }`}>
+                        <div key={day.key} className={`p-3 rounded-lg border-2 ${dayAvailability?.available
+                          ? 'border-green-200 bg-green-50'
+                          : 'border-gray-200 bg-gray-50'
+                          }`}>
                           <div className="flex items-center justify-between">
-                            <span className={`font-medium ${
-                              dayAvailability?.available 
-                                ? 'text-green-800' 
-                                : 'text-gray-500'
-                            }`}>
+                            <span className={`font-medium ${dayAvailability?.available
+                              ? 'text-green-800'
+                              : 'text-gray-500'
+                              }`}>
                               {day.short}
                             </span>
                             {dayAvailability?.available ? (
@@ -547,7 +590,7 @@ export default function TechnicianProfile() {
                 {isEditing ? (
                   <div className="space-y-3">
                     <div className="flex flex-wrap gap-2 min-h-[50px] p-3 border-2 border-slate-200 rounded-xl">
-                      {editedProfile?.specialties?.map((specialty, index) => (
+                      {(editedProfile?.specialties || []).map((specialty, index) => (
                         <div
                           key={index}
                           className="bg-indigo-100 text-indigo-800 px-3 py-2 rounded-full text-sm font-medium flex items-center"
@@ -576,7 +619,7 @@ export default function TechnicianProfile() {
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
-                    {profile?.specialties?.map((specialty, index) => (
+                    {(profile?.specialties || []).map((specialty, index) => (
                       <div
                         key={index}
                         className="bg-gray-100 text-gray-800 px-3 py-2 rounded-full text-sm font-medium"
@@ -591,7 +634,7 @@ export default function TechnicianProfile() {
           </div>
 
           {/* Action Buttons */}
-          <div className="p-8 bg-gradient-to-br from-slate-50 to-gray-50 space-y-4">
+          <div className="p-10 bg-gradient-to-br from-slate-50 to-gray-50 space-y-4">
             {isEditing ? (
               <div className="flex space-x-4">
                 <button
@@ -631,7 +674,6 @@ export default function TechnicianProfile() {
     </div>
   )
 }
-
 
 function InputGroup({ icon, label, isEditing, children }) {
   return (

@@ -22,9 +22,13 @@ const technicianSchema = new mongoose.Schema({
   currentLocation: String,
   specialties: [String],
   experience: String,
-  hourlyRate: Number,
+  hourlyRate: {
+    type: Map,
+    of: Number,
+    default: {}
+  },
   responseTime: String,
-  profilePic: {type:String,default:null},
+  profilePic: { type: String, default: null },
   rating: { type: Number, default: 0 },
   tasksCompleted: { type: Number, default: 0 },
   reviews: [String]
