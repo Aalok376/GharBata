@@ -157,3 +157,121 @@ export const getOtherTechnicianProfile = async (req, res) => {
     res.status(500).json({ msg: "Internal Server Error" })
   }
 }
+
+export const rateTechnician = async (req, res) => {
+  try {
+    const { technicianId, profession, rating } = req.body
+
+    if (!technicianId || !profession || typeof rating !== 'number') {
+      return res.status(400).json({ msg: 'Invalid input' })
+    }
+
+    const technician = await Technician.findById(technicianId)
+    if (!technician) return res.status(404).json({ msg: 'Technician not found' })
+
+    const current = technician.rating.get(profession) || { average: 0, totalRatings: 0, sumRatings: 0 }
+
+    const updated = {
+      totalRatings: current.totalRatings + 1,
+      sumRatings: current.sumRatings + rating,
+      average: (current.sumRatings + rating) / (current.totalRatings + 1)
+    }
+
+    technician.rating.set(profession, updated)
+    await technician.save()
+
+    res.status(200).json({
+      msg: 'Rating updated successfully',
+      updatedRating: updated
+    })
+  } catch (err) {
+    console.error('Rating update error:', err)
+    res.status(500).json({ msg: 'Internal Server Error' })
+  }
+}
+
+export const writeReview = async (req, res) => {
+  const userId=req.user.id
+  try {
+    const { technicianId, profession, reviewText } = req.body
+
+    if (!technicianId || !userId || !profession || !reviewText) {
+      return res.status(400).json({ msg: 'Missing required fields' })
+    }
+
+    const technician = await Technician.findById(technicianId)
+    if (!technician) return res.status(404).json({ msg: 'Technician not found' })
+
+    const newReview = {
+      userId,
+      profession,
+      reviewText,
+      createdAt: new Date()
+    }
+
+    const currentReviews = technician.reviews.get(profession) || []
+    technician.reviews.set(profession, [...currentReviews, newReview])
+
+    await technician.save()
+
+    res.status(200).json({ msg: 'Review added successfully', review: newReview })
+  } catch (err) {
+    console.error('Error writing review:', err)
+    res.status(500).json({ msg: 'Internal Server Error' })
+  }
+}
+
+export const getReviewsByProfession = async (req, res) => {
+  try {
+    const { technicianId, profession } = req.params
+
+    const technician = await Technician.findById(technicianId)
+      .populate({
+        path: `reviews.${profession}.userId`,
+        select: 'fname lname profilePic'
+      })
+
+    if (!technician) {
+      return res.status(404).json({ msg: 'Technician not found' })
+    }
+
+    const reviewsForProfession = technician.reviews.get(profession) || []
+
+    res.status(200).json({ reviews: reviewsForProfession })
+  } catch (err) {
+    console.error('Error fetching reviews:', err)
+    res.status(500).json({ msg: 'Internal Server Error' })
+  }
+}
+
+export const getOverallAverageRating = async (req, res) => {
+  try {
+    const { technicianId } = req.params
+
+    // Fetch technician with ratings (assumes ratings stored as average per profession)
+    const technician = await Technician.findById(technicianId)
+
+    if (!technician) {
+      return res.status(404).json({ msg: 'Technician not found' })
+    }
+
+    // Assuming `technician.averageRatingPerProfession` is an object like:
+    // { "Electrician": 4.5, "Plumber": 3.8, ... }
+    const ratingsObj = technician.averageRatingPerProfession || {}
+
+    const ratingValues = Object.values(ratingsObj).filter(r => typeof r === 'number' && !isNaN(r))
+
+    if (ratingValues.length === 0) {
+      return res.status(200).json({ overallAverageRating: 0 }) // No ratings yet
+    }
+
+    // Calculate average of averages
+    const overallAverage = ratingValues.reduce((sum, r) => sum + r, 0) / ratingValues.length
+
+    res.status(200).json({ overallAverageRating: overallAverage })
+  } catch (error) {
+    console.error('Error fetching overall average rating:', error)
+    res.status(500).json({ msg: 'Internal Server Error' })
+  }
+}
+

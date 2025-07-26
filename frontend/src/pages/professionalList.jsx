@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Star, MapPin, Clock, MessageCircle, Calendar, Filter, Search } from 'lucide-react'
+import { Star, MapPin, Clock, MessageCircle, Calendar, Filter, Search, X } from 'lucide-react'
 
 const TechnicianDisplayPage = () => {
   const { serviceName } = useParams()
@@ -10,6 +10,8 @@ const TechnicianDisplayPage = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [initialLoad, setInitialLoad] = useState(true)
   const [allTechnicians, setTechnicians] = useState([])
+  const [showReviewsOverlay, setShowReviewsOverlay] = useState(false)
+  const [selectedTechnicianReviews, setSelectedTechnicianReviews] = useState(null)
 
   useEffect(() => {
     if (!initialLoad && serviceName !== selectedService) {
@@ -72,6 +74,130 @@ const TechnicianDisplayPage = () => {
       return hourlyRateObj[service] || 0
     }
     return hourlyRateObj || 0
+  }
+
+  // Mock reviews data for testing - matching DB structure
+  const getMockReviews = (technicianName, selectedService) => {
+    // Mock reviews structured as Map with profession as key
+    const reviewsMap = {
+      'Plumber': [
+        {
+          userId: '507f1f77bcf86cd799439011',
+          profession: 'Plumber',
+          reviewText: "Excellent plumbing service! Fixed my kitchen sink leak quickly and professionally. Very satisfied with the work quality.",
+          createdAt: new Date('2024-01-15'),
+          // Mock user data that would come from populate
+          user: {
+            _id: '507f1f77bcf86cd799439011',
+            fname: 'Sarah',
+            lname: 'Johnson',
+            profilePic: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=150&h=150&fit=crop&crop=face'
+          }
+        },
+        {
+          userId: '507f1f77bcf86cd799439012',
+          profession: 'Plumber',
+          reviewText: "Great experience! " + technicianName + " was punctual and explained everything clearly. Fair pricing too.",
+          createdAt: new Date('2024-01-10'),
+          user: {
+            _id: '507f1f77bcf86cd799439012',
+            fname: 'Michael',
+            lname: 'Chen',
+            profilePic: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
+          }
+        }
+      ],
+      'Electrician': [
+        {
+          userId: '507f1f77bcf86cd799439013',
+          profession: 'Electrician',
+          reviewText: "Outstanding electrical work! Rewired my entire basement safely and efficiently. Highly recommend for any electrical needs.",
+          createdAt: new Date('2024-01-12'),
+          user: {
+            _id: '507f1f77bcf86cd799439013',
+            fname: 'Emily',
+            lname: 'Rodriguez',
+            profilePic: 'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=150&h=150&fit=crop&crop=face'
+          }
+        },
+        {
+          userId: '507f1f77bcf86cd799439014',
+          profession: 'Electrician',
+          reviewText: "Professional and knowledgeable. Fixed my electrical outlet issues and provided helpful tips for maintenance.",
+          createdAt: new Date('2024-01-08'),
+          user: {
+            _id: '507f1f77bcf86cd799439014',
+            fname: 'David',
+            lname: 'Thompson',
+            profilePic: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
+          }
+        }
+      ],
+      'HVAC-Technician': [
+        {
+          userId: '507f1f77bcf86cd799439015',
+          profession: 'HVAC-Technician',
+          reviewText: "Excellent HVAC service! Fixed my heating system just before winter. Very reliable and professional work.",
+          createdAt: new Date('2024-01-14'),
+          user: {
+            _id: '507f1f77bcf86cd799439015',
+            fname: 'Lisa',
+            lname: 'Wilson',
+            profilePic: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face'
+          }
+        }
+      ],
+      'Handyman': [
+        {
+          userId: '507f1f77bcf86cd799439016',
+          profession: 'Handyman',
+          reviewText: "Great handyman service! Fixed multiple issues around my house efficiently. Will definitely call again.",
+          createdAt: new Date('2024-01-11'),
+          user: {
+            _id: '507f1f77bcf86cd799439016',
+            fname: 'Robert',
+            lname: 'Brown',
+            profilePic: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face'
+          }
+        }
+      ]
+    }
+
+    // Return reviews for the selected service, or all reviews if service not found
+    return reviewsMap[selectedService] || reviewsMap['Plumber'] || []
+  }
+
+  // Mock rating data matching DB structure
+  const getMockRating = (selectedService) => {
+    const ratingsMap = {
+      'Plumber': { average: 4.5, totalRatings: 12, sumRatings: 54 },
+      'Electrician': { average: 4.8, totalRatings: 8, sumRatings: 38.4 },
+      'HVAC-Technician': { average: 4.2, totalRatings: 5, sumRatings: 21 },
+      'Handyman': { average: 4.6, totalRatings: 10, sumRatings: 46 }
+    }
+    
+    return ratingsMap[selectedService] || ratingsMap['Plumber'] || { average: 0, totalRatings: 0, sumRatings: 0 }
+  }
+
+  const handleShowReviews = (technician) => {
+    const mockReviews = getMockReviews(technician.name, selectedService)
+    const mockRating = getMockRating(selectedService)
+    
+    setSelectedTechnicianReviews({
+      technician: technician,
+      reviews: mockReviews,
+      rating: mockRating
+    })
+    setShowReviewsOverlay(true)
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden'
+  }
+
+  const handleCloseReviews = () => {
+    setShowReviewsOverlay(false)
+    setSelectedTechnicianReviews(null)
+    // Restore body scroll
+    document.body.style.overflow = 'unset'
   }
 
   const handleBookNow = (technician) => {
@@ -275,7 +401,7 @@ const TechnicianDisplayPage = () => {
                         <h3 className="text-xl font-semibold text-gray-900">{technician.name}</h3>
                         <div className="text-right">
                           <div className="text-lg font-bold text-blue-600">
-                            Rs.{currentHourlyRate || 'N/A'}/hr
+                            ${currentHourlyRate || 'N/A'}/hr
                           </div>
                         </div>
                       </div>
@@ -284,7 +410,12 @@ const TechnicianDisplayPage = () => {
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                           <span className="font-medium">{technician.rating}</span>
-                          <span className="text-gray-500">({technician.reviews.length} reviews)</span>
+                          <button 
+                            onClick={() => handleShowReviews(technician)}
+                            className="text-gray-500 hover:text-blue-600 transition-colors cursor-pointer"
+                          >
+                            ({technician.reviews.length} reviews)
+                          </button>
                         </div>
                         <span className="text-gray-300">•</span>
                         <span className="text-gray-600">{technician.experience} experience</span>
@@ -390,6 +521,96 @@ const TechnicianDisplayPage = () => {
           </div>
         )}
       </div>
+
+      {/* Reviews Overlay */}
+      {showReviewsOverlay && selectedTechnicianReviews && (
+        <div 
+          className="fixed inset-0 bg-[rgba(0,0,0,0.8)] flex items-center justify-center z-50 p-4 overflow-hidden"
+          onClick={handleCloseReviews}
+          style={{ 
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            overflowY: 'hidden'
+          }}
+        >
+          <div 
+            className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <img
+                  src={selectedTechnicianReviews.technician.profilePic || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"}
+                  alt={selectedTechnicianReviews.technician.name}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Reviews for {selectedTechnicianReviews.technician.name}
+                  </h2>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span className="font-medium">{selectedTechnicianReviews.rating.average}</span>
+                      <span className="text-gray-500">({selectedTechnicianReviews.rating.totalRatings} reviews)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleCloseReviews}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Reviews List */}
+            <div className="overflow-y-auto max-h-[60vh] p-6">
+              {selectedTechnicianReviews.reviews.length > 0 ? (
+                <div className="space-y-6">
+                  {selectedTechnicianReviews.reviews.map((review, index) => (
+                    <div key={review.userId || index} className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0">
+                      <div className="flex items-start gap-4">
+                        <img
+                          src={review.user?.profilePic || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"}
+                          alt={`${review.user?.fname} ${review.user?.lname}`}
+                          className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-medium text-gray-900">
+                              {review.user?.fname} {review.user?.lname}
+                            </h4>
+                            <span className="text-sm text-gray-500">
+                              {new Date(review.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                              {review.profession}
+                            </span>
+                          </div>
+                          <p className="text-gray-700 leading-relaxed">{review.reviewText}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-gray-400 text-4xl mb-2">💬</div>
+                  <p className="text-gray-500">No reviews yet for {selectedService}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
