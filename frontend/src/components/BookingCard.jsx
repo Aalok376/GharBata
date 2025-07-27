@@ -39,7 +39,7 @@ const BookingCard = ({
 
         {/* Service Info */}
         <div>
-          <p className="text-sm text-gray-500">Service</p>
+          <p className=" font-medium text-sm text-gray-500">Service</p>
           <p className="font-medium text-gray-900">{booking.service_id.name}</p>
           <p className="text-xs text-gray-500">{booking.service_id.category}</p>
         </div>
@@ -50,7 +50,7 @@ const BookingCard = ({
           <div className="flex items-center">
             <img src={booking.technician_id.profilePicture} alt={booking.technician_id.fname} className="w-9 h-9 rounded-full object-cover mr-3" />
             <div>
-              <p className="text-gray-800">{booking.technician_id.fname}</p>
+              <p className="font-medium text-gray-800 capitalize">{booking.technician_id.fname} {booking.technician_id.lname}</p>
               <div className="flex items-center text-yellow-400">
                 <Star className="h-4 w-4 fill-current" />
                 <span className="ml-1 text-xs text-gray-600">{booking.technician_id.rating}</span>
@@ -62,7 +62,7 @@ const BookingCard = ({
         {/* Client Info */}
         <div>
           <p className="text-sm text-gray-500">Client</p>
-          <p className="font-medium text-gray-900">{booking.client_id.fname}</p>
+          <p className="font-medium text-gray-900 capitalize">{booking.client_id.fname}  {booking.client_id.lname}</p>
           <div className="flex items-center text-gray-600 text-sm">
             <Phone className="h-4 w-4 mr-1" /> {booking.client_id.contactNumber}
           </div>

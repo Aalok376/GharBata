@@ -1,11 +1,6 @@
 import mongoose from 'mongoose'
 
 const bookingSchema = new mongoose.Schema({
-  booking_id: { 
-    type: String, 
-    required: true, 
-    unique: true 
-  },
   client_id: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User', 
@@ -16,18 +11,53 @@ const bookingSchema = new mongoose.Schema({
     ref: 'User', 
     required: true 
   },
-  service_id: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Service', 
-    required: true 
-  },
-  address: { 
-    type: String, 
+    fname: {
+    type: String,
     required: true,
     trim: true,
-     minlength: [10, 'Address must be at least 10 characters'],
-    maxlength: [200, 'Address cannot exceed 200 characters']
   },
+    lname: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+    email: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+    phoneNumber: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+    streetAddress: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  apartMent: {
+    type: String,
+    trim: true,
+  },
+    cityAddress: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+    service: {
+    type: String,
+    required: true
+  },
+    emergencyContactName: {
+    type: String,
+    trim: true
+  },
+    emergencyContactPhone: {
+    type: String,
+    trim: true
+  },
+  
   scheduled_date: { 
     type: Date, 
     required: true 
@@ -35,18 +65,27 @@ const bookingSchema = new mongoose.Schema({
   scheduled_time: { 
     type: String, 
     required: true,
-    match: [/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Time must be in HH:MM format']
   },
-  booking_service_price: { 
-    type: Number, 
-    required: true, 
-    min: [0, 'Booking service price cannot be negative'] 
+    specialInstructions: {
+    type: String,
+    trim: true
   },
-  negotiated_price: { 
-    type: Number, 
-    min: [0, 'Negotiated price cannot be negative'],
-    default: null
+   contactPreference: {
+    type: String,
+    trim: true,
+    enum: ['phone', 'email', 'text']
   },
+    latitude: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+ longitude: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  
   final_price: { 
     type: Number, 
     required: true, 
@@ -56,16 +95,11 @@ const bookingSchema = new mongoose.Schema({
     type: String, 
     required: true,
     enum:{
-     values: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'rescheduled','unpaid'],
+     values: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'rescheduled'],
     message: 'Invalid booking status'
   },
     default: 'pending'
   },
-     status: {
-    type: String,
-    enum :['PENDING', 'COMPLETE', 'FAILED', 'CANCELLED'],
-    default: 'PENDING'
-   },
   cancelled_at: { 
     type: Date 
   },

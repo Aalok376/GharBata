@@ -1,4 +1,5 @@
 import crypto from 'crypto'
+import { BOOKING_STATUS } from '../controllers/bookingController.js';
 //generate unique booking ID
 export const generateBookingId=()=>{
     const timestamp= Date.now()
@@ -38,12 +39,12 @@ export const canCancelBooking=(scheduledDate,scheduledTime)=>{
 //Format booking status for display
 export const formatBookingStatus=(status)=>{
     const statusMap={
-        'pending': 'Pending Confirmation',
-        'confirmed': 'Confirmed',
-        'in_progress': 'Service In Progress',
-        'completed': 'Completed',
-        'cancelled': "Cancelled",
-        'rescheduled': 'Rescheduled'
+         [BOOKING_STATUS.PENDING]: 'Pending Confirmation',
+    [BOOKING_STATUS.CONFIRMED]: 'Confirmed',
+    [BOOKING_STATUS.IN_PROGRESS]: 'Service In Progress',
+    [BOOKING_STATUS.COMPLETED]: 'Completed',
+    [BOOKING_STATUS.CANCELLED]: 'Cancelled',
+    [BOOKING_STATUS.RESCHEDULED]: 'Rescheduled'
     }
     return statusMap[status] || status
 }
@@ -56,7 +57,7 @@ export const checkTechnicianAvailability=async(technicianId,date,time,excludeBoo
         technician_id: technicianId,
         scheduled_date: new Date(date),
     scheduled_time: time,
-    booking_status:{ $in: ['confirmed','in_progress']}
+    booking_status:{ $in: [BOOKING_STATUS.CONFIRMED, BOOKING_STATUS.IN_PROGRESS]}
     }
     if(excludeBookingId){
         query._id={$ne: excludeBookingId}

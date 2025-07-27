@@ -1,7 +1,12 @@
 import Technician from "../models/technician.js";
 import User from "../models/user.js";
+import uploadParser from "../utils/multer.js";
 
 export const createTechnicianProfile = async (req, res) => {
+   uploadParser(req, res, async (err) => {
+    if (err) {
+      return res.status(400).json({ message: "Image upload failed", error: err.message });
+    }
     try {
         const userId = req.user.id;
 
@@ -36,7 +41,7 @@ export const createTechnicianProfile = async (req, res) => {
             hourlyRate: req.body.hourlyRate || 0,
             responseTime: req.body.responseTime || "Not specified",
             reviews: 0,
-            avatar: req.body.avatar || "", // Optional: can also pull from user if stored there
+              avatar: req.file ? req.file.path : "", // Cloudinary URL
         });
 
         await technician.save();
@@ -45,6 +50,7 @@ export const createTechnicianProfile = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+  });
 };
 
 export const getAllTechnicians = async (req, res) => {
@@ -58,6 +64,10 @@ export const getAllTechnicians = async (req, res) => {
 };
 
 export const updateTechnicianProfile = async (req, res) => {
+    uploadParser(req, res, async (err) => {
+         if (err) {
+      return res.status(400).json({ message: "Image upload failed", error: err.message });
+    }
   try {
     const userId = req.user.id;
 
@@ -83,7 +93,7 @@ export const updateTechnicianProfile = async (req, res) => {
       experience,
       hourlyRate,
       responseTime,
-      avatar,
+   
       isVerified,
       isActive
     } = req.body;
@@ -98,10 +108,13 @@ export const updateTechnicianProfile = async (req, res) => {
     if (experience !== undefined) technician.experience = experience;
     if (hourlyRate !== undefined) technician.hourlyRate = hourlyRate;
     if (responseTime !== undefined) technician.responseTime = responseTime;
-    if (avatar !== undefined) technician.avatar = avatar;
+
     if (isVerified !== undefined) technician.isVerified = isVerified;
     if (isActive !== undefined) technician.isActive = isActive;
 
+if (req.file) {
+        technician.avatar = req.file.path; // Cloudinary image URL
+      }
     const updatedTechnician = await technician.save();
 
     res.status(200).json({
@@ -112,4 +125,5 @@ export const updateTechnicianProfile = async (req, res) => {
     console.error("Update Technician Error:", error);
     res.status(500).json({ error: error.message });
   }
+});
 };

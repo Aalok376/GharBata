@@ -43,7 +43,7 @@ const BookingDashboard = () => {
                     limit: bookingsPerPage,
                 };
                 const response= await bookingService.getClientBookings(params);
-                setBookings(response.bookings || response.data || []);
+                setBookings(response.bookings || response.data.bookings || []);
                 setTotalPages(Math.ceil((response.total || response.count || 0) / bookingsPerPage));
                 setError(null);
             } catch (error) {

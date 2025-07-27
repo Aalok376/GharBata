@@ -10,7 +10,6 @@ import ClientPage from './pages/clientHomePage'
 import Technician_Signup from './pages/Technician_Signup'
 import Technician_Login from './pages/Technician_Login'
 import ProfessionalPage from './pages/professionalHomePage'
-import ClientPage from './pages/clientHomePage'
 import Overlay_Otp from './components/otpOverlay'
 import ChatPage from './pages/Chat_page'
 
@@ -28,7 +27,6 @@ import PaymentSuccess from './components/PaymentSuccess';
 import PaymentFailure from './components/PaymentFailure';
 import PaymentStatus from './components/PaymentStatus';
 
-import MapPickerModal from './components/MapPicker'
 
 
 function App(){
@@ -47,13 +45,12 @@ function App(){
         <Route path='/professionalProfilePage' element={<ProfessionalProfilePage/>}/> # This is the professional profile page
         <Route path='/technicians' element={<TechnicianDisplayPage/>}/> # This is the page where all professionals are displayed
         
-        <Route path="/bookings" element={<BookingDashboard />} /> # This page displays all the bookings for the client
+   
         <Route path='/booking-form' element={<BookingForm/>}/> # This is the booking form page where the client can book a service
         
         <Route path='/otp' element={<Overlay_Otp/>}/>
         <Route path='/chat/:bookingId' element={<ChatPage/>}/>
-        <Route path='/booking-form' element={<BookingForm/>}/>
-        <Route path='/technicians' element={<TechnicianDisplayPage/>}/>
+
         <Route path='/clientProfileSetupPage' element={<ClientProfilePage/>}/>
            <Route path="/my-bookings" element={<BookingDashboard />} />
            <Route path="/create-booking" element={<CreateBooking />} />

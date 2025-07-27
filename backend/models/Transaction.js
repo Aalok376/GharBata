@@ -9,6 +9,7 @@ const transactionSchema=new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref:'Booking',
         required:true
+        
     },
     client_id:{
         type: mongoose.Schema.Types.ObjectId,
