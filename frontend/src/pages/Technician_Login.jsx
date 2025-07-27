@@ -23,6 +23,7 @@ const Technician_Login = () => {
         setLoading(true) // Set loading after successful login
         const userId = rresult.user._id
         sessionStorage.setItem('userId', userId)
+        sessionStorage.setItem('username', username)
 
         // Check if user profile exists/is complete
         const navi = await fetch('http://localhost:5000/api/clients/getClientprofilestatus', {

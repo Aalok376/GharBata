@@ -19,12 +19,13 @@ export default function ClientProfile() {
     const fetchProfile = async () => {
       const formDataStr = sessionStorage.getItem('formData')
       const ownUserId = sessionStorage.getItem('userId')
+      const userrname=sessionStorage.getItem('username')
 
       // Check if the profile being viewed belongs to the current user
       const isOwn = ownUserId === userId
       setIsOwnProfile(isOwn)
 
-      let username = ''
+       let username = userrname||''
       let user = null
 
       if (formDataStr) {

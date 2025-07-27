@@ -23,6 +23,7 @@ const ClientLogin = () => {
       if (rresult.success) {
         const userId = rresult.user._id
         sessionStorage.setItem('userId', userId)
+        sessionStorage.setItem('username', username)
 
         const navi = await fetch('http://localhost:5000/api/clients/getClientprofilestatus', {
           method: 'POST',
