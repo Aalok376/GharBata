@@ -740,26 +740,49 @@ export default function TechnicianProfile() {
           )}
 
           {/* Message for viewing other's profile */}
-          {!isOwnProfile && (
-            <div className="p-10 bg-gradient-to-br from-slate-50 to-gray-50 text-center">
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-                <div className="text-blue-600 font-medium">
-                  You are viewing {profile?.fname || 'this'} {profile?.lname || 'technician'}'s profile
-                </div>
-                <div className="text-blue-500 text-sm mt-2">
-                  Contact them directly to request services or get more information
-                </div>
-
-              </div>
-                <button
-      type="button"
-      onClick={() => navigate(`/chats/${profile?._id}`)}
-      className="inline-flex items-center px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-75 transition"
-    >
-      Message
-    </button>
-            </div>
-          )}
+         {!isOwnProfile && (
+  <div className="relative p-12 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden">
+    {/* Decorative background elements */}
+    <div className="absolute top-0 left-0 w-32 h-32 bg-blue-100 rounded-full -translate-x-16 -translate-y-16 opacity-50"></div>
+    <div className="absolute bottom-0 right-0 w-24 h-24 bg-purple-100 rounded-full translate-x-12 translate-y-12 opacity-50"></div>
+    
+    <div className="relative max-w-md mx-auto">
+      {/* Profile viewing card */}
+      <div className="bg-white/80 backdrop-blur-sm border border-white/50 rounded-2xl p-8 shadow-xl shadow-blue-100/50 mb-8">
+        <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mx-auto mb-4">
+          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </div>
+        
+        <div className="text-gray-800 font-semibold text-lg mb-2">
+          Viewing {profile?.fname || 'this'} {profile?.lname || 'technician'}'s profile
+        </div>
+        <div className="text-gray-600 text-sm leading-relaxed">
+          Ready to connect? Send a message to discuss your project needs and get professional assistance.
+        </div>
+      </div>
+      
+      {/* Message button */}
+      <div className="text-center">
+        <button
+          type="button"
+          onClick={() => navigate(`/chats/${userId}`)}
+          className="group relative inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-2xl shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transform hover:scale-105 transition-all duration-300 ease-out"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <svg className="w-5 h-5 mr-3 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          <span className="relative z-10">Send Message</span>
+          <svg className="w-4 h-4 ml-2 relative z-10 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+)}
         </div>
       </div>
     </div>
