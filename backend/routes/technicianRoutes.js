@@ -11,6 +11,6 @@ const router= express.Router()
 router.post('/createTechnicians',verifyToken,uploadParser,createTechnicianProfile)
 router.post('/updateTechnicians',verifyToken,uploadParser,updateTechniciansProfile)
 router.get('/getTechnicians',verifyToken,getTechnicianProfile)
-router.get('/filteredTechnicians',getAllTechnicians)
+router.get('/filteredTechnicians',verifyToken,getAllTechnicians)
 
 export default router

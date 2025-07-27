@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { User, Phone, Mail, Save, Edit3, X, Camera, MapPin } from 'lucide-react'
+import { useParams, useNavigate } from 'react-router-dom'
 
 export default function ClientProfile() {
   const [profile, setProfile] = useState({})
@@ -9,13 +10,21 @@ export default function ClientProfile() {
   const [saving, setSaving] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
+  const [isOwnProfile, setIsOwnProfile] = useState(false) // New state to track if it's user's own profile
+
+  const { userId } = useParams()
+  const navigate = useNavigate() // Initialize navigate hook
 
   useEffect(() => {
     const fetchProfile = async () => {
       const formDataStr = sessionStorage.getItem('formData')
-      const uusername = sessionStorage.getItem('username')
+      const ownUserId = sessionStorage.getItem('userId')
 
-      let username = uusername || '' 
+      // Check if the profile being viewed belongs to the current user
+      const isOwn = ownUserId === userId
+      setIsOwnProfile(isOwn)
+
+      let username = ''
       let user = null
 
       if (formDataStr) {
@@ -30,65 +39,72 @@ export default function ClientProfile() {
       }
 
       console.log('Resolved username:', username)
-      const fname = user?.fname||''
-      const lname = user?.lname||''
+      console.log('Is own profile:', isOwn)
 
-      const statusResponse = await fetch('http://localhost:5000/api/clients/getClientprofilestatus', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ username }),
-      })
+      const fname = user?.fname || ''
+      const lname = user?.lname || ''
 
-      const statusData = await statusResponse.json()
-      const isFirstTime = statusResponse.status === 200 && statusData?.msg?.includes('has not been created')
-
-      setForFirstTime(isFirstTime)
-      setIsEditing(isFirstTime)
-
-      if (isFirstTime) {
-        const prof = {
-          username,
-          fname,
-          lname,
-        }
-        setProfile(prof)
-        setEditedProfile({
-          username: prof.username || '',
-          fname: prof.fname || '',
-          lname: prof.lname || '',
-          contactNumber: '',
-          address: '',
-          profilePic: '',
-        })
-      } else {
-        const profileResponse = await fetch('http://localhost:5000/api/clients/getClientProfile', {
-          method: 'GET',
+      try {
+        const statusResponse = await fetch('http://localhost:5000/api/clients/getClientprofilestatus', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
+          body: JSON.stringify({ userId }),
         })
 
-        let profileData = await profileResponse.json()
-        profileData = Array.isArray(profileData) ? profileData : [profileData]
-        const prof = profileData[0].user || {}
+        const statusData = await statusResponse.json()
+        const isFirstTime = statusResponse.status === 200 && statusData?.msg?.includes('has not been created')
 
-        const profData = prof.client_id
+        setForFirstTime(isFirstTime)
+        // Only set editing mode if it's the user's own profile AND it's first time
+        setIsEditing(isFirstTime && isOwn)
 
-        const mergedProfile = {
-          fname: profData.fname,
-          lname: profData.lname,
-          username: profData.username,
-          address: prof.address,
-          profilePic: prof.profilePic,
-          contactNumber: prof.contactNumber,
-          _id: prof._id
+        if (isFirstTime) {
+          const prof = {
+            username,
+            fname,
+            lname,
+          }
+          setProfile(prof)
+          setEditedProfile({
+            username: prof.username || '',
+            fname: prof.fname || '',
+            lname: prof.lname || '',
+            contactNumber: '',
+            address: '',
+            profilePic: '',
+          })
+        } else {
+          const profileResponse = await fetch('http://localhost:5000/api/clients/getClientProfile', {
+            method: 'GET',
+            credentials: 'include',
+          })
+
+          let profileData = await profileResponse.json()
+          profileData = Array.isArray(profileData) ? profileData : [profileData]
+          const prof = profileData[0].user || {}
+
+          const profData = prof.client_id
+
+          const mergedProfile = {
+            fname: profData.fname,
+            lname: profData.lname,
+            username: profData.username,
+            address: prof.address,
+            profilePic: prof.profilePic,
+            contactNumber: prof.contactNumber,
+            _id: prof._id
+          }
+          setProfile(mergedProfile)
+          setEditedProfile(mergedProfile)
         }
-        setProfile(mergedProfile)
-        setEditedProfile(mergedProfile)
+      } catch (error) {
+        console.error('Fetch error:', error)
       }
     }
 
     fetchProfile()
-  }, [])
+  }, [userId]) // Added userId as dependency
 
   const handleInputChange = (field, value) => {
     setEditedProfile(prev => ({
@@ -98,6 +114,9 @@ export default function ClientProfile() {
   }
 
   const handleSave = async () => {
+    // Only allow saving if it's the user's own profile
+    if (!isOwnProfile) return
+
     setSaving(true)
     try {
       const formData = new FormData()
@@ -132,10 +151,20 @@ export default function ClientProfile() {
         setProfile(updatedProfile)
         setEditedProfile(updatedProfile)
         setIsEditing(false)
+        
+        // Check if this was the first time saving
+        const wasFirstTime = forFirstTime
         setForFirstTime(false)
         setShowSuccess(true)
 
         sessionStorage.removeItem('formData')
+
+        // Navigate to dashboard only if it was the first time save
+        if (wasFirstTime) {
+          setTimeout(() => {
+            navigate('/dashboard')
+          }, 1500) // Small delay to show success message before navigation
+        }
       } else {
         console.error('Failed to save profile')
       }
@@ -144,7 +173,10 @@ export default function ClientProfile() {
     }
 
     setSaving(false)
-    setTimeout(() => setShowSuccess(false), 3000)
+    // Only auto-hide success message if not first time (since we're navigating away)
+    if (!forFirstTime) {
+      setTimeout(() => setShowSuccess(false), 3000)
+    }
   }
 
   const handleCancel = () => {
@@ -165,14 +197,26 @@ export default function ClientProfile() {
     }
   }
 
+  // Only allow editing if it's the user's own profile
+  const handleEditClick = () => {
+    if (isOwnProfile) {
+      setIsEditing(true)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8 px-4">
-      <div className={`fixed top-4 right-4 z-50 transform transition-all duration-300 ${showSuccess ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
-        <div className="bg-emerald-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center space-x-2">
-          <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-          <span>Profile updated successfully!</span>
+      {/* Success Notification - Only show for own profile */}
+      {isOwnProfile && (
+        <div className={`fixed top-4 right-4 z-50 transform transition-all duration-300 ${showSuccess ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
+          <div className="bg-emerald-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center space-x-2">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <span>
+              {forFirstTime ? 'Profile created successfully! Redirecting...' : 'Profile updated successfully!'}
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="max-w-md mx-auto">
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden backdrop-blur-sm border border-white/20">
@@ -192,10 +236,12 @@ export default function ClientProfile() {
                   />
                 ) : (
                   <div className="w-28 h-28 rounded-full border-4 border-white bg-gray-300 shadow-lg flex items-center justify-center text-gray-500 text-xl font-semibold">
-                    No Image
+                    {(isEditing ? editedProfile?.fname : profile?.fname)?.charAt(0) || 'C'}
+                    {(isEditing ? editedProfile?.lname : profile?.lname)?.charAt(0) || 'P'}
                   </div>
                 )}
-                {isEditing && (
+                {/* Only show camera upload for own profile when editing */}
+                {isEditing && isOwnProfile && (
                   <label className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
                     <Camera className="w-6 h-6 text-white" />
                     <input
@@ -211,12 +257,18 @@ export default function ClientProfile() {
                 {isEditing ? editedProfile?.fname : profile?.fname} {isEditing ? editedProfile?.lname : profile?.lname}
               </h1>
               <p className="text-indigo-100 text-sm mt-1 font-medium">Premium Client</p>
+              {/* Show profile ownership indicator */}
+              {!isOwnProfile && (
+                <div className="mt-2 inline-block bg-white/20 text-white px-3 py-1 rounded-full text-xs">
+                  Viewing Profile
+                </div>
+              )}
             </div>
           </div>
 
           <div className="p-6 space-y-6">
-            <InputGroup icon={<User />} label="Full Name" isEditing={isEditing}>
-              {isEditing ? (
+            <InputGroup icon={<User />} label="Full Name" isEditing={isEditing && isOwnProfile}>
+              {isEditing && isOwnProfile ? (
                 <>
                   <input
                     type="text"
@@ -238,7 +290,7 @@ export default function ClientProfile() {
               )}
             </InputGroup>
 
-            <InputGroup icon={<Mail />} label="Email Address" isEditing={isEditing}>
+            <InputGroup icon={<Mail />} label="Email Address" isEditing={isEditing && isOwnProfile}>
               <input
                 type="email"
                 value={editedProfile?.username || ''}
@@ -247,8 +299,8 @@ export default function ClientProfile() {
               />
             </InputGroup>
 
-            <InputGroup icon={<Phone />} label="Phone Number" isEditing={isEditing}>
-              {isEditing ? (
+            <InputGroup icon={<Phone />} label="Phone Number" isEditing={isEditing && isOwnProfile}>
+              {isEditing && isOwnProfile ? (
                 <input
                   type="tel"
                   value={editedProfile?.contactNumber || ''}
@@ -261,8 +313,8 @@ export default function ClientProfile() {
               )}
             </InputGroup>
 
-            <InputGroup icon={<MapPin />} label="Address" isEditing={isEditing}>
-              {isEditing ? (
+            <InputGroup icon={<MapPin />} label="Address" isEditing={isEditing && isOwnProfile}>
+              {isEditing && isOwnProfile ? (
                 <textarea
                   value={editedProfile?.address || ''}
                   onChange={(e) => handleInputChange('address', e.target.value)}
@@ -276,41 +328,58 @@ export default function ClientProfile() {
             </InputGroup>
           </div>
 
-          <div className="p-6 bg-gradient-to-br from-slate-50 to-gray-50 space-y-3">
-            {isEditing ? (
-              <div className="flex space-x-3">
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex-1 flex items-center justify-center space-x-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-4 px-6 rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg font-semibold"
-                >
-                  {saving ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <Save className="w-5 h-5" />
-                  )}
-                  <span>{saving ? 'Saving...' : 'Save Changes'}</span>
-                </button>
-                {!forFirstTime && (
+          {/* Action Buttons - Only show for own profile */}
+          {isOwnProfile && (
+            <div className="p-6 bg-gradient-to-br from-slate-50 to-gray-50 space-y-3">
+              {isEditing ? (
+                <div className="flex space-x-3">
                   <button
-                    onClick={handleCancel}
-                    className="flex-1 flex items-center justify-center space-x-2 bg-slate-200 text-slate-700 py-4 px-6 rounded-xl hover:bg-slate-300 transition-all duration-200 font-semibold"
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="flex-1 flex items-center justify-center space-x-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-4 px-6 rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg font-semibold"
                   >
-                    <X className="w-5 h-5" />
-                    <span>Cancel</span>
+                    {saving ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Save className="w-5 h-5" />
+                    )}
+                    <span>{saving ? 'Saving...' : 'Save Changes'}</span>
                   </button>
-                )}
+                  {!forFirstTime && (
+                    <button
+                      onClick={handleCancel}
+                      className="flex-1 flex items-center justify-center space-x-2 bg-slate-200 text-slate-700 py-4 px-6 rounded-xl hover:bg-slate-300 transition-all duration-200 font-semibold"
+                    >
+                      <X className="w-5 h-5" />
+                      <span>Cancel</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={handleEditClick}
+                  className="w-full flex items-center justify-center space-x-2 bg-white border-2 border-slate-200 text-slate-700 py-4 px-6 rounded-xl hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-200 font-semibold shadow-sm hover:shadow-md"
+                >
+                  <Edit3 className="w-5 h-5" />
+                  <span>Edit Profile</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Message for viewing other's profile */}
+          {!isOwnProfile && (
+            <div className="p-6 bg-gradient-to-br from-slate-50 to-gray-50 text-center">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="text-blue-600 font-medium text-sm">
+                  You are viewing {profile?.fname || 'this'} {profile?.lname || 'client'}'s profile
+                </div>
+                <div className="text-blue-500 text-xs mt-1">
+                  Contact them directly for communication
+                </div>
               </div>
-            ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="w-full flex items-center justify-center space-x-2 bg-white border-2 border-slate-200 text-slate-700 py-4 px-6 rounded-xl hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-200 font-semibold shadow-sm hover:shadow-md"
-              >
-                <Edit3 className="w-5 h-5" />
-                <span>Edit Profile</span>
-              </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

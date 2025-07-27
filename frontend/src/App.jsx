@@ -30,11 +30,11 @@ function App(){
         <Route path='/technician_signup' element={<Technician_Signup/>}/>
         <Route path='/otp' element={<Overlay_Otp/>}/>
         <Route path='/professional' element={<ProfessionalPage/>}/>
-        <Route path='/professionalProfilePage' element={<ProfessionalProfilePage/>}/>
+        <Route path='/professionalProfilePage/:userId' element={<ProfessionalProfilePage/>}/>
         <Route path='/chat/:bookingId' element={<ChatPage/>}/>
         <Route path='/booking-form' element={<BookingForm/>}/>
         <Route path="/dashboard/bookservice/:serviceName" element={<TechnicianDisplayPage/>} />
-        <Route path='/clientProfileSetupPage' element={<ClientProfilePage/>}/>
+        <Route path='/clientProfileSetupPage/:userId' element={<ClientProfilePage/>}/>
         <Route path="/dashboard/booking/:service/:technicianId" element={<BookingForm/>} />
       </Routes>
     

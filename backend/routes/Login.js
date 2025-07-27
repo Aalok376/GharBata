@@ -8,9 +8,6 @@ const router = express.Router()
 router.post('/emailVerification', verificationOtp)
 router.post('/register', verifyOtp, Register)
 router.post('/login', login)
-router.get('/verifyToken',verifyToken,(req, res) => {
-  res.status(200).json({ success: true, msg: "Token is valid", user: req.user })
-})
 router.get('/logoutuser', verifyToken, Logout)
 router.delete('/delete&user$-account', verifyToken, deleteUser)
 

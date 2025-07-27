@@ -47,11 +47,11 @@ export const createClientProfile = async (req, res) => {
 }
 
 export const isClientProfileComplete = async (req, res) => {
-  const { username } = req.body
+  const { userId } = req.body
 
   try {
 
-    const userProfile = await User.findOne({ username })
+    const userProfile = await User.findById(userId)
 
     if (!userProfile) {
       return res.status(400).json({ success: false, msg: 'User not found' })

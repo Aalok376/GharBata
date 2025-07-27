@@ -175,14 +175,14 @@ const TechnicianDisplayPage = () => {
       'HVAC-Technician': { average: 4.2, totalRatings: 5, sumRatings: 21 },
       'Handyman': { average: 4.6, totalRatings: 10, sumRatings: 46 }
     }
-    
+
     return ratingsMap[selectedService] || ratingsMap['Plumber'] || { average: 0, totalRatings: 0, sumRatings: 0 }
   }
 
   const handleShowReviews = (technician) => {
     const mockReviews = getMockReviews(technician.name, selectedService)
     const mockRating = getMockRating(selectedService)
-    
+
     setSelectedTechnicianReviews({
       technician: technician,
       reviews: mockReviews,
@@ -398,7 +398,14 @@ const TechnicianDisplayPage = () => {
 
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-semibold text-gray-900">{technician.name}</h3>
+                        <h3
+                          onClick={() => navigate(`/professionalProfilePage/${technician.userId}`)}
+                          className="text-xl font-semibold text-gray-900 cursor-pointer hover:text-blue-600 hover:underline transition-all"
+                        >
+                          {technician.name}
+                        </h3>
+
+
                         <div className="text-right">
                           <div className="text-lg font-bold text-blue-600">
                             ${currentHourlyRate || 'N/A'}/hr
@@ -409,14 +416,21 @@ const TechnicianDisplayPage = () => {
                       <div className="flex items-center gap-2 mt-1">
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="font-medium">{technician.rating}</span>
-                          <button 
+                          <span className="font-medium">
+                            {typeof technician.rating === 'number'
+                              ? technician.rating.toFixed(1)
+                              : typeof technician.rating?.average === 'number'
+                                ? technician.rating.average.toFixed(1)
+                                : '0.0'}
+                          </span>
+                          <button
                             onClick={() => handleShowReviews(technician)}
                             className="text-gray-500 hover:text-blue-600 transition-colors cursor-pointer"
                           >
-                            ({technician.reviews.length} reviews)
+                            ({Array.isArray(technician.reviews) ? technician.reviews.length : 0} reviews)
                           </button>
                         </div>
+
                         <span className="text-gray-300">•</span>
                         <span className="text-gray-600">{technician.experience} experience</span>
                       </div>
@@ -524,10 +538,10 @@ const TechnicianDisplayPage = () => {
 
       {/* Reviews Overlay */}
       {showReviewsOverlay && selectedTechnicianReviews && (
-        <div 
+        <div
           className="fixed inset-0 bg-[rgba(0,0,0,0.8)] flex items-center justify-center z-50 p-4 overflow-hidden"
           onClick={handleCloseReviews}
-          style={{ 
+          style={{
             position: 'fixed',
             top: 0,
             left: 0,
@@ -536,7 +550,7 @@ const TechnicianDisplayPage = () => {
             overflowY: 'hidden'
           }}
         >
-          <div 
+          <div
             className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >

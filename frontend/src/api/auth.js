@@ -53,7 +53,7 @@ export const Llogin = async ({ username, password ,userType}) => {
       },
       body: JSON.stringify({ username, password,userType })
     })
-    const result = response.json()
+    const result = await response.json()
     return result
 
   } catch (error) {

@@ -6,23 +6,52 @@ import { useNavigate } from "react-router-dom"
 const Overlay_Otp = () => {
 
     const [Username, setUsername] = useState()
-    const [Timer, setTimer] = useState()
+    const [Timer, setTimer] = useState(0)
     const [resendTrigger, setResendTrigger] = useState(0)
     const [isDisabled, setIsDisabled] = useState(true)
     const [isVerifyBtnDisabled, setIsVerifyBtnDisabled] = useState(true)
     const [error, setError] = useState()
 
     useEffect(() => {
-        setTimer(120)
+        const timerKey = 'otp_timer_end'
+        const triggerKey = 'otp_resend_trigger'
+        
+        // Get stored end time and trigger count
+        const storedEndTime = sessionStorage.getItem(timerKey)
+        const storedTrigger = sessionStorage.getItem(triggerKey)
+        
+        let endTime
+        
+        if (storedEndTime && storedTrigger && parseInt(storedTrigger) === resendTrigger) {
+            // Use existing timer if it's for the same resend attempt
+            endTime = parseInt(storedEndTime)
+        } else {
+            // Create new timer (first load or new resend attempt)
+            endTime = Date.now() + (120 * 1000) // 2 minutes from now
+            sessionStorage.setItem(timerKey, endTime.toString())
+            sessionStorage.setItem(triggerKey, resendTrigger.toString())
+        }
+        
+        const updateTimer = () => {
+            const remainingTime = Math.max(0, Math.ceil((endTime - Date.now()) / 1000))
+            setTimer(remainingTime)
+            
+            if (remainingTime <= 0) {
+                setIsDisabled(false)
+                return false // Stop the interval
+            }
+            return true // Continue the interval
+        }
+        
+        // Set initial timer value
+        if (!updateTimer()) {
+            return // Timer already expired
+        }
+        
         const interval = setInterval(() => {
-            setTimer(prev => {
-                if (prev <= 1) {
-                    clearInterval(interval)
-                    setIsDisabled(false)
-                    return 0
-                }
-                return prev - 1
-            })
+            if (!updateTimer()) {
+                clearInterval(interval)
+            }
         }, 1000)
 
         return () => clearInterval(interval)
@@ -72,16 +101,19 @@ const Overlay_Otp = () => {
     const RegisterUser = async (e) => {
         e.preventDefault()
 
-
         setIsVerifyBtnDisabled(true)
 
-        const userInputOtp=otpData.digit1+otpData.digit2+otpData.digit3+otpData.digit4+otpData.digit5+otpData.digit6
+        const userInputOtp = otpData.digit1 + otpData.digit2 + otpData.digit3 + otpData.digit4 + otpData.digit5 + otpData.digit6
         setUsername(username)
 
         try {
-            const rresult = await register({ username, password, fname, lname, userType,userInputOtp })
+            const rresult = await register({ username, password, fname, lname, userType, userInputOtp })
 
             if (rresult.success) {
+                // Clear timer data on successful registration
+                sessionStorage.removeItem('otp_timer_end')
+                sessionStorage.removeItem('otp_resend_trigger')
+                
                 toast.success('User Registered successfully. Please login to continue')
                 if (userType === 'client') {
                     navigate('/client_login')
@@ -90,25 +122,63 @@ const Overlay_Otp = () => {
                     navigate('/technician_login')
                 }
             }
-            else{
+            else {
                 setIsVerifyBtnDisabled(false)
                 setError(rresult.msg)
+                
+                // Enable resend button if OTP is invalid
+                if (rresult.msg && rresult.msg.toLowerCase().includes('invalid')) {
+                    setIsDisabled(false)
+                }
             }
         } catch (error) {
             console.log(error)
+            setIsVerifyBtnDisabled(false)
+            // Also enable resend button on catch error
+            setIsDisabled(false)
         }
     }
+
+    const handleResend = async () => {
+        setIsDisabled(true)
+        setResendTrigger(prev => prev + 1)
+        setError('') // Clear any existing error when resending
+        
+        // Clear OTP inputs
+        setOtpData({
+            digit1: '',
+            digit2: '',
+            digit3: '',
+            digit4: '',
+            digit5: '',
+            digit6: '',
+        })
+        
+        // Focus on first input
+        if (inputRef.current[0]) {
+            inputRef.current[0].focus()
+        }
+        
+        await SignUp({ username, password, fname, lname })
+    }
+
+    // Cleanup timer data when component unmounts or user closes modal
+    const handleClose = () => {
+        sessionStorage.removeItem('otp_timer_end')
+        sessionStorage.removeItem('otp_resend_trigger')
+        
+        if (userType === 'client') {
+            navigate('/client_login')
+        }
+        else if (userType === 'technician') {
+            navigate('/technician_login')
+        }
+    }
+
     return (<>
         <div className="otp-overlay" id="otpOverlay">
             <div className="otp-modal" id="otpModal">
-                <button className="otp-close" onClick={() => {
-                    if (userType === 'client') {
-                        navigate('/client_login')
-                    }
-                    else if (userType === 'technician') {
-                        navigate('/technician_login')
-                    }
-                }}>&times;</button>
+                <button className="otp-close" onClick={handleClose}>&times;</button>
 
                 <div className="otp-header">
                     <div className="otp-icon">
@@ -124,9 +194,20 @@ const Overlay_Otp = () => {
 
                 <div className="otp-inputs">
                     {Object.keys(otpData).map((key, index) => (
-                        <input key={key} type="text" className="otp-input" maxLength="1" inputMode="numeric" pattern="[0-9]" name={key} value={otpData.key} onChange={(e) => handleOtpchange(e, index)} onKeyDown={(e) => FuncKeyDown(e, index)} ref={(el) => { inputRef.current[index] = el }}></input>
+                        <input 
+                            key={key} 
+                            type="text" 
+                            className="otp-input" 
+                            maxLength="1" 
+                            inputMode="numeric" 
+                            pattern="[0-9]" 
+                            name={key} 
+                            value={otpData[key]} 
+                            onChange={(e) => handleOtpchange(e, index)} 
+                            onKeyDown={(e) => FuncKeyDown(e, index)} 
+                            ref={(el) => { inputRef.current[index] = el }}
+                        />
                     ))}
-
                 </div>
 
                 <div className="otp-timer">
@@ -136,10 +217,14 @@ const Overlay_Otp = () => {
 
                 <div className="resend-section">
                     <div className="resend-text">Didn't receive the code?</div>
-                    <button className="resend-btn" disabled={isDisabled} id="resendBtn" onClick={async () => { 
-                        setIsDisabled(true)
-                        setResendTrigger(prev=>prev+1)
-                        await SignUp({ username, password, fname, lname }) }}>Resend Code</button>
+                    <button 
+                        className="resend-btn" 
+                        disabled={isDisabled} 
+                        id="resendBtn" 
+                        onClick={handleResend}
+                    >
+                        Resend Code
+                    </button>
                 </div>
 
                 <button className="verify-btn" id="verifyBtn" onClick={RegisterUser} disabled={isVerifyBtnDisabled}>
@@ -147,11 +232,11 @@ const Overlay_Otp = () => {
                     <span className="verify-btn-text">Verify Code</span>
                 </button>
 
-                 {error && (
-                        <p id="error-message" style={{ color: "red" }}>
-                            {error}
-                        </p>
-                    )}
+                {error && (
+                    <p id="error-message" style={{ color: "red" }}>
+                        {error}
+                    </p>
+                )}
             </div>
         </div>
 

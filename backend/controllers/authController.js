@@ -48,9 +48,11 @@ export const Register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { username, password, userType } = req.body
-    console.log(password)
+    console.log(password, username)
 
     const user = await User.findOne({ username })
+
+    console.log(user)
 
     if (!user) {
       return res.status(401).json({ success: false, msg: 'Invalid credentials: User not found.' })
@@ -59,8 +61,11 @@ export const login = async (req, res) => {
     if (user.userType !== userType) {
       return res.status(401).json({ success: false, msg: 'Invalid credentials: User not found.' })
     }
+    
     const isMatch = await bcrypt.compare(password, user.password)
+    console.log('Password match:', isMatch)
     if (!isMatch) {
+      console.log('Incorrect password')
       return res.status(401).json({ success: false, msg: 'Invalid credentials: Incorrect password.' })
     }
 
@@ -81,7 +86,7 @@ export const login = async (req, res) => {
       sameSite: 'Lax'
     })
 
-    return res.status(200).json({ success: true, msg: "Logged in successfully" })
+    return res.status(200).json({ user, success: true, msg: "Logged in successfully" })
   } catch (error) {
     console.log(error)
     return res.status(500).json({ success: false, msg: 'Internal server error' })

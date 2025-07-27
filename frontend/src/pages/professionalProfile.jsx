@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { User, Phone, Mail, Save, Edit3, X, Camera, MapPin, Wrench, Star, Clock, DollarSign } from 'lucide-react'
+import { useParams, useNavigate } from 'react-router-dom'
 
 export default function TechnicianProfile() {
   const [profile, setProfile] = useState({})
@@ -9,6 +10,10 @@ export default function TechnicianProfile() {
   const [saving, setSaving] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
+  const [isOwnProfile, setIsOwnProfile] = useState(false)
+
+  const { userId } = useParams()
+  const navigate = useNavigate()
 
   const professionOptions = [
     'Plumber', 'Electrician', 'HVAC-Technician', 'Handyman', 'Cleaner', 'Gardener',
@@ -41,10 +46,14 @@ export default function TechnicianProfile() {
   useEffect(() => {
     const fetchProfile = async () => {
       const formDataStr = sessionStorage.getItem('formData')
-      const uusername = sessionStorage.getItem('username')
+      const ownUserId = sessionStorage.getItem('userId')
 
-      let username = uusername || ''
+      // Check if the profile being viewed belongs to the current user
+      const isOwn = ownUserId === userId
+      setIsOwnProfile(isOwn)
+
       let user = null
+      let username = ''
 
       if (formDataStr) {
         try {
@@ -58,6 +67,7 @@ export default function TechnicianProfile() {
       }
 
       console.log('Resolved username:', username)
+      console.log('Is own profile:', isOwn)
 
       const fname = user?.fname || ''
       const lname = user?.lname || ''
@@ -67,7 +77,7 @@ export default function TechnicianProfile() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ username }),
+          body: JSON.stringify({ userId }),
         })
 
         if (!statusResponse.ok) throw new Error('Status fetch failed')
@@ -75,7 +85,9 @@ export default function TechnicianProfile() {
         const statusData = await statusResponse.json()
         const isFirstTime = statusData?.msg?.includes('has not been created')
         setForFirstTime(isFirstTime)
-        setIsEditing(isFirstTime)
+
+        // Only set editing mode if it's the user's own profile AND it's first time
+        setIsEditing(isFirstTime && isOwn)
 
         if (isFirstTime) {
           const prof = {
@@ -131,7 +143,7 @@ export default function TechnicianProfile() {
     }
 
     fetchProfile()
-  }, [])
+  }, [userId]) // Added userId as dependency
 
   const handleInputChange = (field, value) => {
     setEditedProfile(prev => ({ ...prev, [field]: value }))
@@ -193,6 +205,9 @@ export default function TechnicianProfile() {
   }
 
   const handleSave = async () => {
+    // Only allow saving if it's the user's own profile
+    if (!isOwnProfile) return
+
     setSaving(true)
     try {
       const formData = new FormData()
@@ -231,9 +246,23 @@ export default function TechnicianProfile() {
         setProfile(updatedProfile)
         setEditedProfile(updatedProfile)
         setIsEditing(false)
-        setForFirstTime(false)
-        setShowSuccess(true)
         sessionStorage.removeItem('formData')
+        
+        // Show success message
+        setShowSuccess(true)
+        
+        // Handle navigation based on whether it's first time or not
+        if (forFirstTime) {
+          // For first-time users, navigate to /professional after a short delay
+          setTimeout(() => {
+            setShowSuccess(false)
+            navigate('/professional')
+          }, 2000) // 2 second delay to show success message
+        } else {
+          // For existing users, just hide success after 3 seconds
+          setForFirstTime(false)
+          setTimeout(() => setShowSuccess(false), 3000)
+        }
       } else {
         console.error('Failed to save profile')
       }
@@ -241,7 +270,6 @@ export default function TechnicianProfile() {
       console.error('Save error:', error)
     }
     setSaving(false)
-    setTimeout(() => setShowSuccess(false), 3000)
   }
 
   const handleCancel = () => {
@@ -260,15 +288,29 @@ export default function TechnicianProfile() {
     }
   }
 
+  // Only allow editing if it's the user's own profile
+  const handleEditClick = () => {
+    if (isOwnProfile) {
+      setIsEditing(true)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8 px-4">
-      {/* Success Notification */}
-      <div className={`fixed top-4 right-4 z-50 transform transition-all duration-300 ${showSuccess ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
-        <div className="bg-emerald-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center space-x-2">
-          <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-          <span>Profile updated successfully!</span>
+      {/* Success Notification - Only show for own profile */}
+      {isOwnProfile && (
+        <div className={`fixed top-4 right-4 z-50 transform transition-all duration-300 ${showSuccess ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
+          <div className="bg-emerald-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center space-x-2">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <span>
+              {forFirstTime 
+                ? 'Profile created successfully! Redirecting to dashboard...' 
+                : 'Profile updated successfully!'
+              }
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden backdrop-blur-sm border border-white/20">
@@ -293,7 +335,8 @@ export default function TechnicianProfile() {
                     {(isEditing ? editedProfile?.lname : profile?.lname)?.charAt(0) || 'P'}
                   </div>
                 )}
-                {isEditing && (
+                {/* Only show camera upload for own profile when editing */}
+                {isEditing && isOwnProfile && (
                   <label className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
                     <Camera className="w-8 h-8 text-white" />
                     <input
@@ -313,6 +356,12 @@ export default function TechnicianProfile() {
                   ? (isEditing ? editedProfile.professions : profile.professions).join(' • ')
                   : 'Professional Technician'}
               </div>
+              {/* Show profile ownership indicator */}
+              {!isOwnProfile && (
+                <div className="mt-3 inline-block bg-white/20 text-white px-3 py-1 rounded-full text-sm">
+                  Viewing Profile
+                </div>
+              )}
             </div>
           </div>
 
@@ -355,8 +404,8 @@ export default function TechnicianProfile() {
             {/* Left Column */}
             <div className="space-y-10">
               {/* Personal Information */}
-              <InputGroup icon={<User className="w-5 h-5 text-indigo-600" />} label="Full Name" isEditing={isEditing}>
-                {isEditing ? (
+              <InputGroup icon={<User className="w-5 h-5 text-indigo-600" />} label="Full Name" isEditing={isEditing && isOwnProfile}>
+                {isEditing && isOwnProfile ? (
                   <div className="grid grid-cols-2 gap-4">
                     <input
                       type="text"
@@ -378,7 +427,7 @@ export default function TechnicianProfile() {
                 )}
               </InputGroup>
 
-              <InputGroup icon={<Mail className="w-5 h-5 text-indigo-600" />} label="Email Address" isEditing={isEditing}>
+              <InputGroup icon={<Mail className="w-5 h-5 text-indigo-600" />} label="Email Address" isEditing={isEditing && isOwnProfile}>
                 <input
                   type="email"
                   value={editedProfile?.username || ''}
@@ -388,8 +437,8 @@ export default function TechnicianProfile() {
               </InputGroup>
 
               {/* Professions */}
-              <InputGroup icon={<Wrench className="w-5 h-5 text-indigo-600" />} label="Professions" isEditing={isEditing}>
-                {isEditing ? (
+              <InputGroup icon={<Wrench className="w-5 h-5 text-indigo-600" />} label="Professions" isEditing={isEditing && isOwnProfile}>
+                {isEditing && isOwnProfile ? (
                   <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto p-4 border-2 border-slate-200 rounded-xl">
                     {professionOptions.map((profession) => (
                       <label key={profession} className="flex items-center space-x-3 cursor-pointer group">
@@ -419,8 +468,8 @@ export default function TechnicianProfile() {
                 )}
               </InputGroup>
 
-              <InputGroup icon={<Clock className="w-5 h-5 text-indigo-600" />} label="Experience" isEditing={isEditing}>
-                {isEditing ? (
+              <InputGroup icon={<Clock className="w-5 h-5 text-indigo-600" />} label="Experience" isEditing={isEditing && isOwnProfile}>
+                {isEditing && isOwnProfile ? (
                   <select
                     value={editedProfile?.experience || ''}
                     onChange={(e) => handleInputChange('experience', e.target.value)}
@@ -438,8 +487,8 @@ export default function TechnicianProfile() {
               </InputGroup>
 
               <div className="grid grid-cols-2 gap-8">
-                <InputGroup icon={<DollarSign className="w-5 h-5 text-indigo-600" />} label="Hourly Rates" isEditing={isEditing}>
-                  {isEditing ? (
+                <InputGroup icon={<DollarSign className="w-5 h-5 text-indigo-600" />} label="Hourly Rates" isEditing={isEditing && isOwnProfile}>
+                  {isEditing && isOwnProfile ? (
                     <div className="space-y-3">
                       {(editedProfile?.professions || []).map((profession) => (
                         <div key={profession} className="flex items-center justify-between border-2 border-slate-200 rounded-xl px-4 py-3">
@@ -472,9 +521,8 @@ export default function TechnicianProfile() {
                   )}
                 </InputGroup>
 
-
-                <InputGroup icon={<Clock className="w-5 h-5 text-indigo-600" />} label="Response Time" isEditing={isEditing}>
-                  {isEditing ? (
+                <InputGroup icon={<Clock className="w-5 h-5 text-indigo-600" />} label="Response Time" isEditing={isEditing && isOwnProfile}>
+                  {isEditing && isOwnProfile ? (
                     <select
                       value={editedProfile?.responseTime || ''}
                       onChange={(e) => handleInputChange('responseTime', e.target.value)}
@@ -494,8 +542,8 @@ export default function TechnicianProfile() {
 
             {/* Right Column */}
             <div className="space-y-10">
-              <InputGroup icon={<MapPin className="w-5 h-5 text-indigo-600" />} label="Service Location" isEditing={isEditing}>
-                {isEditing ? (
+              <InputGroup icon={<MapPin className="w-5 h-5 text-indigo-600" />} label="Service Location" isEditing={isEditing && isOwnProfile}>
+                {isEditing && isOwnProfile ? (
                   <input
                     type="text"
                     value={editedProfile?.serviceLocation || ''}
@@ -508,8 +556,8 @@ export default function TechnicianProfile() {
                 )}
               </InputGroup>
 
-              <InputGroup icon={<MapPin className="w-5 h-5 text-indigo-600" />} label="Current Location" isEditing={isEditing}>
-                {isEditing ? (
+              <InputGroup icon={<MapPin className="w-5 h-5 text-indigo-600" />} label="Current Location" isEditing={isEditing && isOwnProfile}>
+                {isEditing && isOwnProfile ? (
                   <input
                     type="text"
                     value={editedProfile?.currentLocation || ''}
@@ -523,8 +571,8 @@ export default function TechnicianProfile() {
               </InputGroup>
 
               {/* Weekly Availability */}
-              <InputGroup icon={<Clock className="w-5 h-5 text-indigo-600" />} label="Weekly Availability" isEditing={isEditing}>
-                {isEditing ? (
+              <InputGroup icon={<Clock className="w-5 h-5 text-indigo-600" />} label="Weekly Availability" isEditing={isEditing && isOwnProfile}>
+                {isEditing && isOwnProfile ? (
                   <div className="space-y-3 border-2 border-slate-200 rounded-xl p-4 max-h-80 overflow-y-auto">
                     {daysOfWeek.map((day) => (
                       <div key={day.key} className={`p-4 rounded-xl border-2 transition-all ${editedProfile?.availability?.[day.key]?.available
@@ -599,8 +647,8 @@ export default function TechnicianProfile() {
               </InputGroup>
 
               {/* Specialties */}
-              <InputGroup icon={<Wrench className="w-5 h-5 text-indigo-600" />} label="Specialties" isEditing={isEditing}>
-                {isEditing ? (
+              <InputGroup icon={<Wrench className="w-5 h-5 text-indigo-600" />} label="Specialties" isEditing={isEditing && isOwnProfile}>
+                {isEditing && isOwnProfile ? (
                   <div className="space-y-3">
                     <div className="flex flex-wrap gap-2 min-h-[50px] p-3 border-2 border-slate-200 rounded-xl">
                       {(editedProfile?.specialties || []).map((specialty, index) => (
@@ -646,42 +694,58 @@ export default function TechnicianProfile() {
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="p-10 bg-gradient-to-br from-slate-50 to-gray-50 space-y-4">
-            {isEditing ? (
-              <div className="flex space-x-4">
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex-1 flex items-center justify-center space-x-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-4 px-6 rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg font-semibold"
-                >
-                  {saving ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <Save className="w-5 h-5" />
-                  )}
-                  <span>{saving ? 'Saving...' : 'Save Changes'}</span>
-                </button>
-                {!forFirstTime && (
+          {/* Action Buttons - Only show for own profile */}
+          {isOwnProfile && (
+            <div className="p-10 bg-gradient-to-br from-slate-50 to-gray-50 space-y-4">
+              {isEditing ? (
+                <div className="flex space-x-4">
                   <button
-                    onClick={handleCancel}
-                    className="flex-1 flex items-center justify-center space-x-2 bg-slate-200 text-slate-700 py-4 px-6 rounded-xl hover:bg-slate-300 transition-all duration-200 font-semibold"
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="flex-1 flex items-center justify-center space-x-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-4 px-6 rounded-xl hover:from-indigo-600 hover:to-purple-600 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg font-semibold"
                   >
-                    <X className="w-5 h-5" />
-                    <span>Cancel</span>
+                    {saving ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Save className="w-5 h-5" />
+                    )}
+                    <span>{saving ? 'Saving...' : 'Save Changes'}</span>
                   </button>
-                )}
+                  {!forFirstTime && (
+                    <button
+                      onClick={handleCancel}
+                      className="flex-1 flex items-center justify-center space-x-2 bg-slate-200 text-slate-700 py-4 px-6 rounded-xl hover:bg-slate-300 transition-all duration-200 font-semibold"
+                    >
+                      <X className="w-5 h-5" />
+                      <span>Cancel</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={handleEditClick}
+                  className="w-full flex items-center justify-center space-x-2 bg-white border-2 border-slate-200 text-slate-700 py-4 px-6 rounded-xl hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-200 font-semibold shadow-sm hover:shadow-md"
+                >
+                  <Edit3 className="w-5 h-5" />
+                  <span>Edit Profile</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Message for viewing other's profile */}
+          {!isOwnProfile && (
+            <div className="p-10 bg-gradient-to-br from-slate-50 to-gray-50 text-center">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                <div className="text-blue-600 font-medium">
+                  You are viewing {profile?.fname || 'this'} {profile?.lname || 'technician'}'s profile
+                </div>
+                <div className="text-blue-500 text-sm mt-2">
+                  Contact them directly to request services or get more information
+                </div>
               </div>
-            ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="w-full flex items-center justify-center space-x-2 bg-white border-2 border-slate-200 text-slate-700 py-4 px-6 rounded-xl hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-200 font-semibold shadow-sm hover:shadow-md"
-              >
-                <Edit3 className="w-5 h-5" />
-                <span>Edit Profile</span>
-              </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

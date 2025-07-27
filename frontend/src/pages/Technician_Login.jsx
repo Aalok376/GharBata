@@ -4,7 +4,6 @@ import { Toaster, toast } from 'sonner'
 import { Llogin } from "../api/auth"
 
 const Technician_Login = () => {
-
   const [username, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -14,29 +13,55 @@ const Technician_Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setError("") // Clear previous errors
 
-    const userType='technician'
-    const rresult = await Llogin({ username, password,userType })
+    try {
+      const userType = 'technician'
+      const rresult = await Llogin({ username, password, userType })
 
-    sessionStorage.setItem('username',username)
-    
-    if (rresult.success) {
-      setLoading(true)
-      const navi = await fetch('http://localhost:5000/api/clients/getClientprofilestatus', {
-        method: 'POST',
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username })
-      })
+      if (rresult.success) {
+        setLoading(true) // Set loading after successful login
+        const userId = rresult.user._id
+        sessionStorage.setItem('userId', userId)
 
-      if (navi.status === 200) {
-        navigate('/professionalProfilePage')
+        // Check if user profile exists/is complete
+        const navi = await fetch('http://localhost:5000/api/clients/getClientprofilestatus', {
+          method: 'POST',
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId })
+        })
+
+        if (navi.status === 200) {
+          // User profile needs to be set up
+          navigate(`/professionalProfilePage/${userId}`)
+        } else {
+          // User profile already exists, go to dashboard
+          navigate("/professional")
+        }
       } else {
-        navigate("/professional")
+        // Handle different types of login errors
+        if (rresult.msg && (
+          rresult.msg.toLowerCase().includes('password') || 
+          rresult.msg.toLowerCase().includes('invalid credentials') ||
+          rresult.msg.toLowerCase().includes('incorrect password')
+        )) {
+          setError("Invalid Credentials")
+        } else if (rresult.msg && (
+          rresult.msg.toLowerCase().includes('user') ||
+          rresult.msg.toLowerCase().includes('username') ||
+          rresult.msg.toLowerCase().includes('email')
+        )) {
+          setError("User not found")
+        } else {
+          setError(rresult.msg || "Login failed. Please try again.")
+        }
       }
-    } else {
-      setError(rresult.msg)
+    } catch (err) {
+      setError("Network error. Please check your connection and try again.")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -51,7 +76,6 @@ const Technician_Login = () => {
   return (<>
     <style>
       {`
-
         .mainBlock {
         display: flex;
             align-items: center;
@@ -203,6 +227,17 @@ const Technician_Login = () => {
             animation: fadeIn 0.8s ease-out 0.8s both;
         }
 
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-btn:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
         .login-btn::before {
             content: '';
             position: absolute;
@@ -214,16 +249,16 @@ const Technician_Login = () => {
             transition: left 0.6s;
         }
 
-        .login-btn:hover {
+        .login-btn:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
         }
 
-        .login-btn:hover::before {
+        .login-btn:hover:not(:disabled)::before {
             left: 100%;
         }
 
-        .login-btn:active {
+        .login-btn:active:not(:disabled) {
             transform: translateY(0);
         }
 
@@ -296,6 +331,17 @@ const Technician_Login = () => {
             color: #764ba2;
         }
 
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.9rem;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(231, 76, 60, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid #e74c3c;
+            animation: fadeIn 0.3s ease-out;
+        }
+
         .loading {
             display: none;
             width: 20px;
@@ -333,12 +379,28 @@ const Technician_Login = () => {
         <form id="loginForm" onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="email">Username</label>
-            <input type="text" id="email" name="email" placeholder="Enter your email or phone number" value={username} onChange={(e) => setEmail(e.target.value)} required></input>
+            <input 
+              type="text" 
+              id="email" 
+              name="email" 
+              placeholder="Enter your email or phone number" 
+              value={username} 
+              onChange={(e) => setEmail(e.target.value)} 
+              required 
+            />
           </div>
 
           <div className="form-group">
             <label htmlFor="password">Password</label>
-            <input type="password" id="password" name="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} required></input>
+            <input 
+              type="password" 
+              id="password" 
+              name="password" 
+              placeholder="Enter your password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              required 
+            />
           </div>
 
           <div className="forgot-password">
@@ -346,13 +408,15 @@ const Technician_Login = () => {
           </div>
 
           <button type="submit" className="login-btn" disabled={loading}>
-            <span className="btn-text">Sign In</span>
+            <span className="btn-text">
+              {loading ? "Signing In..." : "Sign In"}
+            </span>
           </button>
 
           {error && (
-            <p id="error-message" style={{ color: "red" }}>
+            <div className="error-message">
               {error}
-            </p>
+            </div>
           )}
         </form>
 
@@ -361,7 +425,7 @@ const Technician_Login = () => {
         </div>
 
         <div className="social-login">
-          <button className="social-btn" onClick={() => { }}>
+          <button className="social-btn" onClick={handleGoogleLogin}>
             <svg width="20" height="20" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -370,7 +434,7 @@ const Technician_Login = () => {
             </svg>
             Google
           </button>
-          <button className="social-btn" onClick={() => { }}>
+          <button className="social-btn" onClick={handleFacebookLogin}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2">
               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
             </svg>
