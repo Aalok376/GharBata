@@ -48,14 +48,14 @@ export default function TechnicianProfile() {
       const formDataStr = sessionStorage.getItem('formData')
       const ownUserId = sessionStorage.getItem('userId')
 
-      const userrname=sessionStorage.getItem('username')
+      const userrname = sessionStorage.getItem('username')
 
       // Check if the profile being viewed belongs to the current user
       const isOwn = ownUserId === userId
       setIsOwnProfile(isOwn)
 
       let user = null
-      let username = userrname||''
+      let username = userrname || ''
 
       if (formDataStr) {
         try {
@@ -108,8 +108,12 @@ export default function TechnicianProfile() {
           setEditedProfile(prof)
         } else {
           const profileResponse = await fetch('http://localhost:5000/api/technicians/getTechnicians', {
-            method: 'GET',
+            method: 'POST',
             credentials: 'include',
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ userId })
           })
 
           if (!profileResponse.ok) throw new Error('Profile fetch failed')
@@ -249,10 +253,10 @@ export default function TechnicianProfile() {
         setEditedProfile(updatedProfile)
         setIsEditing(false)
         sessionStorage.removeItem('formData')
-        
+
         // Show success message
         setShowSuccess(true)
-        
+
         // Handle navigation based on whether it's first time or not
         if (forFirstTime) {
           // For first-time users, navigate to /professional after a short delay
@@ -305,8 +309,8 @@ export default function TechnicianProfile() {
           <div className="bg-emerald-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center space-x-2">
             <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
             <span>
-              {forFirstTime 
-                ? 'Profile created successfully! Redirecting to dashboard...' 
+              {forFirstTime
+                ? 'Profile created successfully! Redirecting to dashboard...'
                 : 'Profile updated successfully!'
               }
             </span>
@@ -745,7 +749,15 @@ export default function TechnicianProfile() {
                 <div className="text-blue-500 text-sm mt-2">
                   Contact them directly to request services or get more information
                 </div>
+
               </div>
+                <button
+      type="button"
+      onClick={() => navigate(`/chats/${profile?._id}`)}
+      className="inline-flex items-center px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-75 transition"
+    >
+      Message
+    </button>
             </div>
           )}
         </div>

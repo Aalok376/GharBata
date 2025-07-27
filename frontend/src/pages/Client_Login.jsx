@@ -27,6 +27,7 @@ const ClientLogin = () => {
 
         const navi = await fetch('http://localhost:5000/api/clients/getClientprofilestatus', {
           method: 'POST',
+          credentials: 'include',
           headers: {
             "Content-Type": "application/json",
           },

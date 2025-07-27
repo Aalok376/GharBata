@@ -23,7 +23,10 @@ const TechnicianDisplayPage = () => {
     const getTechnicians = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5000/api/technicians/filteredTechnicians?category=${encodeURIComponent(selectedService)}`
+          `http://localhost:5000/api/technicians/filteredTechnicians?category=${encodeURIComponent(selectedService)}`,{
+            method:'GET',
+            credentials: 'include',
+          }
         );
 
         if (!response.ok) {

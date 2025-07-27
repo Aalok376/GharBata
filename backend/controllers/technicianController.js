@@ -99,7 +99,7 @@ export const updateTechniciansProfile = async (req, res) => {
 
 export const getTechnicianProfile = async (req, res) => {
   try {
-    const userId=req.user.id
+    const {userId}=req.body
 
     const user = await User.findById(userId).select("-password")
     if (!user) return res.status(404).json({ msg: "User not found" })
@@ -136,25 +136,6 @@ export const getAllTechnicians=async (req, res) => {
   } catch (err) {
     console.error('Error fetching technicians:', err)
     res.status(500).json({ message: 'Server error' })
-  }
-}
-
-export const getOtherTechnicianProfile = async (req, res) => {
-  try {
-    const {technicianId}=req.body
-
-    const technician = await Technician.findById(technicianId).populate({
-      path: "user",
-      select: "fname lname username ",
-    })
-
-    if (!technician)
-      return res.status(404).json({ msg: "Technician profile not found" })
-
-    res.status(200).json({ technician })
-  } catch (err) {
-    console.error("Fetch profile error:", err)
-    res.status(500).json({ msg: "Internal Server Error" })
   }
 }
 
