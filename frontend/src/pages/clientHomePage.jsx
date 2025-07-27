@@ -4,49 +4,71 @@ import ClientNavbar from "../components/NavBarForClientAndProfessional"
 import SideBar from "../components/SideBar"
 import SideBarOverlay from "../components/SideBarOverlay"
 import ServiceCard from "../components/serviceCard"
+import { useParams, useNavigate } from 'react-router-dom'
+
 
 const ClientPage = () => {
     const [isSideBarOpenC, setIsSideBarOpenC] = useState(false)
-     const [fname, setFname] = useState('')
-  const [lname, setLname] = useState('')
-  const [profilePic, setProfilePic] = useState('')
+    const [fname, setFname] = useState('')
+    const [lname, setLname] = useState('')
+    const [profilePic, setProfilePic] = useState('')
+    const navigate = useNavigate()
 
-  const Componentss = [
-    { id: '/dashboard', icon: '📊', text: 'Dashboard' },
-    { id: '/schedule', icon: '📋', text: 'My Orders' },
-    { id: '/earnings', icon: '💰', text: 'Payment' },
-    { id: '/messages', icon: '📱', text: 'Messages' },
-    { id: '/logout', icon: '⚙️', text: 'Logout' },
-  ]
+    const Componentss = [
+        { id: '/dashboard', icon: '📊', text: 'Dashboard' },
+        { id: '/schedule', icon: '📋', text: 'My Orders' },
+        { id: '/earnings', icon: '💰', text: 'Payment' },
+        { id: '/messages', icon: '📱', text: 'Messages' },
+        { id: '/logout', icon: '⚙️', text: 'Logout' },
+    ]
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const profileResponse = await fetch('http://localhost:5000/api/clients/getClientProfile', {
-          method: 'GET',
-          credentials: 'include',
-        })
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const profileResponse = await fetch('http://localhost:5000/api/clients/getClientProfile', {
+                    method: 'GET',
+                    credentials: 'include',
+                })
 
-        let profileData = await profileResponse.json()
-        profileData = Array.isArray(profileData) ? profileData : [profileData]
+                let profileData = await profileResponse.json()
+                profileData = Array.isArray(profileData) ? profileData : [profileData]
 
-        const prof = profileData[0]?.user || {}
-        const profData = prof?.client_id
+                const prof = profileData[0]?.user || {}
+                const profData = prof?.client_id
 
-        if (profData) {
-          setFname(profData.fname || '')
-          setLname(profData.lname || '')
+                if (profData) {
+                    setFname(profData.fname || '')
+                    setLname(profData.lname || '')
+                }
+
+                setProfilePic(prof?.profilePic || '')
+
+            } catch (err) {
+                console.error('Failed to fetch profile:', err)
+            }
         }
 
-        setProfilePic(prof?.profilePic || '')
+        fetchProfile()
+    }, [])
 
-      } catch (err) {
-        console.error('Failed to fetch profile:', err)
-      }
+    const handleLogout = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/logoutuser', {
+                method: 'GET',
+                credentials: 'include',
+            })
+            const data = await response.json()
+
+            if (data.success) {
+                // Navigate to login page and replace history so user can't go back
+                navigate('/client_login', { replace: true })
+            } else {
+                alert('Logout failed: ' + data.msg)
+            }
+        } catch (error) {
+            console.error('Logout error:', error)
+        }
     }
-
-    fetchProfile()
-  }, [])
     return (
         <>
             <style>
@@ -204,7 +226,7 @@ const ClientPage = () => {
                 <ClientNavbar isOpen={isSideBarOpenC} setIsOpen={setIsSideBarOpenC} fname={fname} lname={lname} profilePic={profilePic} userType={'client'}></ClientNavbar>
                 <SideBarOverlay isSideBarOpen={isSideBarOpenC} setIsSideBarOpen={setIsSideBarOpenC} />
                 <div className="dashboard">
-                    <SideBar components={Componentss} isOpen={isSideBarOpenC}></SideBar>
+                    <SideBar components={Componentss} isOpen={isSideBarOpenC} onLogout={handleLogout}></SideBar>
                     <main className="main-content">
                         <header className="header">
                             <div className="welcome">

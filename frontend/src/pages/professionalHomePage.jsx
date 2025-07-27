@@ -3,21 +3,40 @@ import styled from "styled-components"
 import ClientNavbar from "../components/NavBarForClientAndProfessional"
 import SideBar from "../components/SideBar"
 import SideBarOverlay from "../components/SideBarOverlay"
+import { useParams, useNavigate } from 'react-router-dom'
 
 const ProfessionalPage = () => {
 
     const [isSideBarOpen, setIsSideBarOpen] = useState(false)
+    const navigate = useNavigate()
 
     const Components = [
         { id: '/dashboard', icon: '📊', text: 'Dashboard' },
-        { id: '/schedule', icon: '📅', text: 'Schedule' },
         { id: '/jobs', icon: '💼', text: 'Jobs' },
-        { id: '/customers', icon: '👥', text: 'Customers' },
         { id: '/earnings', icon: '💰', text: 'Earnings' },
         { id: '/reviews', icon: '⭐', text: 'Reviews' },
         { id: '/messages', icon: '📱', text: 'Messages' },
-        { id: '/settings', icon: '⚙️', text: 'Settings' },
+        { id: '/logout', icon: '⚙️', text: 'Logout' },
     ]
+
+    const handleLogout = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/logoutuser', {
+                method: 'GET',
+                credentials: 'include',
+            })
+            const data = await response.json()
+
+            if (data.success) {
+                // Navigate to login page and replace history so user can't go back
+                navigate('/technician_login', { replace: true })
+            } else {
+                alert('Logout failed: ' + data.msg)
+            }
+        } catch (error) {
+            console.error('Logout error:', error)
+        }
+    }
 
     return (
         <>
@@ -443,7 +462,7 @@ const ProfessionalPage = () => {
                 <ClientNavbar isOpen={isSideBarOpen} setIsOpen={setIsSideBarOpen}></ClientNavbar>
                 <SideBarOverlay isSideBarOpen={isSideBarOpen} setIsSideBarOpen={setIsSideBarOpen} />
                 <div className="dashboard">
-                    <SideBar components={Components} isOpen={isSideBarOpen}></SideBar>
+                    <SideBar components={Components} isOpen={isSideBarOpen} onLogout={handleLogout}></SideBar>
                     <main className="main-content" id="mainContent">
                         <header className="header">
                             <div className="welcome">
@@ -500,7 +519,7 @@ const ProfessionalPage = () => {
                         <section className="schedule-section">
                             <div className="section-header">
                                 <h3>Today's Schedule</h3>
-                                <button className="add-appointment-btn" onClick={()=>{}}>+ Add Appointment</button>
+                                <button className="add-appointment-btn" onClick={() => { }}>+ Add Appointment</button>
                             </div>
 
                             <div className="appointment-item scheduled">
@@ -514,8 +533,8 @@ const ProfessionalPage = () => {
                                     </div>
                                 </div>
                                 <div className="appointment-actions">
-                                    <button className="action-btn start-btn" onClick={()=>{}}>Start Job</button>
-                                    <button className="action-btn contact-btn" onClick={()=>{}}>Contact</button>
+                                    <button className="action-btn start-btn" onClick={() => { }}>Start Job</button>
+                                    <button className="action-btn contact-btn" onClick={() => { }}>Contact</button>
                                 </div>
                             </div>
 
@@ -530,8 +549,8 @@ const ProfessionalPage = () => {
                                     </div>
                                 </div>
                                 <div className="appointment-actions">
-                                    <button className="action-btn start-btn" onClick={()=>{}}>Start Job</button>
-                                    <button className="action-btn contact-btn" onClick={()=>{}}>Contact</button>
+                                    <button className="action-btn start-btn" onClick={() => { }}>Start Job</button>
+                                    <button className="action-btn contact-btn" onClick={() => { }}>Contact</button>
                                 </div>
                             </div>
 
@@ -546,7 +565,7 @@ const ProfessionalPage = () => {
                                     </div>
                                 </div>
                                 <div className="appointment-actions">
-                                    <button className="action-btn contact-btn" onClick={()=>{}}>Contact</button>
+                                    <button className="action-btn contact-btn" onClick={() => { }}>Contact</button>
                                 </div>
                             </div>
 
@@ -561,32 +580,32 @@ const ProfessionalPage = () => {
                                     </div>
                                 </div>
                                 <div className="appointment-actions">
-                                    <button className="action-btn complete-btn" onClick={()=>{}}>Mark
+                                    <button className="action-btn complete-btn" onClick={() => { }}>Mark
                                         Complete</button>
                                 </div>
                             </div>
                         </section>
 
                         <section className="quick-actions">
-                            <div className="quick-action-card" onClick={()=>{}}>
+                            <div className="quick-action-card" onClick={() => { }}>
                                 <div className="quick-action-icon">📋</div>
                                 <div className="quick-action-title">View All Jobs</div>
                                 <div className="quick-action-desc">Manage pending and completed jobs</div>
                             </div>
 
-                            <div className="quick-action-card" onClick={()=>{}}>
+                            <div className="quick-action-card" onClick={() => { }}>
                                 <div className="quick-action-icon">🕐</div>
                                 <div className="quick-action-title">Update Availability</div>
                                 <div className="quick-action-desc">Set your working hours and days</div>
                             </div>
 
-                            <div className="quick-action-card" onClick={()=>{}}>
+                            <div className="quick-action-card" onClick={() => { }}>
                                 <div className="quick-action-icon">💰</div>
                                 <div className="quick-action-title">Earnings Report</div>
                                 <div className="quick-action-desc">Track income and payments</div>
                             </div>
 
-                            <div className="quick-action-card" onClick={()=>{}}>
+                            <div className="quick-action-card" onClick={() => { }}>
                                 <div className="quick-action-icon">💬</div>
                                 <div className="quick-action-title">Customer Feedback</div>
                                 <div className="quick-action-desc">View reviews and ratings</div>
