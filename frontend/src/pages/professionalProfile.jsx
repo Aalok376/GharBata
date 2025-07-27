@@ -29,10 +29,10 @@ export default function TechnicianProfile() {
   // Helper function to get average hourly rate or first available rate
   const getDisplayRate = (hourlyRate) => {
     if (!hourlyRate || typeof hourlyRate !== 'object') return '0'
-    
+
     const rates = Object.values(hourlyRate).filter(rate => rate && !isNaN(rate))
     if (rates.length === 0) return '0'
-    
+
     // Return average rate
     const average = rates.reduce((sum, rate) => sum + parseFloat(rate), 0) / rates.length
     return Math.round(average).toString()
@@ -136,7 +136,7 @@ export default function TechnicianProfile() {
   const handleInputChange = (field, value) => {
     setEditedProfile(prev => ({ ...prev, [field]: value }))
   }
-  
+
   const handleProfessionRateChange = (profession, rate) => {
     setEditedProfile(prev => ({
       ...prev,
@@ -197,16 +197,16 @@ export default function TechnicianProfile() {
     try {
       const formData = new FormData()
       const fieldsToAppend = ['username', 'fname', 'lname', 'serviceLocation', 'currentLocation', 'experience', 'responseTime']
-      
+
       fieldsToAppend.forEach(key => {
         formData.append(key, editedProfile[key] || '')
       })
-      
+
       formData.append('professions', JSON.stringify(editedProfile.professions || []))
       formData.append('availability', JSON.stringify(editedProfile.availability || {}))
       formData.append('specialties', JSON.stringify(editedProfile.specialties || []))
       formData.append('hourlyRate', JSON.stringify(editedProfile.hourlyRate || {}))
-      
+
       if (selectedFile) formData.append('profilePic', selectedFile)
 
       const endpoint = forFirstTime
@@ -322,7 +322,13 @@ export default function TechnicianProfile() {
               <div className="text-center p-6 bg-white rounded-xl shadow-sm">
                 <div className="text-3xl font-bold text-indigo-600 flex items-center justify-center">
                   <Star className="w-6 h-6 text-yellow-500 mr-1" />
-                  {profile?.rating || '0.0'}
+                  {
+                    typeof profile?.rating === 'number'
+                      ? profile.rating.toFixed(1)
+                      : (typeof profile?.rating?.average === 'number'
+                        ? profile.rating.average.toFixed(1)
+                        : '0.0')
+                  }
                 </div>
                 <div className="text-sm text-gray-600 mt-1">Rating</div>
               </div>
@@ -453,12 +459,19 @@ export default function TechnicianProfile() {
                       {(profile?.professions || []).map((profession) => (
                         <div key={profession} className="flex items-center justify-between border-2 border-slate-200 rounded-xl px-4 py-3">
                           <span className="font-medium text-slate-800">{profession}</span>
-                          <span className="text-indigo-600 font-semibold">Rs.{profile?.hourlyRate?.[profession] || 0}/hr</span>
+                          <span className="text-indigo-600 font-semibold">
+                            Rs.
+                            {typeof profile?.hourlyRate?.[profession] === 'number' || typeof profile?.hourlyRate?.[profession] === 'string'
+                              ? profile.hourlyRate[profession]
+                              : 0}
+                            /hr
+                          </span>
                         </div>
                       ))}
                     </div>
                   )}
                 </InputGroup>
+
 
                 <InputGroup icon={<Clock className="w-5 h-5 text-indigo-600" />} label="Response Time" isEditing={isEditing}>
                   {isEditing ? (
