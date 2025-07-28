@@ -40,7 +40,7 @@ const Technician_Login = () => {
           navigate(`/professionalProfilePage/${userId}`)
         } else {
           // User profile already exists, go to dashboard
-          navigate("/professional")
+          navigate("/professional/dashboard")
         }
       } else {
         // Handle different types of login errors

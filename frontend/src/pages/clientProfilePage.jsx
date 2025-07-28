@@ -165,7 +165,7 @@ export default function ClientProfile() {
         // Navigate to dashboard only if it was the first time save
         if (wasFirstTime) {
           setTimeout(() => {
-            navigate('/dashboard')
+            navigate('/client/dashboard')
           }, 1500) // Small delay to show success message before navigation
         }
       } else {

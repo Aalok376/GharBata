@@ -17,25 +17,27 @@ import TechnicianDisplayPage from './pages/professionalList'
 import MapPickerModal from './pages/MapPicker'
 import { SelectLocationOverlay } from './components/selectLocation'
 import ClientProfilePage from './pages/clientProfilePage'
+import TechnicianReviewsPage from './pages/reviewsPage'
 
 function App(){
  return (
     <Router>
       <Routes>
         <Route path='/' element={<HomePageFunc/>}/>
-        <Route path='/dashboard' element={<ClientPage/>}/>
+        <Route path='/client/dashboard' element={<ClientPage/>}/>
         <Route path='/client_login' element={<Client_Login/>}/>
         <Route path='/client_signup' element={<Client_Signup/>}/>
         <Route path='/technician_login' element={<Technician_Login/>}/>
         <Route path='/technician_signup' element={<Technician_Signup/>}/>
         <Route path='/otp' element={<Overlay_Otp/>}/>
-        <Route path='/professional' element={<ProfessionalPage/>}/>
+        <Route path='/professional/dashboard' element={<ProfessionalPage/>}/>
         <Route path='/professionalProfilePage/:userId' element={<ProfessionalProfilePage/>}/>
         <Route path='/chat/:bookingId' element={<ChatPage/>}/>
         <Route path='/booking-form' element={<BookingForm/>}/>
         <Route path="/dashboard/bookservice/:serviceName" element={<TechnicianDisplayPage/>} />
         <Route path='/clientProfileSetupPage/:userId' element={<ClientProfilePage/>}/>
         <Route path="/dashboard/booking/:service/:technicianId" element={<BookingForm/>} />
+        <Route path="/professional/reviews/:userId" element={<TechnicianReviewsPage/>} />
       </Routes>
     
 

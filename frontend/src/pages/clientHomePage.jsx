@@ -15,14 +15,13 @@ const ClientPage = () => {
     const [userId, setuserId] = useState('')
     const navigate = useNavigate()
 
-    const Componentss = [
-        { id: '/dashboard', icon: '📊', text: 'Dashboard' },
-        { id: '/schedule', icon: '📋', text: 'My Orders' },
-        { id: '/earnings', icon: '💰', text: 'Payment' },
-        { id: '/messages', icon: '📱', text: 'Messages' },
-        { id: '/logout', icon: '⚙️', text: 'Logout' },
-    ]
-
+   const Components = [
+   { id: `/client/dashboard`, icon: '📊', text: 'Dashboard' },
+   { id: `/client/orders/${userId}`, icon: '📋', text: 'My Orders' },
+   { id: `/client/earnings/${userId}`, icon: '💰', text: 'Payment' },
+   { id: `/client/messages/${userId}`, icon: '📱', text: 'Messages' },
+   { id: '/logout', icon: '⚙️', text: 'Logout' },
+]
     useEffect(() => {
         const fetchProfile = async () => {
             try {
@@ -64,8 +63,10 @@ const ClientPage = () => {
             const data = await response.json()
 
             if (data.success) {
+                sessionStorage.clear()
                 // Navigate to login page and replace history so user can't go back
                 navigate('/client_login', { replace: true })
+                window.location.reload()
             } else {
                 alert('Logout failed: ' + data.msg)
             }

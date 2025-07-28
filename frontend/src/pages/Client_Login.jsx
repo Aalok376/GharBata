@@ -37,7 +37,7 @@ const ClientLogin = () => {
         if (navi.status === 200) {
           navigate(`/clientProfileSetupPage/${userId}`)
         } else {
-          navigate("/dashboard")
+          navigate("/client/dashboard")
         }
       } else {
         // Handle different types of login errors

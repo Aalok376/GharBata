@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { User, Phone, Mail, Save, Edit3, X, Camera, MapPin, Wrench, Star, Clock, DollarSign } from 'lucide-react'
+import { User, Phone, Mail, Save, Edit3, X, Camera, MapPin, Wrench, Star, Clock, DollarSign, AlertCircle } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 
 export default function TechnicianProfile() {
@@ -11,6 +11,7 @@ export default function TechnicianProfile() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
   const [isOwnProfile, setIsOwnProfile] = useState(false)
+  const [validationErrors, setValidationErrors] = useState({})
 
   const { userId } = useParams()
   const navigate = useNavigate()
@@ -30,6 +31,69 @@ export default function TechnicianProfile() {
     { key: 'friday', label: 'Friday', short: 'Fri' },
     { key: 'saturday', label: 'Saturday', short: 'Sat' }
   ]
+
+  // Validation function
+  const validateProfile = (profile) => {
+    const errors = {}
+
+    // First name is required
+    if (!profile.fname?.trim()) {
+      errors.fname = 'First name is required'
+    }
+
+    // Last name is required
+    if (!profile.lname?.trim()) {
+      errors.lname = 'Last name is required'
+    }
+
+    // At least one profession must be selected
+    if (!profile.professions || profile.professions.length === 0) {
+      errors.professions = 'At least one profession must be selected'
+    }
+
+    // If professions are selected, their rates must be defined
+    if (profile.professions && profile.professions.length > 0) {
+      const missingRates = []
+      profile.professions.forEach(profession => {
+        const rate = profile.hourlyRate?.[profession]
+        if (!rate || rate === '' || rate === '0' || parseFloat(rate) <= 0) {
+          missingRates.push(profession)
+        }
+      })
+      if (missingRates.length > 0) {
+        errors.hourlyRate = `Please set hourly rates for: ${missingRates.join(', ')}`
+      }
+    }
+
+    // Current location is required
+    if (!profile.currentLocation?.trim()) {
+      errors.currentLocation = 'Current location is required'
+    }
+
+    // Service location is required
+    if (!profile.serviceLocation?.trim()) {
+      errors.serviceLocation = 'Service location is required'
+    }
+
+    // Experience is required
+    if (!profile.experience?.trim()) {
+      errors.experience = 'Experience level is required'
+    }
+
+    // Response time is required
+    if (!profile.responseTime?.trim()) {
+      errors.responseTime = 'Response time is required'
+    }
+
+    // At least one day must be available
+    const hasAvailability = profile.availability && 
+      Object.values(profile.availability).some(day => day.available === true)
+    if (!hasAvailability) {
+      errors.availability = 'At least one day must be marked as available'
+    }
+
+    return errors
+  }
 
   // Helper function to get average hourly rate or first available rate
   const getDisplayRate = (hourlyRate) => {
@@ -153,6 +217,14 @@ export default function TechnicianProfile() {
 
   const handleInputChange = (field, value) => {
     setEditedProfile(prev => ({ ...prev, [field]: value }))
+    // Clear validation error when user starts typing
+    if (validationErrors[field]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[field]
+        return newErrors
+      })
+    }
   }
 
   const handleProfessionRateChange = (profession, rate) => {
@@ -163,6 +235,14 @@ export default function TechnicianProfile() {
         [profession]: rate
       }
     }))
+    // Clear hourly rate validation error when user enters a rate
+    if (validationErrors.hourlyRate && rate && parseFloat(rate) > 0) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors.hourlyRate
+        return newErrors
+      })
+    }
   }
 
   const handleProfessionToggle = (profession) => {
@@ -171,7 +251,7 @@ export default function TechnicianProfile() {
       const exists = professions.includes(profession)
       const updated = exists ? professions.filter(p => p !== profession) : [...professions, profession]
       const updatedRates = { ...prev.hourlyRate }
-      if (!exists) updatedRates[profession] = prev.hourlyRate?.[profession] || 0
+      if (!exists) updatedRates[profession] = prev.hourlyRate?.[profession] || ''
       else delete updatedRates[profession]
       return {
         ...prev,
@@ -179,6 +259,14 @@ export default function TechnicianProfile() {
         hourlyRate: updatedRates
       }
     })
+    // Clear professions validation error when user selects a profession
+    if (validationErrors.professions) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors.professions
+        return newErrors
+      })
+    }
   }
 
   const handleAvailabilityChange = (day, field, value) => {
@@ -192,6 +280,14 @@ export default function TechnicianProfile() {
         }
       }
     }))
+    // Clear availability validation error when user marks a day as available
+    if (validationErrors.availability && field === 'available' && value === true) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors.availability
+        return newErrors
+      })
+    }
   }
 
   const handleSpecialtyAdd = (specialty) => {
@@ -213,6 +309,20 @@ export default function TechnicianProfile() {
   const handleSave = async () => {
     // Only allow saving if it's the user's own profile
     if (!isOwnProfile) return
+
+    // Validate the profile
+    const errors = validateProfile(editedProfile)
+    setValidationErrors(errors)
+
+    // If there are validation errors, don't proceed with save
+    if (Object.keys(errors).length > 0) {
+      // Scroll to first error
+      const firstErrorElement = document.querySelector('.border-red-300')
+      if (firstErrorElement) {
+        firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      return
+    }
 
     setSaving(true)
     try {
@@ -252,6 +362,7 @@ export default function TechnicianProfile() {
         setProfile(updatedProfile)
         setEditedProfile(updatedProfile)
         setIsEditing(false)
+        setValidationErrors({}) // Clear validation errors on successful save
         sessionStorage.removeItem('formData')
 
         // Show success message
@@ -262,7 +373,7 @@ export default function TechnicianProfile() {
           // For first-time users, navigate to /professional after a short delay
           setTimeout(() => {
             setShowSuccess(false)
-            navigate('/professional')
+            navigate('/professional/dashboard')
           }, 2000) // 2 second delay to show success message
         } else {
           // For existing users, just hide success after 3 seconds
@@ -282,6 +393,7 @@ export default function TechnicianProfile() {
     setEditedProfile(profile)
     setIsEditing(false)
     setSelectedFile(null)
+    setValidationErrors({}) // Clear validation errors on cancel
   }
 
   const handleImageUpload = (e) => {
@@ -299,6 +411,17 @@ export default function TechnicianProfile() {
     if (isOwnProfile) {
       setIsEditing(true)
     }
+  }
+
+  // Validation error component
+  const ValidationError = ({ error }) => {
+    if (!error) return null
+    return (
+      <div className="flex items-center mt-2 text-red-600 text-sm">
+        <AlertCircle className="w-4 h-4 mr-1" />
+        <span>{error}</span>
+      </div>
+    )
   }
 
   return (
@@ -410,23 +533,35 @@ export default function TechnicianProfile() {
             {/* Left Column */}
             <div className="space-y-10">
               {/* Personal Information */}
-              <InputGroup icon={<User className="w-5 h-5 text-indigo-600" />} label="Full Name" isEditing={isEditing && isOwnProfile}>
+              <InputGroup icon={<User className="w-5 h-5 text-indigo-600" />} label="Full Name" isEditing={isEditing && isOwnProfile} required={true}>
                 {isEditing && isOwnProfile ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      value={editedProfile?.fname || ''}
-                      onChange={(e) => handleInputChange('fname', e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                      placeholder="First name"
-                    />
-                    <input
-                      type="text"
-                      value={editedProfile?.lname || ''}
-                      onChange={(e) => handleInputChange('lname', e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                      placeholder="Last name"
-                    />
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <input
+                          type="text"
+                          value={editedProfile?.fname || ''}
+                          onChange={(e) => handleInputChange('fname', e.target.value)}
+                          className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none ${
+                            validationErrors.fname ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                          }`}
+                          placeholder="First name"
+                        />
+                        <ValidationError error={validationErrors.fname} />
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          value={editedProfile?.lname || ''}
+                          onChange={(e) => handleInputChange('lname', e.target.value)}
+                          className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none ${
+                            validationErrors.lname ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                          }`}
+                          placeholder="Last name"
+                        />
+                        <ValidationError error={validationErrors.lname} />
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <p className="text-slate-900 font-medium text-lg">{profile?.fname || ''} {profile?.lname || ''}</p>
@@ -443,22 +578,27 @@ export default function TechnicianProfile() {
               </InputGroup>
 
               {/* Professions */}
-              <InputGroup icon={<Wrench className="w-5 h-5 text-indigo-600" />} label="Professions" isEditing={isEditing && isOwnProfile}>
+              <InputGroup icon={<Wrench className="w-5 h-5 text-indigo-600" />} label="Professions" isEditing={isEditing && isOwnProfile} required={true}>
                 {isEditing && isOwnProfile ? (
-                  <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto p-4 border-2 border-slate-200 rounded-xl">
-                    {professionOptions.map((profession) => (
-                      <label key={profession} className="flex items-center space-x-3 cursor-pointer group">
-                        <input
-                          type="checkbox"
-                          checked={editedProfile?.professions?.includes(profession) || false}
-                          onChange={() => handleProfessionToggle(profession)}
-                          className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                        />
-                        <span className="text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">
-                          {profession}
-                        </span>
-                      </label>
-                    ))}
+                  <div className="space-y-2">
+                    <div className={`grid grid-cols-2 gap-3 max-h-64 overflow-y-auto p-4 border-2 rounded-xl ${
+                      validationErrors.professions ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                    }`}>
+                      {professionOptions.map((profession) => (
+                        <label key={profession} className="flex items-center space-x-3 cursor-pointer group">
+                          <input
+                            type="checkbox"
+                            checked={editedProfile?.professions?.includes(profession) || false}
+                            onChange={() => handleProfessionToggle(profession)}
+                            className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                          />
+                          <span className="text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">
+                            {profession}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    <ValidationError error={validationErrors.professions} />
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
@@ -474,40 +614,52 @@ export default function TechnicianProfile() {
                 )}
               </InputGroup>
 
-              <InputGroup icon={<Clock className="w-5 h-5 text-indigo-600" />} label="Experience" isEditing={isEditing && isOwnProfile}>
+              <InputGroup icon={<Clock className="w-5 h-5 text-indigo-600" />} label="Experience" isEditing={isEditing && isOwnProfile} required={true}>
                 {isEditing && isOwnProfile ? (
-                  <select
-                    value={editedProfile?.experience || ''}
-                    onChange={(e) => handleInputChange('experience', e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                  >
-                    <option value="Less than 1 year">Less than 1 year</option>
-                    <option value="1-2 years">1-2 years</option>
-                    <option value="3-5 years">3-5 years</option>
-                    <option value="5-10 years">5-10 years</option>
-                    <option value="10+ years">10+ years</option>
-                  </select>
+                  <div className="space-y-2">
+                    <select
+                      value={editedProfile?.experience || ''}
+                      onChange={(e) => handleInputChange('experience', e.target.value)}
+                      className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none ${
+                        validationErrors.experience ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                      }`}
+                    >
+                      <option value="">Select experience level</option>
+                      <option value="Less than 1 year">Less than 1 year</option>
+                      <option value="1-2 years">1-2 years</option>
+                      <option value="3-5 years">3-5 years</option>
+                      <option value="5-10 years">5-10 years</option>
+                      <option value="10+ years">10+ years</option>
+                    </select>
+                    <ValidationError error={validationErrors.experience} />
+                  </div>
                 ) : (
                   <p className="text-slate-900 font-medium">{profile?.experience || 'Not specified'}</p>
                 )}
               </InputGroup>
 
               <div className="grid grid-cols-2 gap-8">
-                <InputGroup icon={<DollarSign className="w-5 h-5 text-indigo-600" />} label="Hourly Rates" isEditing={isEditing && isOwnProfile}>
+                <InputGroup icon={<DollarSign className="w-5 h-5 text-indigo-600" />} label="Hourly Rates" isEditing={isEditing && isOwnProfile} required={true}>
                   {isEditing && isOwnProfile ? (
-                    <div className="space-y-3">
-                      {(editedProfile?.professions || []).map((profession) => (
-                        <div key={profession} className="flex items-center justify-between border-2 border-slate-200 rounded-xl px-4 py-3">
-                          <span className="font-medium text-slate-800 w-1/2">{profession}</span>
-                          <input
-                            type="number"
-                            value={editedProfile?.hourlyRate?.[profession] || ''}
-                            onChange={(e) => handleProfessionRateChange(profession, e.target.value)}
-                            className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                            placeholder="Rs. Rate"
-                          />
-                        </div>
-                      ))}
+                    <div className="space-y-2">
+                      <div className="space-y-3">
+                        {(editedProfile?.professions || []).map((profession) => (
+                          <div key={profession} className={`flex items-center justify-between border-2 rounded-xl px-4 py-3 ${
+                            validationErrors.hourlyRate ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                          }`}>
+                            <span className="font-medium text-slate-800 w-1/2">{profession}</span>
+                            <input
+                              type="number"
+                              value={editedProfile?.hourlyRate?.[profession] || ''}
+                              onChange={(e) => handleProfessionRateChange(profession, e.target.value)}
+                              className="w-1/2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                              placeholder="Rs. Rate"
+                              min="1"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <ValidationError error={validationErrors.hourlyRate} />
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 gap-2">
@@ -527,18 +679,24 @@ export default function TechnicianProfile() {
                   )}
                 </InputGroup>
 
-                <InputGroup icon={<Clock className="w-5 h-5 text-indigo-600" />} label="Response Time" isEditing={isEditing && isOwnProfile}>
+                <InputGroup icon={<Clock className="w-5 h-5 text-indigo-600" />} label="Response Time" isEditing={isEditing && isOwnProfile} required={true}>
                   {isEditing && isOwnProfile ? (
-                    <select
-                      value={editedProfile?.responseTime || ''}
-                      onChange={(e) => handleInputChange('responseTime', e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                    >
-                      <option value="Within 1 hour">Within 1 hour</option>
-                      <option value="Within 2 hours">Within 2 hours</option>
-                      <option value="Same day">Same day</option>
-                      <option value="Within 24 hours">Within 24 hours</option>
-                    </select>
+                    <div className="space-y-2">
+                      <select
+                        value={editedProfile?.responseTime || ''}
+                        onChange={(e) => handleInputChange('responseTime', e.target.value)}
+                        className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none ${
+                          validationErrors.responseTime ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                        }`}
+                      >
+                        <option value="">Select response time</option>
+                        <option value="Within 1 hour">Within 1 hour</option>
+                        <option value="Within 2 hours">Within 2 hours</option>
+                        <option value="Same day">Same day</option>
+                        <option value="Within 24 hours">Within 24 hours</option>
+                      </select>
+                      <ValidationError error={validationErrors.responseTime} />
+                    </div>
                   ) : (
                     <p className="text-slate-900 font-medium">{profile?.responseTime || 'Not specified'}</p>
                   )}
@@ -548,78 +706,93 @@ export default function TechnicianProfile() {
 
             {/* Right Column */}
             <div className="space-y-10">
-              <InputGroup icon={<MapPin className="w-5 h-5 text-indigo-600" />} label="Service Location" isEditing={isEditing && isOwnProfile}>
+              <InputGroup icon={<MapPin className="w-5 h-5 text-indigo-600" />} label="Service Location" isEditing={isEditing && isOwnProfile} required={true}>
                 {isEditing && isOwnProfile ? (
-                  <input
-                    type="text"
-                    value={editedProfile?.serviceLocation || ''}
-                    onChange={(e) => handleInputChange('serviceLocation', e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                    placeholder="Enter service areas"
-                  />
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={editedProfile?.serviceLocation || ''}
+                      onChange={(e) => handleInputChange('serviceLocation', e.target.value)}
+                      className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none ${
+                        validationErrors.serviceLocation ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                      }`}
+                      placeholder="Enter service areas"
+                    />
+                    <ValidationError error={validationErrors.serviceLocation} />
+                  </div>
                 ) : (
                   <p className="text-slate-900 font-medium">{profile?.serviceLocation || 'Not specified'}</p>
                 )}
               </InputGroup>
 
-              <InputGroup icon={<MapPin className="w-5 h-5 text-indigo-600" />} label="Current Location" isEditing={isEditing && isOwnProfile}>
+              <InputGroup icon={<MapPin className="w-5 h-5 text-indigo-600" />} label="Current Location" isEditing={isEditing && isOwnProfile} required={true}>
                 {isEditing && isOwnProfile ? (
-                  <input
-                    type="text"
-                    value={editedProfile?.currentLocation || ''}
-                    onChange={(e) => handleInputChange('currentLocation', e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                    placeholder="Enter current location"
-                  />
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={editedProfile?.currentLocation || ''}
+                      onChange={(e) => handleInputChange('currentLocation', e.target.value)}
+                      className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none ${
+                        validationErrors.currentLocation ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                      }`}
+                      placeholder="Enter current location"
+                    />
+                    <ValidationError error={validationErrors.currentLocation} />
+                  </div>
                 ) : (
                   <p className="text-slate-900 font-medium">{profile?.currentLocation || 'Not specified'}</p>
                 )}
               </InputGroup>
 
               {/* Weekly Availability */}
-              <InputGroup icon={<Clock className="w-5 h-5 text-indigo-600" />} label="Weekly Availability" isEditing={isEditing && isOwnProfile}>
+              <InputGroup icon={<Clock className="w-5 h-5 text-indigo-600" />} label="Weekly Availability" isEditing={isEditing && isOwnProfile} required={true}>
                 {isEditing && isOwnProfile ? (
-                  <div className="space-y-3 border-2 border-slate-200 rounded-xl p-4 max-h-80 overflow-y-auto">
-                    {daysOfWeek.map((day) => (
-                      <div key={day.key} className={`p-4 rounded-xl border-2 transition-all ${editedProfile?.availability?.[day.key]?.available
-                        ? 'border-green-300 bg-green-50'
-                        : 'border-gray-200 bg-gray-50'
-                        }`}>
-                        <div className="flex items-center justify-between mb-3">
-                          <label className="flex items-center space-x-3 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={editedProfile?.availability?.[day.key]?.available || false}
-                              onChange={(e) => handleAvailabilityChange(day.key, 'available', e.target.checked)}
-                              className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                            />
-                            <span className={`font-semibold ${editedProfile?.availability?.[day.key]?.available
-                              ? 'text-green-800'
-                              : 'text-gray-600'
-                              }`}>
-                              {day.label}
-                            </span>
-                          </label>
-                          {editedProfile?.availability?.[day.key]?.available && (
-                            <div className="flex items-center space-x-2 text-sm">
+                  <div className="space-y-2">
+                    <div className={`space-y-3 border-2 rounded-xl p-4 max-h-80 overflow-y-auto ${
+                      validationErrors.availability ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                    }`}>
+                      {daysOfWeek.map((day) => (
+                        <div key={day.key} className={`p-4 rounded-xl border-2 transition-all ${editedProfile?.availability?.[day.key]?.available
+                          ? 'border-green-300 bg-green-50'
+                          : 'border-gray-200 bg-gray-50'
+                          }`}>
+                          <div className="flex items-center justify-between mb-3">
+                            <label className="flex items-center space-x-3 cursor-pointer">
                               <input
-                                type="time"
-                                value={editedProfile?.availability?.[day.key]?.startTime || '09:00'}
-                                onChange={(e) => handleAvailabilityChange(day.key, 'startTime', e.target.value)}
-                                className="px-2 py-1 border border-green-300 rounded-lg focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                                type="checkbox"
+                                checked={editedProfile?.availability?.[day.key]?.available || false}
+                                onChange={(e) => handleAvailabilityChange(day.key, 'available', e.target.checked)}
+                                className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                               />
-                              <span className="text-green-600 font-medium">to</span>
-                              <input
-                                type="time"
-                                value={editedProfile?.availability?.[day.key]?.endTime || '17:00'}
-                                onChange={(e) => handleAvailabilityChange(day.key, 'endTime', e.target.value)}
-                                className="px-2 py-1 border border-green-300 rounded-lg focus:ring-1 focus:ring-green-500 focus:border-green-500"
-                              />
-                            </div>
-                          )}
+                              <span className={`font-semibold ${editedProfile?.availability?.[day.key]?.available
+                                ? 'text-green-800'
+                                : 'text-gray-600'
+                                }`}>
+                                {day.label}
+                              </span>
+                            </label>
+                            {editedProfile?.availability?.[day.key]?.available && (
+                              <div className="flex items-center space-x-2 text-sm">
+                                <input
+                                  type="time"
+                                  value={editedProfile?.availability?.[day.key]?.startTime || '09:00'}
+                                  onChange={(e) => handleAvailabilityChange(day.key, 'startTime', e.target.value)}
+                                  className="px-2 py-1 border border-green-300 rounded-lg focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                                />
+                                <span className="text-green-600 font-medium">to</span>
+                                <input
+                                  type="time"
+                                  value={editedProfile?.availability?.[day.key]?.endTime || '17:00'}
+                                  onChange={(e) => handleAvailabilityChange(day.key, 'endTime', e.target.value)}
+                                  className="px-2 py-1 border border-green-300 rounded-lg focus:ring-1 focus:ring-green-500 focus:border-green-500"
+                                />
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                    <ValidationError error={validationErrors.availability} />
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-2">
@@ -789,7 +962,7 @@ export default function TechnicianProfile() {
   )
 }
 
-function InputGroup({ icon, label, isEditing, children }) {
+function InputGroup({ icon, label, isEditing, required, children }) {
   return (
     <div className="group">
       <div className="flex items-start space-x-4">
@@ -797,7 +970,10 @@ function InputGroup({ icon, label, isEditing, children }) {
           {icon}
         </div>
         <div className="flex-1">
-          <label className="block text-sm font-semibold text-slate-700 mb-3">{label}</label>
+          <label className="block text-sm font-semibold text-slate-700 mb-3">
+            {label}
+            {required && <span className="text-red-500 ml-1">*</span>}
+          </label>
           {children}
         </div>
       </div>
