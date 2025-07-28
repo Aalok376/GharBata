@@ -15,13 +15,15 @@ const ClientPage = () => {
     const [userId, setuserId] = useState('')
     const navigate = useNavigate()
 
-   const Components = [
-   { id: `/client/dashboard`, icon: '📊', text: 'Dashboard' },
-   { id: `/client/orders/${userId}`, icon: '📋', text: 'My Orders' },
-   { id: `/client/earnings/${userId}`, icon: '💰', text: 'Payment' },
-   { id: `/client/messages/${userId}`, icon: '📱', text: 'Messages' },
-   { id: '/logout', icon: '⚙️', text: 'Logout' },
-]
+    const Components = [
+        { id: `/client/dashboard`, icon: '📊', text: 'Dashboard' },
+        { id: `/client/orders/${userId}`, icon: '📋', text: 'My Orders' },
+        { id: `/client/earnings/${userId}`, icon: '💰', text: 'Payment' },
+        { id: `/client/messages/${userId}`, icon: '📱', text: 'Messages' },
+        { id: '/chat', icon: '📱', text: 'chat' },
+        { id: '/logout', icon: '⚙️', text: 'Logout' },
+    ]
+
     useEffect(() => {
         const fetchProfile = async () => {
             try {

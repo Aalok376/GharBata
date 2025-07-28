@@ -10,7 +10,7 @@ const ClientLogin = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState()
 
-  const [userType,setUserType]=useState()
+  const [userType, setUserType] = useState()
 
   const navigate = useNavigate()
 
@@ -21,7 +21,7 @@ const ClientLogin = () => {
 
     try {
 
-      const rresult = await Llogin({ username, password})
+      const rresult = await Llogin({ username, password })
 
       setUserType(rresult.user.userType)
       if (rresult.success) {
@@ -37,15 +37,15 @@ const ClientLogin = () => {
           },
           body: JSON.stringify({ userId })
         })
-
+        console.log(navi.status)
         if (userType === 'client') {
-          if (navi.status === 200) {
+          if (navi.status === 201) {
             navigate(`/clientProfileSetupPage/${userId}`)
           } else {
             navigate("/client/dashboard")
           }
         } else if (userType === 'technician') {
-          if (navi.status === 200) {
+          if (navi.status === 201) {
             // User profile needs to be set up
             navigate(`/professionalProfilePage/${userId}`)
           } else {
@@ -80,9 +80,9 @@ const ClientLogin = () => {
   }
 
   const googleHref =
-        userType === 'technician'
-            ? 'http://localhost:5000/auth/google?userType=technician'
-            : 'http://localhost:5000/auth/google?userType=client';
+    userType === 'technician'
+      ? 'http://localhost:5000/auth/google?userType=technician'
+      : 'http://localhost:5000/auth/google?userType=client';
 
   return (<>
     <style>
