@@ -13,6 +13,7 @@ const ProfessionalPage = () => {
     const [userId, setuserId] = useState('')
     const [technicianData, setTechnicianData] = useState(null)
     const [todaysBookings, setTodaysBookings] = useState([])
+    const navigate = useNavigate()
     const [stats, setStats] = useState({
         todaysEarnings: 0,
         weeklyEarnings: 0,
@@ -95,8 +96,8 @@ const ProfessionalPage = () => {
 
             if (data.success) {
                 sessionStorage.clear()
-                // Use your navigation system here
-                window.location.href = '/technician_login'
+                 navigate('/gharbata/login', { replace: true })
+                window.location.reload()
             } else {
                 alert('Logout failed: ' + data.msg)
             }

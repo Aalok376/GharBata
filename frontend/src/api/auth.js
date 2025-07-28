@@ -42,7 +42,7 @@ export const register = async ({ username, password, fname, lname, userType, use
   }
 }
 
-export const Llogin = async ({ username, password ,userType}) => {
+export const Llogin = async ({ username, password }) => {
   console.log(username, password)
   try {
     const response = await fetch(`${BASE_URL}/api/auth/login`, {
@@ -51,7 +51,7 @@ export const Llogin = async ({ username, password ,userType}) => {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ username, password,userType })
+      body: JSON.stringify({ username, password })
     })
     const result = await response.json()
     return result

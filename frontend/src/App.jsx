@@ -4,8 +4,6 @@ import {BrowserRouter as Router,Routes,Route} from 'react-router-dom'
 
 import Client_Login from './pages/Client_Login'
 import Client_Signup from './pages/Client_Signup'
-import Technician_Signup from './pages/Technician_Signup'
-import Technician_Login from './pages/Technician_Login'
 import HomePageFunc from './pages/IntroductionPage'
 import ProfessionalPage from './pages/professionalHomePage'
 import ClientPage from './pages/clientHomePage'
@@ -18,6 +16,7 @@ import MapPickerModal from './pages/MapPicker'
 import { SelectLocationOverlay } from './components/selectLocation'
 import ClientProfilePage from './pages/clientProfilePage'
 import TechnicianReviewsPage from './pages/reviewsPage'
+import OAuthSuccess from './pages/oAuth';
 
 function App(){
  return (
@@ -25,22 +24,19 @@ function App(){
       <Routes>
         <Route path='/' element={<HomePageFunc/>}/>
         <Route path='/client/dashboard' element={<ClientPage/>}/>
-        <Route path='/client_login' element={<Client_Login/>}/>
-        <Route path='/client_signup' element={<Client_Signup/>}/>
-        <Route path='/technician_login' element={<Technician_Login/>}/>
-        <Route path='/technician_signup' element={<Technician_Signup/>}/>
+        <Route path='/gharbata/login' element={<Client_Login/>}/>
+        <Route path='/gharbata/signup' element={<Client_Signup/>}/>
         <Route path='/otp' element={<Overlay_Otp/>}/>
         <Route path='/professional/dashboard' element={<ProfessionalPage/>}/>
         <Route path='/professionalProfilePage/:userId' element={<ProfessionalProfilePage/>}/>
         <Route path='/chat/:bookingId' element={<ChatPage/>}/>
         <Route path='/booking-form' element={<BookingForm/>}/>
-        <Route path="/dashboard/bookservice/:serviceName" element={<TechnicianDisplayPage/>} />
+        <Route path="client/dashboard/bookservice/:serviceName" element={<TechnicianDisplayPage/>}/>
         <Route path='/clientProfileSetupPage/:userId' element={<ClientProfilePage/>}/>
-        <Route path="/dashboard/booking/:service/:technicianId" element={<BookingForm/>} />
+        <Route path="client/dashboard/booking/:service/:technicianId" element={<BookingForm/>} />
         <Route path="/professional/reviews/:userId" element={<TechnicianReviewsPage/>} />
+        <Route path="/oauth-success" element={<OAuthSuccess />} />
       </Routes>
-    
-
     </Router>
     
   )

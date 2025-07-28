@@ -1,6 +1,14 @@
 import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
+import session from 'express-session'
+import passport from 'passport'
+import dotenv from 'dotenv'
+import './passportConfig.js'
+import TokenStore from './models/RefreshToken.js'
+import { generateAccessToken, generateRefreshToken } from './utils/tokengenerator.js'
+
+dotenv.config()
 
 const app = express() 
 
@@ -12,6 +20,28 @@ app.use(cors({
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
+
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false, // set to true if HTTPS
+    httpOnly: true,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  }
+}));
+
+// Middleware to store userType from query param in session
+app.use((req, res, next) => {
+  if (req.query.userType) {
+    req.session.userType = req.query.userType;
+  }
+  next();
+});
+
+app.use(passport.initialize());
+app.use(passport.session())
 
 import authRoutes from './routes/Login.js'
 import chatRoutes from './routes/chatRoutes.js'
@@ -27,6 +57,52 @@ app.use('/api/technicians',technicianRoutes)
 
 app.use('/api/chat', chatRoutes)
 
+
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+// Google OAuth callback
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login', session: false }),
+  async (req, res) => {
+    // User is authenticated and available at req.user
+
+    const user = req.user
+
+    const AccessToken = generateAccessToken(user)
+    const RefreshToken = generateRefreshToken(user)
+
+    // Save refresh token in DB
+    const tokenStoree = new TokenStore({
+      username: user.username,
+      RefreshToken
+    })
+    await tokenStoree.save()
+
+    // Set tokens as httpOnly cookies
+    res.cookie('accessToken', AccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Lax',
+      maxAge: 30 * 60 * 1000, // 30 minutes
+    })
+
+    res.cookie('refreshToken', RefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    })
+
+    // Redirect to frontend with minimal user info (no tokens in URL)
+    res.redirect(`${process.env.FRONTEND_URL}/oauth-success?user=${encodeURIComponent(JSON.stringify({
+      id: user._id,
+      username: user.username,
+      userType: user.userType,
+      fname: user.fname,
+      lname: user.lname,
+      isProfileComplete: user.isProfileComplete,
+    }))}`)
+  })
 
 app.get('/reverse-geocode', async (req, res) => {
   const { lat, lon } = req.query;

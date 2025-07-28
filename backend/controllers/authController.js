@@ -4,7 +4,6 @@ import TokenStore from '../models/RefreshToken.js'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { sendEmail } from '../utils/email.js'
-import RefreshToken from '../models/RefreshToken.js'
 
 export const verificationOtp = async (req, res) => {
   const { username, password, fname, lname } = req.body
@@ -49,18 +48,13 @@ export const Register = async (req, res) => {
 // Login function
 export const login = async (req, res) => {
   try {
-    const { username, password, userType } = req.body
-    console.log(password, username)
+    const { username, password } = req.body
 
     const user = await User.findOne({ username })
 
     console.log(user)
 
     if (!user) {
-      return res.status(401).json({ success: false, msg: 'Invalid credentials: User not found.' })
-    }
-
-    if (user.userType !== userType) {
       return res.status(401).json({ success: false, msg: 'Invalid credentials: User not found.' })
     }
 
@@ -105,7 +99,7 @@ export const Logout = async (req, res) => {
     }
     const { username } = loggedUser
 
-    await RefreshToken.deleteOne({ username })
+    await TokenStore.deleteOne({ username })
 
     res.clearCookie('refreshToken', { httpOnly: true })
     res.clearCookie('accessToken', { httpOnly: true })

@@ -37,18 +37,20 @@ const SignUpBtn = () => {
 
 
     const handleClientSignUp=()=>{
-        setIsSignUpOpen(false) // close the dropdown
-        navigate('/client_signup')
+        setIsSignUpOpen(false)
+        sessionStorage.setItem('userType','client')
+        navigate('/gharbata/signup')
     }
     const handleTechnicianSignUp=()=>{
         setIsSignUpOpen(false)
-        navigate('/technician_signup')
+        sessionStorage.setItem('userType','technician')
+        navigate('/gharbata/signup')
     }
     
     return (
         <NavButton>
             <ButtonLink onClick={() => setIsSignUpOpen(prev => !prev)}>
-                Sign In
+                Sign Up
             </ButtonLink>
             
             <div className={`

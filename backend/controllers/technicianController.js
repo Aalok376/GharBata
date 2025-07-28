@@ -36,6 +36,8 @@ export const createTechnicianProfile = async (req, res) => {
 
     await technician.save()
 
+    user.fname = req.body.fname || user.fname
+    user.lname = req.body.lname || user.lname
     user.isProfileComplete = true
     await user.save()
 
@@ -102,7 +104,7 @@ export const getTechnicianProfile = async (req, res) => {
     const userId = req.body.userId || req.user.id
 
     const user = await User.findById(userId).select("-password")
-    
+
     if (!user) return res.status(404).json({ msg: "User not found" })
 
     const technician = await Technician.findOne({ user: userId }).populate({
@@ -120,7 +122,7 @@ export const getTechnicianProfile = async (req, res) => {
   }
 }
 
-export const getAllTechnicians=async (req, res) => {
+export const getAllTechnicians = async (req, res) => {
   try {
     const { category } = req.query
 
@@ -173,7 +175,7 @@ export const rateTechnician = async (req, res) => {
 }
 
 export const writeReview = async (req, res) => {
-  const userId=req.user.id
+  const userId = req.user.id
   try {
     const { technicianId, profession, reviewText } = req.body
 

@@ -65,7 +65,7 @@ const ClientPage = () => {
             if (data.success) {
                 sessionStorage.clear()
                 // Navigate to login page and replace history so user can't go back
-                navigate('/client_login', { replace: true })
+                navigate('/gharbata/login', { replace: true })
                 window.location.reload()
             } else {
                 alert('Logout failed: ' + data.msg)
@@ -231,7 +231,7 @@ const ClientPage = () => {
                 <ClientNavbar isOpen={isSideBarOpenC} setIsOpen={setIsSideBarOpenC} fname={fname} lname={lname} profilePic={profilePic} userType={'client'} userId={userId}></ClientNavbar>
                 <SideBarOverlay isSideBarOpen={isSideBarOpenC} setIsSideBarOpen={setIsSideBarOpenC} />
                 <div className="dashboard">
-                    <SideBar components={Componentss} isOpen={isSideBarOpenC} onLogout={handleLogout}></SideBar>
+                    <SideBar components={Components} isOpen={isSideBarOpenC} onLogout={handleLogout}></SideBar>
                     <main className="main-content">
                         <header className="header">
                             <div className="welcome">

@@ -115,12 +115,8 @@ const Overlay_Otp = () => {
                 sessionStorage.removeItem('otp_resend_trigger')
                 
                 toast.success('User Registered successfully. Please login to continue')
-                if (userType === 'client') {
-                    navigate('/client_login')
-                }
-                else if (userType === 'technician') {
-                    navigate('/technician_login')
-                }
+                navigate('/gharbata/login')
+                
             }
             else {
                 setIsVerifyBtnDisabled(false)

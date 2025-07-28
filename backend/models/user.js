@@ -2,7 +2,6 @@ import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
 
 const UserSchema = new mongoose.Schema({
-
   userType: {
     type: String,
     enum: ['client', 'technician', 'admin'],
@@ -10,47 +9,52 @@ const UserSchema = new mongoose.Schema({
   },
   fname: {
     type: String,
-    required: true,
     trim: true,
   },
   lname: {
     type: String,
-    required: true,
     trim: true,
   },
   username: {
     type: String,
-    required: true,
     unique: true,
     trim: true,
   },
   password: {
     type: String,
-    required: true,
+    // Required only if not OAuth user
+    required: function () { return !this.oauthId },
+  },
+  oauthId: {
+    type: String,
+    unique: true,
+    sparse: true, // allows null or undefined for local users
+  },
+  provider: {
+    type: String,
+  },
+  isProfileComplete: {
+    type: Boolean,
+    default: false,
   },
   createdAt: {
     type: Date,
     default: Date.now,
   },
- isProfileComplete: {
-    type: Boolean,
-    default: false
-  }
 }, { timestamps: true })
 
-
 UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    return next();
+  if (!this.isModified('password') || !this.password) {
+    return next()
   }
 
   try {
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(10)
     this.password = await bcrypt.hash(this.password, salt)
     next()
-  }
-  catch (error) {
+  } catch (error) {
     next(error)
   }
 })
+
 export default mongoose.model('User', UserSchema)

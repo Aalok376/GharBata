@@ -37,6 +37,8 @@ export const createClientProfile = async (req, res) => {
     await client.save()
 
     // OPTIONAL: Set profile completion flag
+    user.fname = req.body.fname || user.fname
+    user.lname = req.body.lname ||user.lname
     user.isProfileComplete = true
     await user.save()
 

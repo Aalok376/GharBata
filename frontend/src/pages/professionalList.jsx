@@ -15,7 +15,7 @@ const TechnicianDisplayPage = () => {
 
   useEffect(() => {
     if (!initialLoad && serviceName !== selectedService) {
-      navigate(`/dashboard/bookservice/${selectedService}`, { replace: true })
+      navigate(`/client/dashboard/bookservice/${selectedService}`, { replace: true })
     }
   }, [selectedService, serviceName, navigate, initialLoad])
 
@@ -204,7 +204,7 @@ const TechnicianDisplayPage = () => {
   }
 
   const handleBookNow = (technician) => {
-    navigate(`/dashboard/booking/${selectedService}/${technician._id}`, {
+    navigate(`/client/dashboard/booking/${selectedService}/${technician._id}`, {
       state: {
         service: selectedService,
         technician: technician
