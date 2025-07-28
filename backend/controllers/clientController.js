@@ -70,10 +70,10 @@ export const isClientProfileComplete = async (req, res) => {
 
 export const profile = async (req, res) => {
   try {
+    const idToFind = req.body.userId || req.user.id;
 
-    const user = await Client.findOne({ client_id: req.user.id })
+    const user = await Client.findOne({ client_id: idToFind })
       .populate('client_id', '-password')
-
 
     if (!user) {
       return res.status(404).json({ success: false, msg: 'User not found' })

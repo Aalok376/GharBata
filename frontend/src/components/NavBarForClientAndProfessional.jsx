@@ -3,7 +3,7 @@ import styled from "styled-components"
 import { NavLink, useNavigate } from "react-router-dom"
 
 
-const ClientNavbar = ({isOpen,setIsOpen,fname,lname,profilePic,userType}) => {
+const ClientNavbar = ({isOpen,setIsOpen,fname,lname,profilePic,userType,userId}) => {
 
     const navigate = useNavigate()
 
@@ -23,10 +23,10 @@ const ClientNavbar = ({isOpen,setIsOpen,fname,lname,profilePic,userType}) => {
             <NavbarRight>
                 <UserProfile onClick={()=>{
                     if(userType==='client'){
-                    navigate('/clientProfileSetupPage')
+                    navigate(`/clientProfileSetupPage/${userId}`)
                     }
                     else{
-                        navigate('/professionalProfilePage')
+                        navigate(`/professionalProfilePage/${userId}`)
                     }
                 }}>
                     <UserAvatar><img src={profilePic || '/default-avatar.png'} alt="A" className="w-10 h-10 rounded-full object-cover"></img></UserAvatar>

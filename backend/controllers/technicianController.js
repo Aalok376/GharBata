@@ -99,9 +99,10 @@ export const updateTechniciansProfile = async (req, res) => {
 
 export const getTechnicianProfile = async (req, res) => {
   try {
-    const {userId}=req.body
+    const userId = req.body.userId || req.user.id
 
     const user = await User.findById(userId).select("-password")
+    
     if (!user) return res.status(404).json({ msg: "User not found" })
 
     const technician = await Technician.findOne({ user: userId }).populate({

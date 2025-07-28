@@ -10,7 +10,7 @@ const router = express.Router()
 
 router.post('/createClient', verifyToken, uploadParser, createClientProfile)
 router.post('/updateClient', verifyToken, uploadParser, updateClientProfile)
-router.get('/getClientProfile', verifyToken, profile)
+router.post('/getClientProfile', verifyToken, profile)
 router.post('/getClientprofilestatus', isClientProfileComplete)
 
 export default router

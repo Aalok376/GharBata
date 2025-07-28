@@ -1,23 +1,60 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import styled from "styled-components"
 import ClientNavbar from "../components/NavBarForClientAndProfessional"
 import SideBar from "../components/SideBar"
 import SideBarOverlay from "../components/SideBarOverlay"
-import { useParams, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 const ProfessionalPage = () => {
 
     const [isSideBarOpen, setIsSideBarOpen] = useState(false)
+    const [fname, setFname] = useState('')
+    const [lname, setLname] = useState('')
+    const [profilePic, setProfilePic] = useState('')
+    const [userId, setuserId] = useState('')
     const navigate = useNavigate()
 
     const Components = [
-        { id: '/dashboard', icon: '📊', text: 'Dashboard' },
-        { id: '/jobs', icon: '💼', text: 'Jobs' },
-        { id: '/earnings', icon: '💰', text: 'Earnings' },
-        { id: '/reviews', icon: '⭐', text: 'Reviews' },
-        { id: '/messages', icon: '📱', text: 'Messages' },
+        { id: '/professional', icon: '📊', text: 'Dashboard' },
+        { id: '/professional/jobs', icon: '💼', text: 'Jobs' },
+        { id: '/professional/earnings', icon: '💰', text: 'Earnings' },
+        { id: '/professional/reviews', icon: '⭐', text: 'Reviews' },
+        { id: '/professional/messages', icon: '📱', text: 'Messages' },
         { id: '/logout', icon: '⚙️', text: 'Logout' },
     ]
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const profileResponse = await fetch('http://localhost:5000/api/technicians/getTechnicians', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({})
+                })
+
+                let profileData = await profileResponse.json()
+                console.log(profileData)
+                profileData = Array.isArray(profileData) ? profileData : [profileData]
+                const prof = profileData[0].technician || {}
+
+                if (prof) {
+                    setFname(prof.user?.fname || '')
+                    setLname(prof.user?.lname || '')
+                    setuserId(prof.user?._id || '')
+                }
+
+                setProfilePic(prof?.profilePic || '')
+
+            } catch (err) {
+                console.error('Failed to fetch profile:', err)
+            }
+        }
+
+        fetchProfile()
+    }, [])
 
     const handleLogout = async () => {
         try {
@@ -40,6 +77,201 @@ const ProfessionalPage = () => {
 
     return (
         <>
+            <Body>
+                <ClientNavbar isOpen={isSideBarOpen} setIsOpen={setIsSideBarOpen} fname={fname} lname={lname} profilePic={profilePic} userType={'technician'} userId={userId}></ClientNavbar>
+                <SideBarOverlay isSideBarOpen={isSideBarOpen} setIsSideBarOpen={setIsSideBarOpen} />
+                <div className="dashboard">
+                    <SideBar components={Components} isOpen={isSideBarOpen} onLogout={handleLogout}></SideBar>
+                    <main className="main-content" id="mainContent">
+                        <header className="header">
+                            <div className="welcome">
+                                <h2>Good morning, Michael!</h2>
+                                <p>You have 5 appointments today</p>
+                            </div>
+                            <div className="header-actions">
+                                <div className="status-badge">Available</div>
+                                <div className="earnings-display">
+                                    <div className="earnings-amount">$348</div>
+                                    <div className="earnings-label">Today's Earnings</div>
+                                </div>
+                            </div>
+                        </header>
+
+                        <section className="stats-grid">
+                            <div className="stat-card jobs-today">
+                                <div className="stat-header">
+                                    <div className="stat-icon">📋</div>
+                                </div>
+                                <div className="stat-value">5</div>
+                                <div className="stat-label">Jobs Today</div>
+                                <div className="stat-change positive">+2 from yesterday</div>
+                            </div>
+
+                            <div className="stat-card total-earnings">
+                                <div className="stat-header">
+                                    <div className="stat-icon">💵</div>
+                                </div>
+                                <div className="stat-value">$2,840</div>
+                                <div className="stat-label">This Week</div>
+                                <div className="stat-change positive">+15% from last week</div>
+                            </div>
+
+                            <div className="stat-card avg-rating">
+                                <div className="stat-header">
+                                    <div className="stat-icon">⭐</div>
+                                </div>
+                                <div className="stat-value">4.9</div>
+                                <div className="stat-label">Average Rating</div>
+                                <div className="stat-change positive">+0.1 this month</div>
+                            </div>
+
+                            <div className="stat-card completion-rate">
+                                <div className="stat-header">
+                                    <div className="stat-icon">✅</div>
+                                </div>
+                                <div className="stat-value">98%</div>
+                                <div className="stat-label">Completion Rate</div>
+                                <div className="stat-change positive">+2% this month</div>
+                            </div>
+                        </section>
+
+                        <section className="schedule-section">
+                            <div className="section-header">
+                                <h3>Today's Schedule</h3>
+                                <button className="add-appointment-btn" onClick={() => { }}>+ Add Appointment</button>
+                            </div>
+
+                            <div className="appointment-item scheduled">
+                                <div className="appointment-time">9:00 AM</div>
+                                <div className="appointment-details">
+                                    <div className="appointment-title">Kitchen Sink Repair</div>
+                                    <div className="appointment-info">
+                                        <span>📍 123 Oak Street, Downtown</span>
+                                        <span>👤 Sarah Johnson</span>
+                                        <span>💰 $85</span>
+                                    </div>
+                                </div>
+                                <div className="appointment-actions">
+                                    <button className="action-btn start-btn" onClick={() => { }}>Start Job</button>
+                                    <button className="action-btn contact-btn" onClick={() => { }}>Contact</button>
+                                </div>
+                            </div>
+
+                            <div className="appointment-item urgent">
+                                <div className="appointment-time">11:30 AM</div>
+                                <div className="appointment-details">
+                                    <div className="appointment-title">Emergency Plumbing - Burst Pipe</div>
+                                    <div className="appointment-info">
+                                        <span>📍 456 Maple Ave, Westside</span>
+                                        <span>👤 Robert Chen</span>
+                                        <span>💰 $150</span>
+                                    </div>
+                                </div>
+                                <div className="appointment-actions">
+                                    <button className="action-btn start-btn" onClick={() => { }}>Start Job</button>
+                                    <button className="action-btn contact-btn" onClick={() => { }}>Contact</button>
+                                </div>
+                            </div>
+
+                            <div className="appointment-item scheduled">
+                                <div className="appointment-time">2:00 PM</div>
+                                <div className="appointment-details">
+                                    <div className="appointment-title">Bathroom Faucet Installation</div>
+                                    <div className="appointment-info">
+                                        <span>📍 789 Pine St, Northside</span>
+                                        <span>👤 Emily Davis</span>
+                                        <span>💰 $120</span>
+                                    </div>
+                                </div>
+                                <div className="appointment-actions">
+                                    <button className="action-btn contact-btn" onClick={() => { }}>Contact</button>
+                                </div>
+                            </div>
+
+                            <div className="appointment-item completed">
+                                <div className="appointment-time">4:30 PM</div>
+                                <div className="appointment-details">
+                                    <div className="appointment-title">Toilet Repair</div>
+                                    <div className="appointment-info">
+                                        <span>📍 321 Cedar Blvd, Eastside</span>
+                                        <span>👤 Mark Wilson</span>
+                                        <span>💰 $95</span>
+                                    </div>
+                                </div>
+                                <div className="appointment-actions">
+                                    <button className="action-btn complete-btn" onClick={() => { }}>Mark
+                                        Complete</button>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section className="quick-actions">
+                            <div className="quick-action-card" onClick={() => { }}>
+                                <div className="quick-action-icon">📋</div>
+                                <div className="quick-action-title">View All Jobs</div>
+                                <div className="quick-action-desc">Manage pending and completed jobs</div>
+                            </div>
+
+                            <div className="quick-action-card" onClick={() => { }}>
+                                <div className="quick-action-icon">🕐</div>
+                                <div className="quick-action-title">Update Availability</div>
+                                <div className="quick-action-desc">Set your working hours and days</div>
+                            </div>
+
+                            <div className="quick-action-card" onClick={() => { }}>
+                                <div className="quick-action-icon">💰</div>
+                                <div className="quick-action-title">Earnings Report</div>
+                                <div className="quick-action-desc">Track income and payments</div>
+                            </div>
+
+                            <div className="quick-action-card" onClick={() => { }}>
+                                <div className="quick-action-icon">💬</div>
+                                <div className="quick-action-title">Customer Feedback</div>
+                                <div className="quick-action-desc">View reviews and ratings</div>
+                            </div>
+                        </section>
+
+                        <section className="reviews-section">
+                            <div className="section-header">
+                                <h3>Recent Customer Reviews</h3>
+                                <a href="#" className="view-all-btn">View All Reviews</a>
+                            </div>
+
+                            <div className="review-item">
+                                <div className="review-header">
+                                    <div className="customer-info">
+                                        <div className="customer-avatar">SJ</div>
+                                        <div>
+                                            <strong>Sarah Johnson</strong>
+                                            <div className="stars">⭐⭐⭐⭐⭐</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="review-text">
+                                    "Michael was fantastic! Fixed my kitchen sink quickly and professionally. Very clean work and
+                                    fair pricing. Will definitely call again!"
+                                </div>
+                            </div>
+
+                            <div className="review-item">
+                                <div className="review-header">
+                                    <div className="customer-info">
+                                        <div className="customer-avatar">ED</div>
+                                        <div>
+                                            <strong>Emily Davis</strong>
+                                            <div className="stars">⭐⭐⭐⭐⭐</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="review-text">
+                                    "Excellent service! Arrived on time, explained everything clearly, and the new faucet works
+                                    perfectly. Highly recommended!"
+                                </div>
+                            </div>
+                        </section>
+                    </main>
+                </div>
+            </Body>
             <style>
                 {` 
                 .dashboard {
@@ -458,201 +690,6 @@ const ProfessionalPage = () => {
             }
         `}
             </style>
-            <Body>
-                <ClientNavbar isOpen={isSideBarOpen} setIsOpen={setIsSideBarOpen}></ClientNavbar>
-                <SideBarOverlay isSideBarOpen={isSideBarOpen} setIsSideBarOpen={setIsSideBarOpen} />
-                <div className="dashboard">
-                    <SideBar components={Components} isOpen={isSideBarOpen} onLogout={handleLogout}></SideBar>
-                    <main className="main-content" id="mainContent">
-                        <header className="header">
-                            <div className="welcome">
-                                <h2>Good morning, Michael!</h2>
-                                <p>You have 5 appointments today</p>
-                            </div>
-                            <div className="header-actions">
-                                <div className="status-badge">Available</div>
-                                <div className="earnings-display">
-                                    <div className="earnings-amount">$348</div>
-                                    <div className="earnings-label">Today's Earnings</div>
-                                </div>
-                            </div>
-                        </header>
-
-                        <section className="stats-grid">
-                            <div className="stat-card jobs-today">
-                                <div className="stat-header">
-                                    <div className="stat-icon">📋</div>
-                                </div>
-                                <div className="stat-value">5</div>
-                                <div className="stat-label">Jobs Today</div>
-                                <div className="stat-change positive">+2 from yesterday</div>
-                            </div>
-
-                            <div className="stat-card total-earnings">
-                                <div className="stat-header">
-                                    <div className="stat-icon">💵</div>
-                                </div>
-                                <div className="stat-value">$2,840</div>
-                                <div className="stat-label">This Week</div>
-                                <div className="stat-change positive">+15% from last week</div>
-                            </div>
-
-                            <div className="stat-card avg-rating">
-                                <div className="stat-header">
-                                    <div className="stat-icon">⭐</div>
-                                </div>
-                                <div className="stat-value">4.9</div>
-                                <div className="stat-label">Average Rating</div>
-                                <div className="stat-change positive">+0.1 this month</div>
-                            </div>
-
-                            <div className="stat-card completion-rate">
-                                <div className="stat-header">
-                                    <div className="stat-icon">✅</div>
-                                </div>
-                                <div className="stat-value">98%</div>
-                                <div className="stat-label">Completion Rate</div>
-                                <div className="stat-change positive">+2% this month</div>
-                            </div>
-                        </section>
-
-                        <section className="schedule-section">
-                            <div className="section-header">
-                                <h3>Today's Schedule</h3>
-                                <button className="add-appointment-btn" onClick={() => { }}>+ Add Appointment</button>
-                            </div>
-
-                            <div className="appointment-item scheduled">
-                                <div className="appointment-time">9:00 AM</div>
-                                <div className="appointment-details">
-                                    <div className="appointment-title">Kitchen Sink Repair</div>
-                                    <div className="appointment-info">
-                                        <span>📍 123 Oak Street, Downtown</span>
-                                        <span>👤 Sarah Johnson</span>
-                                        <span>💰 $85</span>
-                                    </div>
-                                </div>
-                                <div className="appointment-actions">
-                                    <button className="action-btn start-btn" onClick={() => { }}>Start Job</button>
-                                    <button className="action-btn contact-btn" onClick={() => { }}>Contact</button>
-                                </div>
-                            </div>
-
-                            <div className="appointment-item urgent">
-                                <div className="appointment-time">11:30 AM</div>
-                                <div className="appointment-details">
-                                    <div className="appointment-title">Emergency Plumbing - Burst Pipe</div>
-                                    <div className="appointment-info">
-                                        <span>📍 456 Maple Ave, Westside</span>
-                                        <span>👤 Robert Chen</span>
-                                        <span>💰 $150</span>
-                                    </div>
-                                </div>
-                                <div className="appointment-actions">
-                                    <button className="action-btn start-btn" onClick={() => { }}>Start Job</button>
-                                    <button className="action-btn contact-btn" onClick={() => { }}>Contact</button>
-                                </div>
-                            </div>
-
-                            <div className="appointment-item scheduled">
-                                <div className="appointment-time">2:00 PM</div>
-                                <div className="appointment-details">
-                                    <div className="appointment-title">Bathroom Faucet Installation</div>
-                                    <div className="appointment-info">
-                                        <span>📍 789 Pine St, Northside</span>
-                                        <span>👤 Emily Davis</span>
-                                        <span>💰 $120</span>
-                                    </div>
-                                </div>
-                                <div className="appointment-actions">
-                                    <button className="action-btn contact-btn" onClick={() => { }}>Contact</button>
-                                </div>
-                            </div>
-
-                            <div className="appointment-item completed">
-                                <div className="appointment-time">4:30 PM</div>
-                                <div className="appointment-details">
-                                    <div className="appointment-title">Toilet Repair</div>
-                                    <div className="appointment-info">
-                                        <span>📍 321 Cedar Blvd, Eastside</span>
-                                        <span>👤 Mark Wilson</span>
-                                        <span>💰 $95</span>
-                                    </div>
-                                </div>
-                                <div className="appointment-actions">
-                                    <button className="action-btn complete-btn" onClick={() => { }}>Mark
-                                        Complete</button>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section className="quick-actions">
-                            <div className="quick-action-card" onClick={() => { }}>
-                                <div className="quick-action-icon">📋</div>
-                                <div className="quick-action-title">View All Jobs</div>
-                                <div className="quick-action-desc">Manage pending and completed jobs</div>
-                            </div>
-
-                            <div className="quick-action-card" onClick={() => { }}>
-                                <div className="quick-action-icon">🕐</div>
-                                <div className="quick-action-title">Update Availability</div>
-                                <div className="quick-action-desc">Set your working hours and days</div>
-                            </div>
-
-                            <div className="quick-action-card" onClick={() => { }}>
-                                <div className="quick-action-icon">💰</div>
-                                <div className="quick-action-title">Earnings Report</div>
-                                <div className="quick-action-desc">Track income and payments</div>
-                            </div>
-
-                            <div className="quick-action-card" onClick={() => { }}>
-                                <div className="quick-action-icon">💬</div>
-                                <div className="quick-action-title">Customer Feedback</div>
-                                <div className="quick-action-desc">View reviews and ratings</div>
-                            </div>
-                        </section>
-
-                        <section className="reviews-section">
-                            <div className="section-header">
-                                <h3>Recent Customer Reviews</h3>
-                                <a href="#" className="view-all-btn">View All Reviews</a>
-                            </div>
-
-                            <div className="review-item">
-                                <div className="review-header">
-                                    <div className="customer-info">
-                                        <div className="customer-avatar">SJ</div>
-                                        <div>
-                                            <strong>Sarah Johnson</strong>
-                                            <div className="stars">⭐⭐⭐⭐⭐</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="review-text">
-                                    "Michael was fantastic! Fixed my kitchen sink quickly and professionally. Very clean work and
-                                    fair pricing. Will definitely call again!"
-                                </div>
-                            </div>
-
-                            <div className="review-item">
-                                <div className="review-header">
-                                    <div className="customer-info">
-                                        <div className="customer-avatar">ED</div>
-                                        <div>
-                                            <strong>Emily Davis</strong>
-                                            <div className="stars">⭐⭐⭐⭐⭐</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="review-text">
-                                    "Excellent service! Arrived on time, explained everything clearly, and the new faucet works
-                                    perfectly. Highly recommended!"
-                                </div>
-                            </div>
-                        </section>
-                    </main>
-                </div>
-            </Body>
         </>
 
     )

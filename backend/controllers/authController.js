@@ -22,6 +22,8 @@ export const verificationOtp = async (req, res) => {
       const otp = Math.floor(100000 + Math.random() * 900000).toString()
       sendEmail(username, otp)
 
+      console.log(otp)
+
       const otpDb = new OtpStore({ username, otp })
       await otpDb.save()
       return res.status(200).json({ success: true, msg: 'OTP sent to your email. Please verify to complete signup.' })

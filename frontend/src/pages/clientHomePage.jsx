@@ -12,6 +12,7 @@ const ClientPage = () => {
     const [fname, setFname] = useState('')
     const [lname, setLname] = useState('')
     const [profilePic, setProfilePic] = useState('')
+    const [userId, setuserId] = useState('')
     const navigate = useNavigate()
 
     const Componentss = [
@@ -26,8 +27,10 @@ const ClientPage = () => {
         const fetchProfile = async () => {
             try {
                 const profileResponse = await fetch('http://localhost:5000/api/clients/getClientProfile', {
-                    method: 'GET',
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
+                    body: JSON.stringify()
                 })
 
                 let profileData = await profileResponse.json()
@@ -39,6 +42,7 @@ const ClientPage = () => {
                 if (profData) {
                     setFname(profData.fname || '')
                     setLname(profData.lname || '')
+                    setuserId(profData._id || '')
                 }
 
                 setProfilePic(prof?.profilePic || '')
@@ -223,7 +227,7 @@ const ClientPage = () => {
 `}
             </style>
             <CBody>
-                <ClientNavbar isOpen={isSideBarOpenC} setIsOpen={setIsSideBarOpenC} fname={fname} lname={lname} profilePic={profilePic} userType={'client'}></ClientNavbar>
+                <ClientNavbar isOpen={isSideBarOpenC} setIsOpen={setIsSideBarOpenC} fname={fname} lname={lname} profilePic={profilePic} userType={'client'} userId={userId}></ClientNavbar>
                 <SideBarOverlay isSideBarOpen={isSideBarOpenC} setIsSideBarOpen={setIsSideBarOpenC} />
                 <div className="dashboard">
                     <SideBar components={Componentss} isOpen={isSideBarOpenC} onLogout={handleLogout}></SideBar>

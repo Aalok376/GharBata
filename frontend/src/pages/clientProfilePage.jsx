@@ -19,13 +19,13 @@ export default function ClientProfile() {
     const fetchProfile = async () => {
       const formDataStr = sessionStorage.getItem('formData')
       const ownUserId = sessionStorage.getItem('userId')
-      const userrname=sessionStorage.getItem('username')
+      const userrname = sessionStorage.getItem('username')
 
       // Check if the profile being viewed belongs to the current user
       const isOwn = ownUserId === userId
       setIsOwnProfile(isOwn)
 
-       let username = userrname||''
+      let username = userrname || ''
       let user = null
 
       if (formDataStr) {
@@ -77,8 +77,10 @@ export default function ClientProfile() {
           })
         } else {
           const profileResponse = await fetch('http://localhost:5000/api/clients/getClientProfile', {
-            method: 'GET',
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
+            body: JSON.stringify({ userId })
           })
 
           let profileData = await profileResponse.json()
@@ -152,7 +154,7 @@ export default function ClientProfile() {
         setProfile(updatedProfile)
         setEditedProfile(updatedProfile)
         setIsEditing(false)
-        
+
         // Check if this was the first time saving
         const wasFirstTime = forFirstTime
         setForFirstTime(false)
