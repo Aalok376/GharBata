@@ -1,4 +1,5 @@
 import express from 'express'
+import Booking from '../models/Booking.js'
 import {
     createBooking, getClientBookings, getBookingById,
     cancelBooking
@@ -8,12 +9,7 @@ import {
 } from '../middlewares/bookingValidation.js'
 import { verifyToken } from '../middlewares/auth.js'
 
-<<<<<<< HEAD
 const router = express.Router()
-=======
-
-const router=express.Router()
->>>>>>> 0573d4c (error handling)
 //POST/api/bookings - create a new booking
 router.post('/', verifyToken, validateCreateBooking, createBooking)
 

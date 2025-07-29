@@ -1,74 +1,74 @@
-import React, { useEffect, useState } from "react";
-import { Calendar } from "lucide-react";
+import React, { useEffect, useState } from "react"
+import { Calendar } from "lucide-react"
 
-import BookingCard from "./BookingCard";
-import BookingDetailsView from "./BookingDetailsView";
-import FilterBar from "./FilterBar";
-import Pagination from "./Pagination";
-import NegotiationModal from "./NegotiationModal";
-import { bookingService } from "../api/bookingService";
+import BookingCard from "./BookingCard"
+import BookingDetailsView from "./BookingDetailsView"
+import FilterBar from "./FilterBar"
+import Pagination from "./Pagination"
+import NegotiationModal from "./NegotiationModal"
+import { bookingService } from "../api/bookingService"
 
 const BookingDashboard = () => {
-  const [bookings, setBookings] = useState([]);
-  const [filteredBookings, setFilteredBookings] = useState([]);
+  const [bookings, setBookings] = useState([])
+  const [filteredBookings, setFilteredBookings] = useState([])
 
-  const [selectedBooking, setSelectedBooking] = useState(null);
-  const [showDetails, setShowDetails] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null)
+  const [showDetails, setShowDetails] = useState(false)
 
   const [filters, setFilters] = useState({
     status: "",
     search: "",
     date: "",
-  });
+  })
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  const [showNegotiationModal, setShowNegotiationModal] = useState(false);
-  const [negotiationPrice, setNegotiationPrice] = useState("");
+  const [showNegotiationModal, setShowNegotiationModal] = useState(false)
+  const [negotiationPrice, setNegotiationPrice] = useState("")
 
-  const bookingsPerPage = 5;
+  const bookingsPerPage = 5
 
   // Fetch bookings from backend
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        setLoading(true);
+        setLoading(true)
         const params = {
           status: filters.status || undefined,
           page: currentPage,
           limit: bookingsPerPage,
-        };
-        const response = await bookingService.getClientBookings(params);
-        const dataBookings = response.bookings || [];
-        const total = response.pagination?.totalBookings || 0;
+        }
+        const response = await bookingService.getClientBookings(params)
+        const dataBookings = response.bookings || []
+        const total = response.pagination?.totalBookings || 0
 
-        setBookings(dataBookings);
-        setTotalPages(Math.ceil(total / bookingsPerPage));
-        setError(null);
+        setBookings(dataBookings)
+        setTotalPages(Math.ceil(total / bookingsPerPage))
+        setError(null)
       } catch (error) {
-        setError(error.message || "Failed to fetch bookings");
+        setError(error.message || "Failed to fetch bookings")
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-    fetchBookings();
-  }, [filters.status, currentPage]);
+    }
+    fetchBookings()
+  }, [filters.status, currentPage])
 
   // Filter bookings whenever filters or bookings change
   useEffect(() => {
-    let filtered = bookings;
+    let filtered = bookings
 
     if (filters.status) {
       filtered = filtered.filter(
         (booking) => booking.booking_status === filters.status
-      );
+      )
     }
 
     if (filters.search) {
-      const searchTerm = filters.search.toLowerCase();
+      const searchTerm = filters.search.toLowerCase()
       filtered = filtered.filter((booking) => {
         return (
           (booking._id &&
@@ -77,8 +77,8 @@ const BookingDashboard = () => {
             ?.toLowerCase()
             .includes(searchTerm)) ||
           (booking.service?.toLowerCase().includes(searchTerm))
-        );
-      });
+        )
+      })
     }
 
     if (filters.date) {
@@ -86,32 +86,32 @@ const BookingDashboard = () => {
         (booking) =>
           new Date(booking.scheduled_date).toISOString().slice(0, 10) ===
           filters.date
-      );
+      )
     }
 
-    setFilteredBookings(filtered);
-  }, [filters.search, filters.date, filters.status, bookings]);
+    setFilteredBookings(filtered)
+  }, [filters.search, filters.date, filters.status, bookings])
 
   // Pagination variables
-  const indexOfLastBooking = currentPage * bookingsPerPage;
-  const indexOfFirstBooking = indexOfLastBooking - bookingsPerPage;
+  const indexOfLastBooking = currentPage * bookingsPerPage
+  const indexOfFirstBooking = indexOfLastBooking - bookingsPerPage
   const currentBookings = filteredBookings.slice(
     indexOfFirstBooking,
     indexOfLastBooking
-  );
+  )
 
   // Open booking details
   const handleViewDetails = (booking) => {
-    setSelectedBooking(booking);
-    setShowDetails(true);
-  };
+    setSelectedBooking(booking)
+    setShowDetails(true)
+  }
 
   // Open negotiation modal
   const handleNegotiation = (booking) => {
-    setSelectedBooking(booking);
-    setNegotiationPrice(booking.final_price.toString());
-    setShowNegotiationModal(true);
-  };
+    setSelectedBooking(booking)
+    setNegotiationPrice(booking.final_price.toString())
+    setShowNegotiationModal(true)
+  }
 
   // Submit negotiation (placeholder for API call)
   const submitNegotiation = () => {
@@ -120,27 +120,27 @@ const BookingDashboard = () => {
       negotiationPrice,
       "for booking:",
       selectedBooking._id
-    );
-    setShowNegotiationModal(false);
-    setNegotiationPrice("");
-  };
+    )
+    setShowNegotiationModal(false)
+    setNegotiationPrice("")
+  }
 
   // Can negotiate if booking is confirmed
   const canNegotiate = (booking) => {
-    return booking.booking_status === "confirmed";
-  };
+    return booking.booking_status === "confirmed"
+  }
 
   // Can cancel if >24hrs before scheduled time and not cancelled/completed
   const canCancel = (booking) => {
     const scheduledDateTime = new Date(
       `${booking.scheduled_date}T${booking.scheduled_time}`
-    );
-    const now = new Date();
-    const hoursDiff = (scheduledDateTime - now) / (1000 * 60 * 60);
+    )
+    const now = new Date()
+    const hoursDiff = (scheduledDateTime - now) / (1000 * 60 * 60)
     return (
       hoursDiff > 24 && !["cancelled", "completed"].includes(booking.booking_status)
-    );
-  };
+    )
+  }
 
   // Show details view if selected
   if (showDetails && selectedBooking) {
@@ -152,7 +152,7 @@ const BookingDashboard = () => {
         canNegotiate={canNegotiate}
         canCancel={canCancel}
       />
-    );
+    )
   }
 
   // Main dashboard layout
@@ -220,7 +220,7 @@ const BookingDashboard = () => {
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default BookingDashboard;
+export default BookingDashboard

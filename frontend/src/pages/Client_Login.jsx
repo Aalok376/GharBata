@@ -2,7 +2,6 @@ import React, { useState } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
 import { Toaster, toast } from 'sonner'
 import { Llogin } from "../api/auth"
-import client from "../../../backend/models/client"
 
 const ClientLogin = () => {
   const [username, setEmail] = useState("")
@@ -37,15 +36,15 @@ const ClientLogin = () => {
           },
           body: JSON.stringify({ userId })
         })
-        console.log(navi.status)
+
         if (userType === 'client') {
-          if (navi.status === 201) {
+          if (navi.status === 200) {
             navigate(`/clientProfileSetupPage/${userId}`)
           } else {
             navigate("/client/dashboard")
           }
         } else if (userType === 'technician') {
-          if (navi.status === 201) {
+          if (navi.status === 200) {
             // User profile needs to be set up
             navigate(`/professionalProfilePage/${userId}`)
           } else {
@@ -78,11 +77,6 @@ const ClientLogin = () => {
       setLoading(false)
     }
   }
-
-  const googleHref =
-    userType === 'technician'
-      ? 'http://localhost:5000/auth/google?userType=technician'
-      : 'http://localhost:5000/auth/google?userType=client';
 
   return (<>
     <style>
