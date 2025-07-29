@@ -9,24 +9,64 @@ export const validateCreateBooking=[
     .isMongoId()
     .withMessage('Invalid technician ID'),
 
-
-    body('service_id')
+  body('fname')
     .notEmpty()
-    .withMessage('Service ID is required')
-    .isMongoId()
-    .withMessage('Invalid service ID'),
+    .withMessage('First name is required')
+    .isLength({ min: 2 })
+    .withMessage('First name must be at least 2 characters'),
 
-    body('address')
+  body('lname')
     .notEmpty()
-    .withMessage('Address is required')
-    .isLength({min:10 ,max:200})
-    .withMessage('Address must be between 10 and 200 characters')
+    .withMessage('Last name is required')
+    .isLength({ min: 2 })
+    .withMessage('Last name must be at least 2 characters'),
+
+    
+  body('email')
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Invalid email address'),
+
+      body('phoneNumber')
+    .notEmpty()
+    .withMessage('Phone number is required')
+    .isMobilePhone()
+    .withMessage('Invalid phone number'),
+
+     body('streetAddress')
+    .notEmpty()
+    .withMessage('Street address is required')
+    .isLength({ min: 10, max: 200 })
+    .withMessage('Street address must be between 10 and 200 characters'),
+
+
+      body('apartMent')
+    .optional()
     .trim(),
+
+     body('cityAddress')
+    .notEmpty()
+    .withMessage('City is required'),
+
+      body('service')
+    .notEmpty()
+    .withMessage('Service is required'),
+
+      body('emergencyContactName')
+    .optional()
+    .isLength({ min: 2 })
+    .withMessage('Emergency contact name must be at least 2 characters'),
+
+      body('emergencyContactPhone')
+    .optional()
+    .isMobilePhone()
+    .withMessage('Invalid emergency contact phone number'),
+
 
     body('scheduled_date')
     .notEmpty()
     .withMessage('Scheduled date is required')
-    .isISO8601()
     .withMessage('Invalid date format')
     .custom((value)=>{
         if(!validateBookingDate(value)){
@@ -45,24 +85,37 @@ export const validateCreateBooking=[
         return true
     }),
 
-    body('address')
+  body('specialInstructions')
     .optional()
-    .isLength({min:10 , max:200})
-    .withMessage('Address must be between 10 and 200 characters')
-    .trim(),
+    .isLength({ max: 500 })
+    .withMessage('Special instructions cannot exceed 500 characters'),    
 
-    body('booking_service_price')
+    
+  body('contactPreference')
+    .optional()
+    .isIn(['phone', 'email', 'text'])
+    .withMessage('Invalid contact preference'),
+
+  body('latitude')
     .notEmpty()
-    .withMessage('Service price is required')
-    .isNumeric()
-    .withMessage('Service price must be a number')
-    .custom((value)=>{
-        if(value < 0){
-            throw new Error('Service price cannot be negative')
-        }
-        return true
-    })
+    .withMessage('Latitude is required'),
 
+    
+  body('longitude')
+    .notEmpty()
+    .withMessage('Longitude is required'),
+
+      body('final_price')
+    .notEmpty()
+    .withMessage('Final price is required')
+    .isNumeric()
+    .withMessage('Final price must be a number')
+    .custom((value) => {
+      if (value < 0) {
+        throw new Error('Final price cannot be negative')
+      }
+      return true
+    })
 ]
  //Validation for updating booking
  export const validateUpdateBooking=[
@@ -90,11 +143,18 @@ export const validateCreateBooking=[
         return true
     }),
 
-    body('address')
+    
+  body('specialInstructions')
     .optional()
-    .isLength({min:10 , max:200})
-    .withMessage('Address must be between 10 and 200 characters')
-    .trim()
+    .isLength({ max: 500 })
+    .withMessage('Special instructions cannot exceed 500 characters'),
+
+      body('contactPreference')
+    .optional()
+    .isIn(['phone', 'email', 'text'])
+    .withMessage('Invalid contact preference')
+
+    
  ]
 
  // validation for booking queries
