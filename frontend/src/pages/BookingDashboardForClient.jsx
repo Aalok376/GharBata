@@ -264,9 +264,6 @@ const ClientBookingDashboard = () => {
                     <tr key={booking._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{booking.service}</div>
-                        <div className={`text-xs font-medium ${getPriorityColor(booking.priority_level)}`}>
-                          {booking.priority_level?.toUpperCase() || 'NORMAL'}
-                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">

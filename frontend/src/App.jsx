@@ -23,7 +23,6 @@ import TechnicianReviewsPage from './pages/reviewsPage'
 
 
 import MapPickerModal from './pages/MapPicker'
-import { SelectLocationOverlay } from './components/selectLocation'
 
 
 import ChatPage from './pages/Chat_page'
@@ -52,6 +51,7 @@ function App() {
         <Route path='/professionalProfilePage/:userId' element={<ProfessionalProfilePage />} />
         <Route path='/professional/bookings/:technicianId' element={<BookingDashboard />} />
         <Route path='/professional/reviews/:userId' element={<TechnicianReviewsPage />} />
+        <Route path='/bookings/direction/:lat/:lon' element={<MapPickerModal />} />
 
         <Route path='/chat/' element={<ChatPage />} />
       </Routes>

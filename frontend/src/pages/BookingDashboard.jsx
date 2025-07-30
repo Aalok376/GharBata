@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { Calendar, Clock, User, Phone, Mail, MapPin, CheckCircle, XCircle, Play, Square, Edit, Eye, Filter, ChevronLeft, ChevronRight, Star, MessageSquare, Navigation, BarChart3, Search } from 'lucide-react'
-import { useNavigate,useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 const BookingDashboard = () => {
   // Get technician_id from URL params or use a default for demo
   const { technicianId } = useParams()
-  const navigate=useNavigate()
+  const navigate = useNavigate()
 
   const [activeTab, setActiveTab] = useState('bookings')
   const [bookings, setBookings] = useState([])
@@ -258,7 +258,7 @@ const BookingDashboard = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className="flex-shrink-0 h-10 w-10">
-                                <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center" onClick={()=>{
+                                <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center" onClick={() => {
                                   navigate(`/clientProfileSetupPage/${booking?.client_id?.client_id}`)
                                 }}>
                                   {booking.client_id?.profilePic ? (
@@ -282,9 +282,6 @@ const BookingDashboard = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">{booking.service}</div>
-                            <div className={`text-xs font-medium ${getPriorityColor(booking.priority_level)}`}>
-                              {booking.priority_level?.toUpperCase() || 'NORMAL'}
-                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center text-sm text-gray-500">
@@ -302,7 +299,7 @@ const BookingDashboard = () => {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            ${booking.final_price}
+                            Rs.{booking.final_price}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <button
@@ -532,10 +529,14 @@ const BookingDashboard = () => {
                     </p>
                     {selectedBooking.latitude && selectedBooking.longitude && (
                       <button
-                        onClick={() => window.open(`https://maps.google.com?q=${selectedBooking.latitude},${selectedBooking.longitude}`, '_blank')}
-                        className="mt-2 inline-flex items-center px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+                        onClick={() => {
+                          navigate(
+                            `/bookings/direction/${selectedBooking.latitude}/${selectedBooking.longitude}`
+                          )
+                        }}
+                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-300"
                       >
-                        <Navigation className="h-4 w-4 mr-1" />
+                        <Navigation className="h-4 w-4 mr-2" />
                         Get Directions
                       </button>
                     )}
