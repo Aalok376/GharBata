@@ -12,6 +12,7 @@ const TechnicianDisplayPage = () => {
   const [allTechnicians, setTechnicians] = useState([])
   const [showReviewsOverlay, setShowReviewsOverlay] = useState(false)
   const [selectedTechnicianReviews, setSelectedTechnicianReviews] = useState(null)
+  const [loadingReviews, setLoadingReviews] = useState(false)
 
   useEffect(() => {
     if (!initialLoad && serviceName !== selectedService) {
@@ -35,8 +36,6 @@ const TechnicianDisplayPage = () => {
 
         const data = await response.json()
 
-        console.log(data)
-
         const formatted = data.map((tech) => ({
           _id: tech._id,
           userId: tech.user._id,
@@ -44,13 +43,14 @@ const TechnicianDisplayPage = () => {
           username: tech.user.username,
           profilePic: tech.profilePic,
           rating: tech.rating,
+          overallRating: tech.overallRating || 0,
           reviews: tech.reviews,
           professions: tech.professions,
           serviceLocation: tech.serviceLocation,
           currentLocation: tech.currentLocation,
           specialties: tech.specialties,
           experience: tech.experience,
-          hourlyRate: tech.hourlyRate, // Keep as object
+          hourlyRate: tech.hourlyRate,
           availability: tech.availability,
           responseTime: tech.responseTime,
           tasksCompleted: tech.tasksCompleted
@@ -71,143 +71,128 @@ const TechnicianDisplayPage = () => {
     setInitialLoad(false)
   }, [])
 
-  // Helper function to get hourly rate for selected service
+  // Updated function to get hourly rate for a specific service/profession
   const getHourlyRateForService = (hourlyRateObj, service) => {
-    if (typeof hourlyRateObj === 'object' && hourlyRateObj !== null) {
-      return hourlyRateObj[service] || 0
-    }
-    return hourlyRateObj || 0
-  }
-
-  // Mock reviews data for testing - matching DB structure
-  const getMockReviews = (technicianName, selectedService) => {
-    // Mock reviews structured as Map with profession as key
-    const reviewsMap = {
-      'Plumber': [
-        {
-          userId: '507f1f77bcf86cd799439011',
-          profession: 'Plumber',
-          reviewText: "Excellent plumbing service! Fixed my kitchen sink leak quickly and professionally. Very satisfied with the work quality.",
-          createdAt: new Date('2024-01-15'),
-          // Mock user data that would come from populate
-          user: {
-            _id: '507f1f77bcf86cd799439011',
-            fname: 'Sarah',
-            lname: 'Johnson',
-            profilePic: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=150&h=150&fit=crop&crop=face'
-          }
-        },
-        {
-          userId: '507f1f77bcf86cd799439012',
-          profession: 'Plumber',
-          reviewText: "Great experience! " + technicianName + " was punctual and explained everything clearly. Fair pricing too.",
-          createdAt: new Date('2024-01-10'),
-          user: {
-            _id: '507f1f77bcf86cd799439012',
-            fname: 'Michael',
-            lname: 'Chen',
-            profilePic: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
-          }
-        }
-      ],
-      'Electrician': [
-        {
-          userId: '507f1f77bcf86cd799439013',
-          profession: 'Electrician',
-          reviewText: "Outstanding electrical work! Rewired my entire basement safely and efficiently. Highly recommend for any electrical needs.",
-          createdAt: new Date('2024-01-12'),
-          user: {
-            _id: '507f1f77bcf86cd799439013',
-            fname: 'Emily',
-            lname: 'Rodriguez',
-            profilePic: 'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=150&h=150&fit=crop&crop=face'
-          }
-        },
-        {
-          userId: '507f1f77bcf86cd799439014',
-          profession: 'Electrician',
-          reviewText: "Professional and knowledgeable. Fixed my electrical outlet issues and provided helpful tips for maintenance.",
-          createdAt: new Date('2024-01-08'),
-          user: {
-            _id: '507f1f77bcf86cd799439014',
-            fname: 'David',
-            lname: 'Thompson',
-            profilePic: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
-          }
-        }
-      ],
-      'HVAC-Technician': [
-        {
-          userId: '507f1f77bcf86cd799439015',
-          profession: 'HVAC-Technician',
-          reviewText: "Excellent HVAC service! Fixed my heating system just before winter. Very reliable and professional work.",
-          createdAt: new Date('2024-01-14'),
-          user: {
-            _id: '507f1f77bcf86cd799439015',
-            fname: 'Lisa',
-            lname: 'Wilson',
-            profilePic: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face'
-          }
-        }
-      ],
-      'Handyman': [
-        {
-          userId: '507f1f77bcf86cd799439016',
-          profession: 'Handyman',
-          reviewText: "Great handyman service! Fixed multiple issues around my house efficiently. Will definitely call again.",
-          createdAt: new Date('2024-01-11'),
-          user: {
-            _id: '507f1f77bcf86cd799439016',
-            fname: 'Robert',
-            lname: 'Brown',
-            profilePic: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&crop=face'
-          }
-        }
-      ]
+    console.log('Getting hourly rate for:', { hourlyRateObj, service })
+    
+    if (!hourlyRateObj || typeof hourlyRateObj !== 'object') {
+      console.log('Invalid hourlyRateObj:', hourlyRateObj)
+      return 0
     }
 
-    // Return reviews for the selected service, or all reviews if service not found
-    return reviewsMap[selectedService] || reviewsMap['Plumber'] || []
-  }
-
-  // Mock rating data matching DB structure
-  const getMockRating = (selectedService) => {
-    const ratingsMap = {
-      'Plumber': { average: 4.5, totalRatings: 12, sumRatings: 54 },
-      'Electrician': { average: 4.8, totalRatings: 8, sumRatings: 38.4 },
-      'HVAC-Technician': { average: 4.2, totalRatings: 5, sumRatings: 21 },
-      'Handyman': { average: 4.6, totalRatings: 10, sumRatings: 46 }
+    // First try exact match
+    if (hourlyRateObj[service]) {
+      console.log('Found exact match:', hourlyRateObj[service])
+      return hourlyRateObj[service]
     }
 
-    return ratingsMap[selectedService] || ratingsMap['Plumber'] || { average: 0, totalRatings: 0, sumRatings: 0 }
+    // Try case-insensitive match
+    const serviceKeys = Object.keys(hourlyRateObj)
+    const matchingKey = serviceKeys.find(key => 
+      key.toLowerCase() === service.toLowerCase()
+    )
+    
+    if (matchingKey) {
+      console.log('Found case-insensitive match:', hourlyRateObj[matchingKey])
+      return hourlyRateObj[matchingKey]
+    }
+
+    // Try partial matches for service names that might be different
+    const partialMatch = serviceKeys.find(key => {
+      const keyLower = key.toLowerCase()
+      const serviceLower = service.toLowerCase()
+      
+      // Handle special cases
+      if (serviceLower.includes('hvac') && keyLower.includes('hvac')) return true
+      if (serviceLower.includes('appliance') && keyLower.includes('appliance')) return true
+      if (serviceLower.includes('pest') && keyLower.includes('pest')) return true
+      if (serviceLower.includes('roofing') && keyLower.includes('roof')) return true
+      if (serviceLower.includes('flooring') && keyLower.includes('floor')) return true
+      if (serviceLower.includes('door') && keyLower.includes('door')) return true
+      
+      // General substring matching
+      return keyLower.includes(serviceLower) || serviceLower.includes(keyLower)
+    })
+
+    if (partialMatch) {
+      console.log('Found partial match:', hourlyRateObj[partialMatch])
+      return hourlyRateObj[partialMatch]
+    }
+
+    // If no match found, return the first available rate or 0
+    const firstRate = Object.values(hourlyRateObj)[0]
+    console.log('No match found, returning first rate or 0:', firstRate || 0)
+    return firstRate || 0
   }
 
-  const handleShowReviews = (technician) => {
-    const mockReviews = getMockReviews(technician.name, selectedService)
-    const mockRating = getMockRating(selectedService)
+  // Fetch real reviews from API
+  const fetchReviews = async (technicianId, profession) => {
+    try {
+      setLoadingReviews(true)
+      const response = await fetch(
+        `http://localhost:5000/api/technicians/reviews/${technicianId}/${profession}`,
+        {
+          method: 'GET',
+          credentials: 'include',
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data.reviews || []
+    } catch (err) {
+      console.error('Error fetching reviews:', err)
+      return []
+    } finally {
+      setLoadingReviews(false)
+    }
+  }
+
+  // Get rating for specific profession
+  const getRatingForProfession = (ratingObj, profession) => {
+    if (typeof ratingObj === 'object' && ratingObj !== null) {
+      const professionRating = ratingObj[profession]
+      if (professionRating && typeof professionRating.average === 'number') {
+        return {
+          average: professionRating.average,
+          totalRatings: professionRating.totalRatings || 0
+        }
+      }
+    }
+    return { average: 0, totalRatings: 0 }
+  }
+
+  const handleShowReviews = async (technician) => {
+    const reviews = await fetchReviews(technician._id, selectedService)
+    const rating = getRatingForProfession(technician.rating, selectedService)
 
     setSelectedTechnicianReviews({
       technician: technician,
-      reviews: mockReviews,
-      rating: mockRating
+      reviews: reviews,
+      rating: rating
     })
     setShowReviewsOverlay(true)
-    // Prevent body scroll
     document.body.style.overflow = 'hidden'
   }
 
   const handleCloseReviews = () => {
     setShowReviewsOverlay(false)
     setSelectedTechnicianReviews(null)
-    // Restore body scroll
     document.body.style.overflow = 'unset'
   }
 
   const handleBookNow = (technician) => {
-    navigate(`/client/dashboard/booking/${selectedService}/${technician._id}`, {
+    const currentHourlyRate = getHourlyRateForService(technician.hourlyRate, selectedService)
+    console.log('Booking with rate:', currentHourlyRate)
+    
+    navigate(`/client/dashboard/booking/${selectedService}/${technician._id}/${currentHourlyRate}`, {
       state: {
         service: selectedService,
-        technician: technician
+        technician: technician,
+        hourlyRate: currentHourlyRate
       }
     })
   }
@@ -301,14 +286,14 @@ const TechnicianDisplayPage = () => {
     .sort((a, b) => {
       switch (sortBy) {
         case 'rating':
-          return b.rating - a.rating
+          return (b.overallRating || 0) - (a.overallRating || 0)
         case 'price':
           const rateA = getHourlyRateForService(a.hourlyRate, selectedService)
           const rateB = getHourlyRateForService(b.hourlyRate, selectedService)
           return rateA - rateB
         case 'availability':
           // Sort by tasks completed as a proxy for availability/popularity
-          return b.tasksCompleted - a.tasksCompleted
+          return (b.tasksCompleted || 0) - (a.tasksCompleted || 0)
         default:
           return 0
       }
@@ -385,6 +370,9 @@ const TechnicianDisplayPage = () => {
           {filteredAndSortedTechnicians.map(technician => {
             const availability = getNextAvailability(technician.availability)
             const currentHourlyRate = getHourlyRateForService(technician.hourlyRate, selectedService)
+            const professionRating = getRatingForProfession(technician.rating, selectedService)
+
+            console.log(`Technician ${technician.name} - Rate for ${selectedService}:`, currentHourlyRate)
 
             return (
               <div key={technician._id} className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
@@ -408,11 +396,13 @@ const TechnicianDisplayPage = () => {
                           {technician.name}
                         </h3>
 
-
                         <div className="text-right">
                           <div className="text-lg font-bold text-blue-600">
-                            ${currentHourlyRate || 'N/A'}/hr
+                            Rs.{currentHourlyRate > 0 ? currentHourlyRate : 'N/A'}/hr
                           </div>
+                          {currentHourlyRate === 0 && (
+                            <div className="text-xs text-gray-500">Rate not set</div>
+                          )}
                         </div>
                       </div>
 
@@ -420,17 +410,13 @@ const TechnicianDisplayPage = () => {
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                           <span className="font-medium">
-                            {typeof technician.rating === 'number'
-                              ? technician.rating.toFixed(1)
-                              : typeof technician.rating?.average === 'number'
-                                ? technician.rating.average.toFixed(1)
-                                : '0.0'}
+                            {professionRating.average > 0 ? professionRating.average.toFixed(1) : technician.overallRating.toFixed(1)}
                           </span>
                           <button
                             onClick={() => handleShowReviews(technician)}
                             className="text-gray-500 hover:text-blue-600 transition-colors cursor-pointer"
                           >
-                            ({Array.isArray(technician.reviews) ? technician.reviews.length : 0} reviews)
+                            ({professionRating.totalRatings > 0 ? professionRating.totalRatings : 0} reviews)
                           </button>
                         </div>
 
@@ -483,7 +469,7 @@ const TechnicianDisplayPage = () => {
                       <Clock className="w-4 h-4 text-gray-400" />
                       <div>
                         <div className="text-gray-600">Responds in {technician.responseTime}</div>
-                        <div className="text-gray-500 text-xs">{technician.tasksCompleted} tasks completed</div>
+                        <div className="text-gray-500 text-xs">{technician.tasksCompleted || 0} tasks completed</div>
                       </div>
                     </div>
                   </div>
@@ -511,9 +497,10 @@ const TechnicianDisplayPage = () => {
                     <button
                       onClick={() => handleBookNow(technician)}
                       className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                      disabled={currentHourlyRate === 0}
                     >
                       <Calendar className="w-4 h-4" />
-                      Book Now
+                      {currentHourlyRate === 0 ? 'Rate Not Set' : 'Book Now'}
                     </button>
                     <button
                       onClick={() => handleMessage(technician)}
@@ -572,7 +559,7 @@ const TechnicianDisplayPage = () => {
                   <div className="flex items-center gap-2 mt-1">
                     <div className="flex items-center gap-1">
                       <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-medium">{selectedTechnicianReviews.rating.average}</span>
+                      <span className="font-medium">{selectedTechnicianReviews.rating.average.toFixed(1)}</span>
                       <span className="text-gray-500">({selectedTechnicianReviews.rating.totalRatings} reviews)</span>
                     </div>
                   </div>
@@ -588,7 +575,12 @@ const TechnicianDisplayPage = () => {
 
             {/* Reviews List */}
             <div className="overflow-y-auto max-h-[60vh] p-6">
-              {selectedTechnicianReviews.reviews.length > 0 ? (
+              {loadingReviews ? (
+                <div className="text-center py-8">
+                  <div className="text-gray-400 text-4xl mb-2">⏳</div>
+                  <p className="text-gray-500">Loading reviews...</p>
+                </div>
+              ) : selectedTechnicianReviews.reviews.length > 0 ? (
                 <div className="space-y-6">
                   {selectedTechnicianReviews.reviews.map((review, index) => (
                     <div key={review.userId || index} className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0">

@@ -1,356 +1,554 @@
-
+import express from 'express'
+import mongoose from 'mongoose'
 import Booking from '../models/Booking.js'
-import Technician from '../models/technician.js'
 import Client from '../models/client.js'
-import {canCancelBooking,checkTechnicianAvailability} from '../utils/bookingUtils.js'
-import { validationResult } from 'express-validator'
-import mongoose from 'mongoose';
+import Technician from '../models/technician.js'
+import { verifyToken } from '../middlewares/auth.js'
 
+const router = express.Router()
 
-//HTTP status codes
-const HTTP_STATUS={
-    OK : 200,
-    CREATED: 201,
-    BAD_REQUEST: 400,
-    NOT_FOUND: 404,
-    INTERNAL_SERVER_ERROR: 500
-}
+// CREATE BOOKING
+router.post('/create', verifyToken, async (req, res) => {
+  try {
+    const {
+      technician_id,
+      fname,
+      lname,
+      email,
+      phoneNumber,
+      streetAddress,
+      apartMent,
+      cityAddress,
+      service,
+      emergencyContactName,
+      emergencyContactPhone,
+      scheduled_date,
+      scheduled_time,
+      specialInstructions,
+      contactPreference,
+      latitude,
+      longitude,
+      final_price
+    } = req.body
 
-// User roles
-const USER_ROLES={
-    CLIENT: 'client',
-    TECHNICIAN: 'technician'
-}
-// Booking status
-export const BOOKING_STATUS = {
-  PENDING: 'pending',
-  CONFIRMED: 'confirmed',
-  IN_PROGRESS: 'in_progress',
-  COMPLETED: 'completed',
-  CANCELLED: 'cancelled',
-  RESCHEDULED: 'rescheduled'
-}
+    const userId = req.user.id
+    // Validate client and technician exist
+    const client = await Client.findOne({ client_id: userId })
+    const technician = await Technician.findById(technician_id)
 
-//create new booking
-export const  createBooking=async(req,res)=>{
-    try{
-      const {
-     fname: firstName,
-  lname: lastName,
-  email,
-  phoneNumber: phone,
-  streetAddress: address,
-  apartMent: apartment,
-  cityAddress: city,
-  scheduled_date,
-  scheduled_time: timeSlot,
-  specialInstructions,
-  contactPreference,
-  emergencyContactName: emergencyContact,
-  emergencyContactPhone: emergencyPhone,
-  latitude,
-  longitude,
-  service,
-  technician_id: technicianId
-    } = req.body;
-      const userId = req.user.id
-      console.log('User ID from token:', userId);
-
-
- // Validate technicianId is a valid ObjectId
-    if (!mongoose.Types.ObjectId.isValid(technicianId)) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        success: false,
-        message: 'Invalid technician ID format',
-      });
-    }
-
-    // Find the Client document where client_id = User _id (userId)
-    const client = await Client.findOne({ client_id: userId });
     if (!client) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        success: false,
-        message: 'Client user not found',
-      });
+      return res.status(404).json({ error: 'Client not found' })
+    }
+    if (!technician) {
+      return res.status(404).json({ error: 'Technician not found' })
     }
 
-
-
-        console.log('Searching Technician with ID:', technicianId);
-
-        // Fetch technician by ID
-           const technician = await Technician.findById(technicianId)
-            if (!technician) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        success: false,
-        message: 'Technician not found',
-      });
-    }
-           console.log('Technician found:', technician);
-
-
-
-        // check if technician exists and is actually a technician
-        if(!technician){
-            return res.status(HTTP_STATUS.NOT_FOUND).json({
-                success: false,
-                message: 'Technician not found'
-            })
-        }
-         // check technician availability for the selected date and time
-        const isAvailable=await checkTechnicianAvailability(technicianId, scheduled_date, timeSlot)
-        if(!isAvailable){
-            return res.status(HTTP_STATUS.BAD_REQUEST).json({
-                success: false,
-                message: 'Technician is not available at the selected date and time'
-
-            })
-         }
-          // Extract hourly rate number from the Map for the given service
-    const finalPrice = technician.hourlyRate.get(service);
-
-    if (!finalPrice) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        success: false,
-        message: `Hourly rate not found for service: ${service}`,
-      });
-    }
-        
-         // Create new booking
-         const newBooking=new Booking({
-            client_id: client._id,
-      technician_id: technician._id,
-      fname:firstName,
-      lname:lastName,
-      email:email,
-      phoneNumber:phone,
-      service: service,
-      streetAddress: address,
-      apartMent: apartment,
-      cityAddress: city,
-      emergencyContactName: emergencyContact,
-      emergencyContactPhone: emergencyPhone,
+    // Check technician availability
+    const existingBooking = await Booking.findOne({
+      technician_id,
       scheduled_date: new Date(scheduled_date),
-      scheduled_time: timeSlot,
-      specialInstructions: specialInstructions,
-      contactPreference: contactPreference,
-      latitude: latitude,
-      longitude: longitude,
-      final_price: finalPrice,
-      booking_status: BOOKING_STATUS.PENDING
+      scheduled_time,
+      booking_status: { $in: ['pending', 'confirmed', 'in_progress'] }
+    })
 
-         })
-         
-
-         const savedBooking = await newBooking.save()
-
-          const populateBooking = await Booking.findById(savedBooking._id)
-        .populate('technician_id', 'name email phone profession rating profile_image')
-         .populate('client_id', 'name email phone')
-
-          res.status(HTTP_STATUS.CREATED).json({
-            success: true,
-            message:'Booking created successfully',
-            data:{
-                booking: populateBooking
-            }
-         })
-        
-
-    } catch(error){
-        console.error('Error creating booking:',error)
-        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-            success: false,
-            message: 'Internal server error',
-            error: error.message
-        })
-    }
-}
-// Get single booking details
-export const getBookingById=async(req,res)=>{
-    try{
-        const {id}=req.params
-        const userId=req.user.id
-
-         // Find Client document for logged-in user
-    const client = await Client.findOne({ client_id: userId });
-    if (!client) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        success: false,
-        message: 'Client not found'
-      });
+    if (existingBooking) {
+      return res.status(409).json({ error: 'Technician is not available at this time' })
     }
 
+    const newBooking = new Booking({
+      client_id: client._id,
+      technician_id,
+      fname,
+      lname,
+      email,
+      phoneNumber,
+      streetAddress,
+      apartMent,
+      cityAddress,
+      service,
+      emergencyContactName,
+      emergencyContactPhone,
+      scheduled_date: new Date(scheduled_date),
+      scheduled_time,
+      specialInstructions,
+      contactPreference,
+      latitude,
+      longitude,
+      final_price,
+      booking_status: 'pending'
+    })
 
-  // Find booking by _id and client_id (Client document _id)
-    const booking = await Booking.findOne({ _id: id, client_id: client._id })
-     .populate('technician_id','name email phone profession rating profile_image  ')
-     
-       .populate('client_id', 'name email phone')
-        if(!booking){
-            return res.status(HTTP_STATUS.NOT_FOUND).json({
-                success: false,
-                message: 'Booking not found'
-            })
-        }
-        res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Booking details retrieved successfully',
-            data:{
-                booking
-            }
-        })
+    const savedBooking = await newBooking.save()
+    await savedBooking.populate(['client_id', 'technician_id'])
 
-    }catch(error){
-        console.error('Error fetching booking details:',error)
-        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-            success: false,
-            message: 'Internal server error',
-            error: error.message
-        })
+    res.status(201).json({
+      message: 'Booking created successfully',
+      booking: savedBooking
+    })
+  } catch (error) {
+    res.status(400).json({ error: error.message })
+  }
+})
+
+// ACCEPT BOOKING (Technician accepts)
+router.patch('/:id/accept', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params
+    const { technician_id } = req.body // Verify the technician accepting
+
+    const booking = await Booking.findById(id)
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' })
     }
-}
 
-// Get client's booking
-export const getClientBookings= async(req,res)=>{
-    try{
-        const {status,page=1,limit=10}=req.query
-        const userId=req.user.id;
-         // Find Client document for logged-in user
-    const client = await Client.findOne({ client_id: userId });
-    if (!client) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        success: false,
-        message: 'Client not found'
-      });
+    if (booking.technician_id.toString() !== technician_id) {
+      return res.status(403).json({ error: 'Unauthorized to accept this booking' })
     }
-         //Build filter query
-         const filter={client_id:client._id};
-         if(status)
-            filter.booking_status = status
-          // Calculate pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit)
 
-    // Get bookings
+    if (booking.booking_status !== 'pending') {
+      return res.status(400).json({ error: 'Booking cannot be accepted in current status' })
+    }
+
+    booking.booking_status = 'confirmed'
+    booking.confirmed_at = new Date()
+    booking.updated_at = new Date()
+
+    await booking.save()
+    await booking.populate(['client_id', 'technician_id'])
+
+    res.json({
+      message: 'Booking accepted successfully',
+      booking
+    })
+  } catch (error) {
+    res.status(400).json({ error: error.message })
+  }
+})
+
+// REJECT BOOKING (Technician rejects)
+router.patch('/:id/reject', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params
+    const { technician_id, rejection_reason } = req.body
+
+    const booking = await Booking.findById(id)
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' })
+    }
+
+    if (booking.technician_id.toString() !== technician_id) {
+      return res.status(403).json({ error: 'Unauthorized to reject this booking' })
+    }
+
+    if (booking.booking_status !== 'pending') {
+      return res.status(400).json({ error: 'Booking cannot be rejected in current status' })
+    }
+
+    booking.booking_status = 'cancelled'
+    booking.cancelled_at = new Date()
+    booking.cancelled_by = technician_id
+    booking.rejection_reason = rejection_reason
+    booking.updated_at = new Date()
+
+    await booking.save()
+    await booking.populate(['client_id', 'technician_id'])
+
+    res.json({
+      message: 'Booking rejected successfully',
+      booking
+    })
+  } catch (error) {
+    res.status(400).json({ error: error.message })
+  }
+})
+
+// CANCEL BOOKING (Client or Admin cancels)
+router.patch('/:id/cancel', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params
+    const { cancelled_by, cancellation_reason } = req.body
+
+    const booking = await Booking.findById(id)
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' })
+    }
+
+    if (['completed', 'cancelled'].includes(booking.booking_status)) {
+      return res.status(400).json({ error: 'Booking cannot be cancelled in current status' })
+    }
+
+    booking.booking_status = 'cancelled'
+    booking.cancelled_at = new Date()
+    booking.cancelled_by = cancelled_by
+    booking.cancellation_reason = cancellation_reason
+    booking.updated_at = new Date()
+
+    await booking.save()
+    await booking.populate(['client_id', 'technician_id'])
+
+    res.json({
+      message: 'Booking cancelled successfully',
+      booking
+    })
+  } catch (error) {
+    res.status(400).json({ error: error.message })
+  }
+})
+
+// START SERVICE (Technician starts work)
+router.patch('/:id/start', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params
+    const { technician_id } = req.body
+
+    const booking = await Booking.findById(id)
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' })
+    }
+
+    if (booking.technician_id.toString() !== technician_id) {
+      return res.status(403).json({ error: 'Unauthorized to start this booking' })
+    }
+
+    if (booking.booking_status !== 'confirmed') {
+      return res.status(400).json({ error: 'Booking must be confirmed before starting' })
+    }
+
+    booking.booking_status = 'in_progress'
+    booking.started_at = new Date()
+    booking.updated_at = new Date()
+
+    await booking.save()
+    await booking.populate(['client_id', 'technician_id'])
+
+    res.json({
+      message: 'Service started successfully',
+      booking
+    })
+  } catch (error) {
+    res.status(400).json({ error: error.message })
+  }
+})
+
+// COMPLETE BOOKING (Technician completes work)
+router.patch('/:id/complete', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params
+    const { technician_id, completion_notes, actual_price } = req.body
+
+    const booking = await Booking.findById(id)
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' })
+    }
+
+    if (booking.technician_id.toString() !== technician_id) {
+      return res.status(403).json({ error: 'Unauthorized to complete this booking' })
+    }
+
+    if (booking.booking_status !== 'in_progress') {
+      return res.status(400).json({ error: 'Booking must be in progress to complete' })
+    }
+
+    booking.booking_status = 'completed'
+    booking.completed_at = new Date()
+    booking.completion_notes = completion_notes
+    if (actual_price) {
+      booking.final_price = actual_price // Update final price if provided
+    }
+    booking.updated_at = new Date()
+
+    await booking.save()
+    await booking.populate(['client_id', 'technician_id'])
+
+    res.json({
+      message: 'Booking completed successfully',
+      booking
+    })
+  } catch (error) {
+    res.status(400).json({ error: error.message })
+  }
+})
+
+// RESCHEDULE BOOKING
+router.patch('/:id/reschedule', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params
+    const { new_date, new_time, rescheduled_by, reschedule_reason } = req.body
+
+    const booking = await Booking.findById(id)
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' })
+    }
+
+    if (['completed', 'cancelled', 'in_progress'].includes(booking.booking_status)) {
+      return res.status(400).json({ error: 'Booking cannot be rescheduled in current status' })
+    }
+
+    // Check technician availability for new time
+    const conflictBooking = await Booking.findOne({
+      technician_id: booking.technician_id,
+      scheduled_date: new Date(new_date),
+      scheduled_time: new_time,
+      booking_status: { $in: ['pending', 'confirmed', 'in_progress', 'rescheduled'] },
+      _id: { $ne: id }
+    })
+
+    if (conflictBooking) {
+      return res.status(409).json({ error: 'Technician is not available at the new time' })
+    }
+
+    // Store old schedule in history
+    booking.schedule_history = booking.schedule_history || []
+    booking.schedule_history.push({
+      old_date: booking.scheduled_date,
+      old_time: booking.scheduled_time,
+      new_date: new Date(new_date),
+      new_time: new_time,
+      rescheduled_by,
+      rescheduled_at: new Date(),
+      reason: reschedule_reason
+    })
+
+    booking.scheduled_date = new Date(new_date)
+    booking.scheduled_time = new_time
+    booking.booking_status = 'confirmed'
+    booking.updated_at = new Date()
+
+    await booking.save()
+    await booking.populate(['client_id', 'technician_id'])
+
+    res.json({
+      message: 'Booking rescheduled successfully',
+      booking
+    })
+  } catch (error) {
+    res.status(400).json({ error: error.message })
+  }
+})
+
+// GET ALL BOOKINGS (with filters)
+router.get('/', verifyToken, async (req, res) => {
+  try {
+    const {
+      technician_id,
+      client_id,
+      status,
+      date_from,
+      date_to,
+      page = 1,
+      limit = 10
+    } = req.query
+
+    const filter = {}
+    if (technician_id) filter.technician_id = technician_id
+    if (client_id) filter.client_id = client_id
+    if (status) filter.booking_status = status
+    if (date_from || date_to) {
+      filter.scheduled_date = {}
+      if (date_from) filter.scheduled_date.$gte = new Date(date_from)
+      if (date_to) filter.scheduled_date.$lte = new Date(date_to)
+    }
+
+    const skip = (page - 1) * limit
+
     const bookings = await Booking.find(filter)
-     .populate('technician_id', 'name email phone profession rating profile_image')
+      .populate('client_id')
+      .populate({
+        path: 'technician_id',
+        populate: {
+          path: 'user',
+          select: '-password'
+        }
+      })
       .sort({ created_at: -1 })
       .skip(skip)
       .limit(parseInt(limit))
 
-    // Get total count for pagination
-    const totalBookings = await Booking.countDocuments(filter)
-    const totalPages = Math.ceil(totalBookings / parseInt(limit))
+    const total = await Booking.countDocuments(filter)
 
-    res.status(HTTP_STATUS.OK).json({
-      success: true,
-      message: 'Bookings retrieved successfully',
-      data: {
-        bookings,
-        pagination: {
-          currentPage: parseInt(page),
-          totalPages,
-          totalBookings,
-          hasNextPage: parseInt(page) < totalPages,
-          hasPrevPage: parseInt(page) > 1
-        }
+    res.json({
+      bookings,
+      pagination: {
+        current_page: parseInt(page),
+        total_pages: Math.ceil(total / limit),
+        total_bookings: total
       }
     })
-
   } catch (error) {
-    console.error('Error fetching bookings:', error)
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Internal server error',
-      error: error.message
-    })
+    res.status(400).json({ error: error.message })
   }
-}
+})
 
-// Cancel booking
-export const cancelBooking = async (req, res) => {
+// GET BOOKING BY ID
+router.get('/:id', verifyToken, async (req, res) => {
   try {
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        success: false,
-        message: 'Validation error',
-        errors: errors.array()
+    const booking = await Booking.findById(req.params.id)
+      .populate({
+        path: 'client_id',
+        populate: {
+          path: 'user',
+          select: '-password'
+        }
       })
-    }
+      .populate({
+        path: 'technician_id',
+        populate: {
+          path: 'user',
+          select: '-password'
+        }
+      })
+      .populate({
+        path: 'cancelled_by'
+      })
 
-    const { id } = req.params
-    const { cancellation_reason } = req.body
-    const userId = req.user.id
-     // Find Client document for logged-in user
-    const client = await Client.findOne({ client_id: userId });
-    if (!client) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        success: false,
-        message: 'Client not found'
-      });
-    }
-
-    // Find the booking
-    const booking = await Booking.findOne({ _id: id, client_id:client._id })
     if (!booking) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({
-        success: false,
-        message: 'Booking not found'
-      })
+      return res.status(404).json({ error: 'Booking not found' })
     }
 
-    // Check if booking can be cancelled
-    if (booking.booking_status === BOOKING_STATUS.CANCELLED) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        success: false,
-        message: 'Booking is already cancelled'
-      })
+    res.json({ booking })
+  } catch (error) {
+    res.status(400).json({ error: error.message })
+  }
+})
+
+// UPDATE BOOKING DETAILS (before confirmation)
+router.patch('/:id', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params
+    const updates = req.body
+
+    const booking = await Booking.findById(id)
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' })
     }
 
-    if (booking.booking_status === BOOKING_STATUS.COMPLETED) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        success: false,
-        message: 'Cannot cancel completed booking'
-      })
+    if (booking.booking_status !== 'pending') {
+      return res.status(400).json({ error: 'Can only update pending bookings' })
     }
 
-    // Check cancellation deadline (24 hours before)
-    if (!canCancelBooking(booking.scheduled_date, booking.scheduled_time)) {
-      return res.status(HTTP_STATUS.BAD_REQUEST).json({
-        success: false,
-        message: 'Booking cannot be cancelled within 24 hours of scheduled time'
-      })
+    // Prevent updating certain fields
+    delete updates.booking_status
+    delete updates.created_at
+    delete updates.cancelled_at
+    delete updates.cancelled_by
+
+    updates.updated_at = new Date()
+
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      id,
+      updates,
+      { new: true, runValidators: true }
+    ).populate(['client_id', 'technician_id'])
+
+    res.json({
+      message: 'Booking updated successfully',
+      booking: updatedBooking
+    })
+  } catch (error) {
+    res.status(400).json({ error: error.message })
+  }
+})
+
+// GET TECHNICIAN SCHEDULE
+router.get('/technician/:technician_id/schedule', verifyToken, async (req, res) => {
+  try {
+    const { technician_id } = req.params
+    const { date } = req.query
+
+    const filter = {
+      technician_id,
+      booking_status: { $in: ['confirmed', 'in_progress'] }
     }
 
-    // Update booking status
-    booking.booking_status = BOOKING_STATUS.CANCELLED
-    booking.cancelled_at = new Date()
-    booking.cancelled_by = client._id;
-    booking.cancellation_reason = cancellation_reason || 'Cancelled by client'
+    if (date) {
+      const targetDate = new Date(date)
+      const nextDay = new Date(targetDate)
+      nextDay.setDate(nextDay.getDate() + 1)
+
+      filter.scheduled_date = {
+        $gte: targetDate,
+        $lt: nextDay
+      }
+    }
+
+    const bookings = await Booking.find(filter)
+      .populate('client_id')
+      .sort({ scheduled_date: 1, scheduled_time: 1 })
+
+    res.json({ schedule: bookings })
+  } catch (error) {
+    res.status(400).json({ error: error.message })
+  }
+})
+
+// ADD RATING AND FEEDBACK
+router.patch('/:id/feedback', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params
+    const { rating, feedback } = req.body
+
+    const booking = await Booking.findById(id)
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' })
+    }
+
+    if (booking.booking_status !== 'completed') {
+      return res.status(400).json({ error: 'Can only add feedback to completed bookings' })
+    }
+
+    booking.rating = rating
+    booking.feedback = feedback
+    booking.feedback_date = new Date()
+    booking.updated_at = new Date()
 
     await booking.save()
+    await booking.populate(['client_id', 'technician_id'])
 
-    // Populate the updated booking
-    const updatedBooking = await Booking.findById(booking._id)
- .populate('technician_id', 'name email phone profession rating profile_image')
-
-      .populate('client_id', 'name email phone')
-
-    res.status(HTTP_STATUS.OK).json({
-      success: true,
-      message: 'Booking cancelled successfully',
-      data: {
-        booking: updatedBooking
-      }
+    res.json({
+      message: 'Feedback added successfully',
+      booking
     })
-
   } catch (error) {
-    console.error('Error cancelling booking:', error)
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Internal server error',
-      error: error.message
-    })
+    res.status(400).json({ error: error.message })
   }
-}
+})
+
+// GET BOOKING STATISTICS
+router.get('/stats/overview', verifyToken, async (req, res) => {
+  try {
+    const { technician_id, date_from, date_to } = req.query
+
+    const matchFilter = {}
+    if (technician_id) matchFilter.technician_id = new mongoose.Types.ObjectId(technician_id)
+    if (date_from || date_to) {
+      matchFilter.created_at = {}
+      if (date_from) matchFilter.created_at.$gte = new Date(date_from)
+      if (date_to) matchFilter.created_at.$lte = new Date(date_to)
+    }
+
+    const stats = await Booking.aggregate([
+      { $match: matchFilter },
+      {
+        $group: {
+          _id: null,
+          total_bookings: { $sum: 1 },
+          pending: { $sum: { $cond: [{ $eq: ['$booking_status', 'pending'] }, 1, 0] } },
+          confirmed: { $sum: { $cond: [{ $eq: ['$booking_status', 'confirmed'] }, 1, 0] } },
+          in_progress: { $sum: { $cond: [{ $eq: ['$booking_status', 'in_progress'] }, 1, 0] } },
+          completed: { $sum: { $cond: [{ $eq: ['$booking_status', 'completed'] }, 1, 0] } },
+          cancelled: { $sum: { $cond: [{ $eq: ['$booking_status', 'cancelled'] }, 1, 0] } },
+          rescheduled: { $sum: { $cond: [{ $eq: ['$booking_status', 'rescheduled'] }, 1, 0] } },
+          total_revenue: { $sum: { $cond: [{ $eq: ['$booking_status', 'completed'] }, '$final_price', 0] } },
+          avg_booking_value: { $avg: '$final_price' },
+          avg_rating: { $avg: '$rating' }
+        }
+      }
+    ])
+
+    res.json({ stats: stats[0] || {} })
+  } catch (error) {
+    res.status(400).json({ error: error.message })
+  }
+})
+
+export default router

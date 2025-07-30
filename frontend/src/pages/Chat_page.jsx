@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import ChatBox from '../components/chatBox'
-import BookingsList from '../components/BookingsList'
 import api from '../utils/api'
 
 const ChatPage = () => {

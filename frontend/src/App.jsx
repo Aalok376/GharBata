@@ -1,62 +1,59 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
 
+import HomePageFunc from './pages/IntroductionPage'
+import OAuthSuccess from './pages/oAuth'
 import Client_Login from './pages/Client_Login'
 import Client_Signup from './pages/Client_Signup'
-
-import HomePageFunc from './pages/IntroductionPage'
-import ProfessionalPage from './pages/professionalHomePage'
-import ClientPage from './pages/clientHomePage'
 import Overlay_Otp from './components/otpOverlay'
-import ChatPage from './pages/Chat_page'
-import ProfessionalProfilePage from './pages/professionalProfile'
-import BookingForm from './pages/bookingform'
+
+
+import ClientPage from './pages/clientHomePage'
 import TechnicianDisplayPage from './pages/professionalList'
+import ClientProfilePage from './pages/clientProfilePage'
+import BookingForm from './pages/bookingform'
+import ClientBookingDashboard from './pages/BookingDashboardForClient'
+
+
+import ProfessionalPage from './pages/professionalHomePage'
+import ProfessionalProfilePage from './pages/professionalProfile'
+import BookingDashboard from './pages/BookingDashboard'
+import TechnicianReviewsPage from './pages/reviewsPage'
+
+
 import MapPickerModal from './pages/MapPicker'
 import { SelectLocationOverlay } from './components/selectLocation'
-import ClientProfilePage from './pages/clientProfilePage'
-import TechnicianReviewsPage from './pages/reviewsPage'
-import OAuthSuccess from './pages/oAuth';
 
-import BookingDashboard from './components/BookingDashboard'
 
+import ChatPage from './pages/Chat_page'
 
 function App() {
   return (
     <Router>
       <Routes>
 
+        {/*Login Routes*/}
         <Route path='/' element={<HomePageFunc />} />
-        <Route path='/client/dashboard' element={<ClientPage />} />
+        <Route path='/oauth-success' element={<OAuthSuccess />} />
         <Route path='/gharbata/login' element={<Client_Login />} />
         <Route path='/gharbata/signup' element={<Client_Signup />} />
         <Route path='/otp' element={<Overlay_Otp />} />
+
+
+        <Route path='/clientProfileSetupPage/:userId' element={<ClientProfilePage />} />
+        <Route path='/client/dashboard' element={<ClientPage />} />
+        <Route path='/client/dashboard/bookservice/:serviceName' element={<TechnicianDisplayPage />} />
+        <Route path='/client/dashboard/booking/:service/:technicianId/:finalPrice' element={<BookingForm />} />
+        <Route path='/client/orders/:clientId' element={<ClientBookingDashboard />} />
+
+
         <Route path='/professional/dashboard' element={<ProfessionalPage />} />
         <Route path='/professionalProfilePage/:userId' element={<ProfessionalProfilePage />} />
-        <Route path='/chat/' element={<ChatPage />} />
-        {/* <Route path='/chat/:bookingId' element={<ChatPage />} /> */}
-        <Route path='/client/dashboard/bookservice/:serviceName' element={<TechnicianDisplayPage />} />
-        <Route path='/clientProfileSetupPage/:userId' element={<ClientProfilePage />} />
-        <Route path='/client/dashboard/booking/:service/:technicianId' element={<BookingForm />} />
+        <Route path='/professional/bookings/:technicianId' element={<BookingDashboard />} />
         <Route path='/professional/reviews/:userId' element={<TechnicianReviewsPage />} />
-        <Route path='/oauth-success' element={<OAuthSuccess />} />
 
-        <Route path='/' element={<HomePageFunc/>}/>
-        <Route path='/dashboard' element={<ClientPage/>}/>
-        <Route path='/client_login' element={<Client_Login/>}/>
-        <Route path='/client_signup' element={<Client_Signup/>}/>
-       { /*<Route path='/technician_login' element={<Technician_Login/>}/>*/}
-       {/* <Route path='/technician_signup' element={<Technician_Signup/>}/>*/}
-        <Route path='/otp' element={<Overlay_Otp/>}/>
-        <Route path='/professional' element={<ProfessionalPage/>}/>
-        <Route path='/professionalProfilePage/:userId' element={<ProfessionalProfilePage/>}/>
-        <Route path='/chat/:bookingId' element={<ChatPage/>}/>
-       
-        <Route path="/dashboard/bookservice/:serviceName" element={<TechnicianDisplayPage/>} />
-        <Route path='/clientProfileSetupPage/:userId' element={<ClientProfilePage/>}/>
-        {/*<Route path="/dashboard/booking/:service/:technicianId" element={<BookingForm/>} />*/}
-         <Route path="/my-bookings" element={<BookingDashboard />} />
+        <Route path='/chat/' element={<ChatPage />} />
       </Routes>
     </Router>
 

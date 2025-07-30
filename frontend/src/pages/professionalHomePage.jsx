@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react"
 import ClientNavbar from "../components/NavBarForClientAndProfessional"
 import SideBar from "../components/SideBar"
 import SideBarOverlay from "../components/SideBarOverlay"
-import { useParams, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 const ProfessionalPage = () => {
 
@@ -10,7 +10,8 @@ const ProfessionalPage = () => {
     const [fname, setFname] = useState('')
     const [lname, setLname] = useState('')
     const [profilePic, setProfilePic] = useState('')
-    const [userId, setuserId] = useState('')
+    const [technicianId, setTechnicianId] = useState('')
+    const [userId, setUserId] = useState('')
     const [technicianData, setTechnicianData] = useState(null)
     const [todaysBookings, setTodaysBookings] = useState([])
     const navigate = useNavigate()
@@ -27,10 +28,10 @@ const ProfessionalPage = () => {
 
      const Components = [
         { id: `/professional/dashboard`, icon: '📊', text: 'Dashboard' },
-        { id: `/professional/jobs/${userId}`, icon: '💼', text: 'Jobs' },
-        { id: `/professional/earnings/${userId}`, icon: '💰', text: 'Earnings' },
-        { id: `/professional/reviews/${userId}`, icon: '⭐', text: 'Reviews' },
-        { id: `/professional/messages/${userId}`, icon: '📱', text: 'Messages' },
+        { id: `/professional/bookings/${technicianId}`, icon: '💼', text: 'Jobs' },
+        { id: `/professional/earnings/${technicianId}`, icon: '💰', text: 'Earnings' },
+        { id: `/professional/reviews/${technicianId}`, icon: '⭐', text: 'Reviews' },
+        { id: `/professional/messages/${technicianId}`, icon: '📱', text: 'Messages' },
         { id: '/logout', icon: '⚙️', text: 'Logout' },
     ]
     useEffect(() => {
@@ -53,8 +54,9 @@ const ProfessionalPage = () => {
                 if (prof) {
                     setFname(prof.user?.fname || '')
                     setLname(prof.user?.lname || '')
-                    setuserId(prof.user?._id || '')
+                    setUserId(prof.user?._id || '')
                     setTechnicianData(prof)
+
 
                     // Calculate average rating across all professions
                     let totalRating = 0
@@ -77,6 +79,7 @@ const ProfessionalPage = () => {
                 }
 
                 setProfilePic(prof?.profilePic || '')
+                setTechnicianId(prof?._id||'')
 
             } catch (err) {
                 console.error('Failed to fetch profile:', err)

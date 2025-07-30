@@ -45,15 +45,16 @@ app.use(passport.session())
 
 import authRoutes from './routes/Login.js'
 import chatRoutes from './routes/chatRoutes.js'
-import bookingRoutes from './routes/bookingRoutes.js' 
 import clientRoutes from './routes/clientRoutes.js'
 import technicianRoutes from './routes/technicianRoutes.js'
+import boookingroutes from './controllers/bookingController.js'
 
 
 app.use('/api/auth', authRoutes)
-app.use('/api/bookings', bookingRoutes) 
+
 app.use('/api/clients',clientRoutes)
 app.use('/api/technicians',technicianRoutes)
+app.use('/api/bookings',boookingroutes)
 
 app.use('/api/chat', chatRoutes)
 

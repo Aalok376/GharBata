@@ -98,7 +98,6 @@ export const updateTechniciansProfile = async (req, res) => {
   }
 }
 
-
 export const getTechnicianProfile = async (req, res) => {
   try {
     const userId = req.body.userId || req.user.id
@@ -122,6 +121,7 @@ export const getTechnicianProfile = async (req, res) => {
   }
 }
 
+// Fixed endpoint name to match frontend call
 export const getAllTechnicians = async (req, res) => {
   try {
     const { category } = req.query
@@ -135,7 +135,47 @@ export const getAllTechnicians = async (req, res) => {
       select: '-password'
     })
 
-    res.status(200).json(technicians)
+    // Calculate overall average rating for each technician
+    const techniciansWithRating = technicians.map(tech => {
+      const techObj = tech.toObject()
+
+      //Convert Map to plain object for hourlyRate
+      if (tech.hourlyRate instanceof Map) {
+        techObj.hourlyRate = Object.fromEntries(tech.hourlyRate)
+      }
+
+      //Convert Map to plain object for rating
+      if (tech.rating instanceof Map) {
+        techObj.rating = Object.fromEntries(tech.rating)
+      }
+
+      // Convert Map to plain object for reviews
+      if (tech.reviews instanceof Map) {
+        techObj.reviews = Object.fromEntries(tech.reviews)
+      }
+
+      // Calculate overall average rating from all professions
+      let totalSum = 0
+      let totalCount = 0
+
+      if (techObj.rating && typeof techObj.rating === 'object') {
+        Object.values(techObj.rating).forEach(ratingData => {
+          if (ratingData && typeof ratingData.sumRatings === 'number' && typeof ratingData.totalRatings === 'number') {
+            totalSum += ratingData.sumRatings
+            totalCount += ratingData.totalRatings
+          }
+        })
+      }
+
+      const overallRating = totalCount > 0 ? totalSum / totalCount : 0
+
+      return {
+        ...techObj,
+        overallRating: parseFloat(overallRating.toFixed(1))
+      }
+    })
+
+    res.status(200).json(techniciansWithRating)
   } catch (err) {
     console.error('Error fetching technicians:', err)
     res.status(500).json({ message: 'Server error' })
@@ -210,10 +250,6 @@ export const getReviewsByProfession = async (req, res) => {
     const { technicianId, profession } = req.params
 
     const technician = await Technician.findById(technicianId)
-      .populate({
-        path: `reviews.${profession}.userId`,
-        select: 'fname lname profilePic'
-      })
 
     if (!technician) {
       return res.status(404).json({ msg: 'Technician not found' })
@@ -221,7 +257,17 @@ export const getReviewsByProfession = async (req, res) => {
 
     const reviewsForProfession = technician.reviews.get(profession) || []
 
-    res.status(200).json({ reviews: reviewsForProfession })
+    // Populate user data for each review
+    const populatedReviews = []
+    for (const review of reviewsForProfession) {
+      const user = await User.findById(review.userId).select('fname lname profilePic')
+      populatedReviews.push({
+        ...review,
+        user: user
+      })
+    }
+
+    res.status(200).json({ reviews: populatedReviews })
   } catch (err) {
     console.error('Error fetching reviews:', err)
     res.status(500).json({ msg: 'Internal Server Error' })
@@ -232,30 +278,30 @@ export const getOverallAverageRating = async (req, res) => {
   try {
     const { technicianId } = req.params
 
-    // Fetch technician with ratings (assumes ratings stored as average per profession)
     const technician = await Technician.findById(technicianId)
 
     if (!technician) {
       return res.status(404).json({ msg: 'Technician not found' })
     }
 
-    // Assuming `technician.averageRatingPerProfession` is an object like:
-    // { "Electrician": 4.5, "Plumber": 3.8, ... }
-    const ratingsObj = technician.averageRatingPerProfession || {}
+    // Calculate overall average from all profession ratings
+    let totalSum = 0
+    let totalCount = 0
 
-    const ratingValues = Object.values(ratingsObj).filter(r => typeof r === 'number' && !isNaN(r))
-
-    if (ratingValues.length === 0) {
-      return res.status(200).json({ overallAverageRating: 0 }) // No ratings yet
+    if (technician.rating && typeof technician.rating === 'object') {
+      for (const [profession, ratingData] of technician.rating) {
+        if (ratingData && typeof ratingData.sumRatings === 'number' && typeof ratingData.totalRatings === 'number') {
+          totalSum += ratingData.sumRatings
+          totalCount += ratingData.totalRatings
+        }
+      }
     }
 
-    // Calculate average of averages
-    const overallAverage = ratingValues.reduce((sum, r) => sum + r, 0) / ratingValues.length
+    const overallAverage = totalCount > 0 ? totalSum / totalCount : 0
 
-    res.status(200).json({ overallAverageRating: overallAverage })
+    res.status(200).json({ overallAverageRating: parseFloat(overallAverage.toFixed(1)) })
   } catch (error) {
     console.error('Error fetching overall average rating:', error)
     res.status(500).json({ msg: 'Internal Server Error' })
   }
 }
-

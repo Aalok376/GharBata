@@ -12,14 +12,15 @@ const ClientPage = () => {
     const [fname, setFname] = useState('')
     const [lname, setLname] = useState('')
     const [profilePic, setProfilePic] = useState('')
-    const [userId, setuserId] = useState('')
+    const [userId, setUserId] = useState('')
+    const [clientId, setclientId] = useState('')
     const navigate = useNavigate()
 
     const Components = [
         { id: `/client/dashboard`, icon: '📊', text: 'Dashboard' },
-        { id: `/client/orders/${userId}`, icon: '📋', text: 'My Orders' },
-        { id: `/client/earnings/${userId}`, icon: '💰', text: 'Payment' },
-        { id: `/client/messages/${userId}`, icon: '📱', text: 'Messages' },
+        { id: `/client/orders/${clientId}`, icon: '📋', text: 'My Orders' },
+        { id: `/client/earnings/${clientId}`, icon: '💰', text: 'Payment' },
+        { id: `/client/messages/${clientId}`, icon: '📱', text: 'Messages' },
         { id: '/chat', icon: '📱', text: 'chat' },
         { id: '/logout', icon: '⚙️', text: 'Logout' },
     ]
@@ -43,9 +44,10 @@ const ClientPage = () => {
                 if (profData) {
                     setFname(profData.fname || '')
                     setLname(profData.lname || '')
-                    setuserId(profData._id || '')
+                    setUserId(profData._id || '')
                 }
 
+                setclientId(prof?._id)
                 setProfilePic(prof?.profilePic || '')
 
             } catch (err) {

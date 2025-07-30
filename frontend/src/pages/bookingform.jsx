@@ -1,26 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { Calendar, Clock, MapPin, User, Phone, Mail, CreditCard, Home } from 'lucide-react'
-import { useParams } from 'react-router-dom'
-
 import { SelectLocationOverlay } from '../components/selectLocation'
+import { useNavigate, useParams } from 'react-router-dom'
 
 export default function BookingForm() {
 
-    const { service, technicianId } = useParams()
-    // Debug URL params
-    useEffect(() => {
-        console.log('=== URL PARAMS DEBUG ===')
-        console.log('Service:', service)
-        console.log('Technician ID:', technicianId)
-        console.log('Technician ID length:', technicianId?.length)
-        console.log('Technician ID type:', typeof technicianId)
-        console.log('Is valid ObjectId format:', /^[0-9a-fA-F]{24}$/.test(technicianId))
-        console.log('========================')
-    }, [service, technicianId])
-
+    const navigate = useNavigate()
+    const { service, technicianId, finalPrice } = useParams()
     const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
+        fname: '',
+        lname: '',
         email: '',
         phone: '',
         address: '',
@@ -35,7 +24,8 @@ export default function BookingForm() {
         latitude: '',
         longitude: '',
         service: service,
-        technicianId: technicianId
+        technician_id: technicianId,
+        final_price: finalPrice
     })
 
     const [showMapOverlay, setShowMapOverlay] = useState(false)
@@ -44,9 +34,8 @@ export default function BookingForm() {
     const [currentStep, setCurrentStep] = useState(1)
     const [agreed, setAgreed] = useState(false)
     const [errors, setErrors] = useState({})
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const [submitMessage, setSubmitMessage] = useState('')
     const totalSteps = 4
+
 
     useEffect(() => {
         if (startTime && endTime) {
@@ -75,17 +64,18 @@ export default function BookingForm() {
         const newErrors = {}
 
         if (step === 1) {
-            if (!formData.firstName.trim()) newErrors.firstName = 'First name is required'
-            else if (!/^[A-Za-z]+$/.test(formData.firstName)) newErrors.firstName = 'First name should contain alphabets only'
+            if (!formData.fname.trim()) newErrors.fname = 'First name is required'
+            else if (!/^[A-Za-z]+$/.test(formData.fname)) newErrors.fname = 'First name should contain alphabets only'
 
-            if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required'
-            else if (!/^[A-Za-z]+$/.test(formData.lastName)) newErrors.lastName = 'Last name should contain alphabets only'
+            if (!formData.lname.trim()) newErrors.lname = 'Last name is required'
+            else if (!/^[A-Za-z]+$/.test(formData.lname)) newErrors.lname = 'Last name should contain alphabets only'
 
             if (!formData.email.trim()) newErrors.email = 'Email is required'
             else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid'
 
             if (!formData.phone.trim()) newErrors.phone = 'Phone number is required'
             else if (!/^\d{10}$/.test(formData.phone.trim())) newErrors.phone = 'Phone number must be of 10 digits'
+
         }
 
         if (step === 2) {
@@ -98,7 +88,7 @@ export default function BookingForm() {
             if (!startTime) newErrors.startTime = 'Start time is required'
             if (!endTime) newErrors.endTime = 'End time is required'
             if (startTime && endTime && startTime >= endTime) {
-                newErrors.timeSlot = 'End time must be after start time'
+                newErrors.endTime = 'End time must be after start time'
             }
         }
         if (step === 4) {
@@ -122,141 +112,87 @@ export default function BookingForm() {
         }
     }
 
-    const getAuthToken = () => {
-        // Try to get token from localStorage/sessionStorage first
-        // (in case you store it there for client-side access)
-        const storedToken = localStorage.getItem('accessToken') || 
-                           sessionStorage.getItem('accessToken') ||
-                           localStorage.getItem('token') || 
-                           sessionStorage.getItem('token')
-        
-        if (storedToken) {
-            return storedToken
-        }
-        
-        // If no stored token, try to get from cookies (though this might not work in all browsers due to httpOnly)
-        // Your backend will handle the cookie automatically, but we still need a token for the Authorization header
-        const cookies = document.cookie.split(';')
-        const accessTokenCookie = cookies.find(cookie => cookie.trim().startsWith('accessToken='))
-        
-        if (accessTokenCookie) {
-            return accessTokenCookie.split('=')[1]
-        }
-        
-        return null
-    }
-
-    const createBookingAPI = async (bookingData) => {
-        const token = getAuthToken()
-        
-        // Prepare headers - your backend accepts both cookies and Authorization header
-        const headers = {
-            'Content-Type': 'application/json'
-        }
-        
-        // Add Authorization header if token is available
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`
-        }
-        
-        const response = await fetch('http://localhost:5000/api/bookings', {
-            method: 'POST',
-            headers: headers,
-            credentials: 'include', // This ensures cookies are sent with the request
-            body: JSON.stringify(bookingData)
-        })
-
-        const data = await response.json()
-
-        if (!response.ok) {
-            // Handle specific error cases
-            if (response.status === 401) {
-                throw new Error('Authentication required. Please login again.')
-            } else if (response.status === 403) {
-                throw new Error('Access denied. Please login again.')
-            } else {
-                throw new Error(data.message || 'Failed to create booking')
-            }
-        }
-
-        return data
-    }
-
     const handleSubmit = async (e) => {
         e.preventDefault()
-        setIsSubmitting(true)
-        setSubmitMessage('')
 
-                    // Validate that we have both start and end times
-            if (!startTime || !endTime) {
-                setSubmitMessage('❌ Error: Please select both start and end times')
-                setIsSubmitting(false)
-                return
-            }
+        if (validateStep(4)) {
 
-            // Validate that timeSlot is properly formed
-            if (!formData.timeSlot || formData.timeSlot === ' - ') {
-                setSubmitMessage('❌ Error: Please select valid time slot')
-                setIsSubmitting(false)
-                return
-            }
-
-        try {
-            // Get coordinates if not already set
             if (!formData.latitude || !formData.longitude) {
-                const location = formData.address
-                console.log('Getting coordinates for:', location)
+                const location = formData.address;
 
-                const geocodeResponse = await fetch(`http://localhost:5000/geocode?q=${encodeURIComponent(location)}`)
-                const geocodeData = await geocodeResponse.json()
+                console.log(location)
 
-                if (geocodeData.error) {
-                    throw new Error(geocodeData.error)
+                try {
+                    const geoResponse = await fetch(`http://localhost:5000/geocode?q=${encodeURIComponent(location)}`,{
+        method: 'GET',
+                credentials: 'include',
+      })
+                    const geoData = await geoResponse.json()
+
+                    if (geoData.error) {
+                        console.error(geoData.error);
+                        alert('Error getting location coordinates: ' + geoData.error)
+                        return
+                    } else {
+                        setFormData(prev => ({
+                            ...prev,
+                            latitude: geoData.lat,
+                            longitude: geoData.lon
+                        }))
+                    }
+                } catch (error) {
+                    console.error('Geocoding error:', error)
+                    alert('Error getting location coordinates')
+                    return
                 }
-
-                formData.latitude = geocodeData.lat.toString()
-                formData.longitude = geocodeData.lon.toString()
             }
 
-            // Prepare booking data in the format expected by backend
-            const bookingData = {
-                fname: formData.firstName,
-                lname: formData.lastName,
-                email: formData.email,
-                phoneNumber: formData.phone,
-                streetAddress: formData.address,
-                apartMent: formData.apartment,
-                cityAddress: formData.city,
-                scheduled_date: formData.date,
-                scheduled_time: formData.timeSlot,
-                specialInstructions: formData.specialInstructions,
-                contactPreference: formData.contactPreference,
-                emergencyContactName: formData.emergencyContact,
-                emergencyContactPhone: formData.emergencyPhone,
-                latitude: formData.latitude,
-                longitude: formData.longitude,
-                service: formData.service,
-                technician_id: formData.technicianId
+            console.log('Booking submitted:', formData)
+            try {
+                const response = await fetch('http://localhost:5000/api/bookings/create', {
+                    method: 'POST',
+                    credentials:'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        technician_id: formData.technician_id,
+                        fname: formData.fname,
+                        lname: formData.lname,
+                        email: formData.email,
+                        phoneNumber: formData.phone,
+                        streetAddress: formData.address,
+                        apartMent: formData.apartment,
+                        cityAddress: formData.city,
+                        service: formData.service,
+                        emergencyContactName: formData.emergencyContact,
+                        emergencyContactPhone: formData.emergencyPhone,
+                        scheduled_date: formData.date,
+                        scheduled_time: startTime,
+                        specialInstructions: formData.specialInstructions,
+                        contactPreference: formData.contactPreference,
+                        latitude: formData.latitude || '0',
+                        longitude: formData.longitude || '0',
+                        final_price: formData.final_price || '0'
+                    })
+                })
+
+                const data = await response.json()
+
+                if (response.ok) {
+                    console.log('Booking created successfully:', data.booking)
+                    setTimeout(() => {
+                        navigate('/client/dashboard', { replace: true })
+                    }, 5000)
+                    // You can redirect or reset form here
+                } else {
+                    console.error('Error creating booking:', data.error)
+                    alert('Error creating booking: ' + data.error)
+                }
+            } catch (error) {
+                console.error('Network error:', error)
+                alert('Network error occurred while creating booking')
             }
-
-            console.log('Submitting booking data:', bookingData)
-
-            // Call the API
-            const response = await createBookingAPI(bookingData)
-
-            console.log('Booking created successfully:', response)
-            
-            setSubmitMessage('✅ Booking created successfully! You will receive a confirmation shortly.')
-            
-            // Optional: Reset form or redirect
-            // You might want to redirect to a success page or booking details page
-            // window.location.href = `/booking-confirmation/${response.data.booking._id}`
-
-        } catch (error) {
-            console.error('Error creating booking:', error)
-            setSubmitMessage(`❌ Error: ${error.message}`)
-        } finally {
-            setIsSubmitting(false)
         }
     }
 
@@ -304,14 +240,14 @@ export default function BookingForm() {
                     </label>
                     <input
                         type="text"
-                        name="firstName"
-                        value={formData.firstName}
+                        name="fname"
+                        value={formData.fname}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.firstName ? 'border-red-500' : 'border-gray-300'
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.fname ? 'border-red-500' : 'border-gray-300'
                             }`}
                         required
                     />
-                    {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>}
+                    {errors.fname && <p className="text-red-500 text-xs mt-1">{errors.fname}</p>}
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -319,14 +255,14 @@ export default function BookingForm() {
                     </label>
                     <input
                         type="text"
-                        name="lastName"
-                        value={formData.lastName}
+                        name="lname"
+                        value={formData.lname}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.lastName ? 'border-red-500' : 'border-gray-300'
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.lname ? 'border-red-500' : 'border-gray-300'
                             }`}
                         required
                     />
-                    {errors.lastName && <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>}
+                    {errors.lname && <p className="text-red-500 text-xs mt-1">{errors.lname}</p>}
                 </div>
             </div>
 
@@ -448,6 +384,7 @@ export default function BookingForm() {
                     />
                 </div>
 
+
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         City *
@@ -504,10 +441,11 @@ export default function BookingForm() {
             {showMapOverlay && (
                 <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
                     <div className="relative w-[100vw] h-[100vh] bg-white rounded shadow-xl">
+
                         <SelectLocationOverlay
                             onClose={() => setShowMapOverlay(false)}
                             onLocationConfirm={({ lat, lon, name, cityName }) => {
-                                setFormData(prev => ({ ...prev, address: name, latitude: lat.toString(), longitude: lon.toString(), city: cityName }))
+                                setFormData(prev => ({ ...prev, address: name, latitude: lat, longitude: lon, city: cityName }))
                             }}
                         />
                     </div>
@@ -552,7 +490,7 @@ export default function BookingForm() {
                             name="startTime"
                             value={startTime}
                             onChange={handleInputChange}
-                            className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.timeSlot ? 'border-red-500' : 'border-gray-300'
+                            className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.startTime ? 'border-red-500' : 'border-gray-300'
                                 }`}
                             required
                         />
@@ -561,13 +499,18 @@ export default function BookingForm() {
                             name="endTime"
                             value={endTime}
                             onChange={handleInputChange}
-                            className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.timeSlot ? 'border-red-500' : 'border-gray-300'
+                            className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.endTime ? 'border-red-500' : 'border-gray-300'
                                 }`}
                             required
                         />
                     </div>
-                    {errors.timeSlot && <p className="text-red-500 text-xs mt-1">{errors.timeSlot}</p>}
+                    {(errors.startTime || errors.endTime) && (
+                        <p className="text-red-500 text-xs mt-1">
+                            {errors.startTime || errors.endTime}
+                        </p>
+                    )}
                 </div>
+
             </div>
 
             <div>
@@ -607,7 +550,7 @@ export default function BookingForm() {
                     <div>
                         <h3 className="font-semibold text-gray-800 mb-3">Contact Information</h3>
                         <div className="space-y-2 text-sm">
-                            <p><span className="font-medium">Name:</span> {formData.firstName} {formData.lastName}</p>
+                            <p><span className="font-medium">Name:</span> {formData.fname} {formData.lname}</p>
                             <p><span className="font-medium">Email:</span> {formData.email}</p>
                             <p><span className="font-medium">Phone:</span> {formData.phone}</p>
                             <p><span className="font-medium">Contact via:</span> {formData.contactPreference}</p>
@@ -629,7 +572,6 @@ export default function BookingForm() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <p><span className="font-medium">Date:</span> {formData.date}</p>
                         <p><span className="font-medium">Time:</span> {formData.timeSlot}</p>
-                        <p><span className="font-medium">Service:</span> {formData.service}</p>
                     </div>
                     {formData.specialInstructions && (
                         <div className="mt-3">
@@ -655,19 +597,10 @@ export default function BookingForm() {
                 </div>
                 {errors.checkbox && <p className="text-red-500 text-xs mt-1">{errors.checkbox}</p>}
             </div>
-
-            {/* Display submit message */}
-            {submitMessage && (
-                <div className={`p-4 rounded-lg ${submitMessage.includes('✅') 
-                    ? 'bg-green-50 border border-green-200 text-green-800' 
-                    : 'bg-red-50 border border-red-200 text-red-800'
-                }`}>
-                    {submitMessage}
-                </div>
-            )}
         </div>
-    )
 
+
+    )
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
             <div className="max-w-4xl mx-auto">
@@ -720,14 +653,9 @@ export default function BookingForm() {
                                     <button
                                         type="button"
                                         onClick={handleSubmit}
-                                        disabled={isSubmitting}
-                                        className={`px-8 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 ${
-                                            isSubmitting
-                                                ? 'bg-gray-400 text-white cursor-not-allowed'
-                                                : 'bg-green-600 text-white hover:bg-green-700'
-                                        }`}
+                                        className="px-8 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all duration-200 transform hover:scale-105"
                                     >
-                                        {isSubmitting ? 'Creating Booking...' : 'Confirm Booking'}
+                                        Confirm Booking
                                     </button>
                                 )}
                             </div>
