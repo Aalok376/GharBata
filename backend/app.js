@@ -44,7 +44,6 @@ app.use(passport.initialize());
 app.use(passport.session())
 
 import authRoutes from './routes/Login.js'
-import chatRoutes from './routes/chatRoutes.js'
 import clientRoutes from './routes/clientRoutes.js'
 import technicianRoutes from './routes/technicianRoutes.js'
 import boookingroutes from './controllers/bookingController.js'
@@ -55,8 +54,6 @@ app.use('/api/auth', authRoutes)
 app.use('/api/clients',clientRoutes)
 app.use('/api/technicians',technicianRoutes)
 app.use('/api/bookings',boookingroutes)
-
-app.use('/api/chat', chatRoutes)
 
 
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));

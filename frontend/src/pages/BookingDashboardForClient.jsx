@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { Calendar, Clock, User, Phone, Mail, MapPin, XCircle, Star, MessageSquare, Navigation, Filter, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useNavigate,useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 const ClientBookingDashboard = () => {
   const { clientId } = useParams()
 
-  const navigate=useNavigate()
+  const navigate = useNavigate()
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState(null)
@@ -141,8 +141,14 @@ const ClientBookingDashboard = () => {
   }
 
   const canCancelBooking = (booking) => {
-    if (['completed', 'cancelled'].includes(booking.booking_status)) {
+    const status = booking.booking_status
+
+    if (status === 'cancelled' || status === 'completed') {
       return false
+    }
+
+    if (status === 'pending') {
+      return true
     }
 
     const scheduledDate = new Date(booking.scheduled_date)
@@ -151,6 +157,7 @@ const ClientBookingDashboard = () => {
 
     return scheduledDate > oneDayBefore
   }
+
 
   const canRateBooking = (booking) => {
     return booking.booking_status === 'completed' && !booking.rating
@@ -268,7 +275,7 @@ const ClientBookingDashboard = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-8 w-8">
-                            <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center" onClick={()=>{
+                            <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center" onClick={() => {
                               navigate(`/professionalProfilePage/${booking?.technician_id?.user?._id}`)
                             }}>
                               {booking.technician_id?.profilePic ? (

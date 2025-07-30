@@ -1,7 +1,7 @@
 import express from 'express'
 import mongoose from 'mongoose'
-import Booking from '../models/Booking.js'
 import Client from '../models/client.js'
+import Booking from '../models/modelBooking.js'
 import Technician from '../models/technician.js'
 import { verifyToken } from '../middlewares/auth.js'
 

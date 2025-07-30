@@ -1,15 +1,12 @@
 import http from 'http'
 import dotenv from 'dotenv'
 import mongoose from 'mongoose'
-import { initializeSocket } from './utils/socket.js' 
 import app from './app.js'
 
 dotenv.config() 
 
 const PORT = process.env.PORT
 const server = http.createServer(app) 
-
-initializeSocket(server)
 
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("Connected to DB"))
