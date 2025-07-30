@@ -123,22 +123,20 @@ export default function BookingForm() {
                 console.log(location)
 
                 try {
-                    const geoResponse = await fetch(`http://localhost:5000/geocode?q=${encodeURIComponent(location)}`,{
-        method: 'GET',
-                credentials: 'include',
-      })
+                    const geoResponse = await fetch(`http://localhost:5000/geocode?q=${encodeURIComponent(location)}`, {
+                        method: 'GET',
+                        credentials: 'include',
+                    })
                     const geoData = await geoResponse.json()
+                    console.log(geoData)
 
                     if (geoData.error) {
                         console.error(geoData.error);
                         alert('Error getting location coordinates: ' + geoData.error)
                         return
                     } else {
-                        setFormData(prev => ({
-                            ...prev,
-                            latitude: geoData.lat,
-                            longitude: geoData.lon
-                        }))
+                       formData.latitude=geoData.lat
+                       formData.longitude=geoData.lon
                     }
                 } catch (error) {
                     console.error('Geocoding error:', error)
@@ -151,7 +149,7 @@ export default function BookingForm() {
             try {
                 const response = await fetch('http://localhost:5000/api/bookings/create', {
                     method: 'POST',
-                    credentials:'include',
+                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json'
                     },

@@ -30,17 +30,17 @@ app.use(session({
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   }
-}));
+}))
 
 // Middleware to store userType from query param in session
 app.use((req, res, next) => {
   if (req.query.userType) {
-    req.session.userType = req.query.userType;
+    req.session.userType = req.query.userType
   }
-  next();
-});
+  next()
+})
 
-app.use(passport.initialize());
+app.use(passport.initialize())
 app.use(passport.session())
 
 import authRoutes from './routes/Login.js'
@@ -56,7 +56,7 @@ app.use('/api/technicians',technicianRoutes)
 app.use('/api/bookings',boookingroutes)
 
 
-app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }))
 
 // Google OAuth callback
 app.get('/auth/google/callback',
@@ -103,52 +103,66 @@ app.get('/auth/google/callback',
   })
 
 app.get('/reverse-geocode', async (req, res) => {
-  const { lat, lon } = req.query;
+  const { lat, lon } = req.query
 
-  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+  if (!lat || !lon) {
+    return res.status(400).json({ error: 'Missing lat or lon query params' })
+  }
+
+  const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjZhYzc3NTgwMzE4YTQyMTViZDYxMmViZmNkMjIzYjAwIiwiaCI6Im11cm11cjY0In0="
+  const url = `https://api.openrouteservice.org/geocode/reverse?api_key=${ORS_API_KEY}&point.lat=${lat}&point.lon=${lon}`
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'YourAppName/1.0 (your@email.com)'
-      }
-    });
-    const data = await response.json();
-    res.json(data);
+    const response = await fetch(url)
+    const data = await response.json()
+
+    if (!data.features || data.features.length === 0) {
+      return res.status(404).json({ error: 'No address found' })
+    }
+
+    const feature = data.features[0]
+    const display_name = feature.properties.name
+    console.log(display_name)
+
+    res.json({
+      lat,
+      lon,
+      display_name,
+      raw: feature
+    })
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch from Nominatim' });
+    console.error('Reverse geocode error:', err)
+    res.status(500).json({ error: 'Failed to fetch from ORS' })
   }
 })
 
 app.get('/geocode', async (req, res) => {
-  const locationName = req.query.q;  // expecting ?q=Kathmandu or any address
+  const locationName = req.query.q
 
   if (!locationName) {
-    return res.status(400).json({ error: "Missing required query param 'q'" });
+    return res.status(400).json({ error: "Missing required query param 'q'" })
   }
 
-  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(locationName)}&format=json&limit=1`;
+  const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjZhYzc3NTgwMzE4YTQyMTViZDYxMmViZmNkMjIzYjAwIiwiaCI6Im11cm11cjY0In0="
+  const url = `https://api.openrouteservice.org/geocode/search?api_key=${ORS_API_KEY}&text=${encodeURIComponent(locationName)}&size=1`
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'YourAppName/1.0 (your@email.com)'
-      }
-    });
+    const response = await fetch(url)
+    const data = await response.json()
 
-    const data = await response.json();
-
-    if (data.length === 0) {
-      return res.status(404).json({ error: 'No results found' });
+    if (!data.features || data.features.length === 0) {
+      return res.status(404).json({ error: 'No results found' })
     }
 
-    // Return first result's lat and lon
-    const { lat, lon, display_name } = data[0];
+    const feature = data.features[0]
+    const [lon, lat] = feature.geometry.coordinates
+    const display_name = feature.properties.label
 
-    res.json({ lat, lon, display_name });
+    res.json({ lat, lon, display_name })
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch from Nominatim' });
+    console.error('Geocoding error:', err)
+    res.status(500).json({ error: 'Failed to fetch from ORS' })
   }
-});
+})
 
 export default app
