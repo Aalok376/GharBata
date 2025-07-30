@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react"
-import { useParams } from "react-router-dom"
+import { useParams } from 'react-router-dom'
 import {
   MapContainer,
   TileLayer,
@@ -27,7 +27,7 @@ const destinationIcon = new L.Icon({
 
 function RecenterMap({ latLng }) {
   const map = useMap()
-  useEffect(() => {
+  React.useEffect(() => {
     if (latLng) {
       map.flyTo(latLng, 16, { duration: 1.5 })
     }
@@ -35,15 +35,14 @@ function RecenterMap({ latLng }) {
   return null
 }
 
+// Enhanced Haversine formula for distance in meters
 function getDistanceFromLatLonInMeters(loc1, loc2) {
-  const R = 6371000
+  const R = 6371000 // Earth's radius in meters
   const dLat = deg2rad(loc2.lat - loc1.lat)
   const dLon = deg2rad(loc2.lng - loc1.lng)
   const a =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos(deg2rad(loc1.lat)) *
-    Math.cos(deg2rad(loc2.lat)) *
-    Math.sin(dLon / 2) ** 2
+    Math.cos(deg2rad(loc1.lat)) * Math.cos(deg2rad(loc2.lat)) * Math.sin(dLon / 2) ** 2
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   return R * c
 }
@@ -72,75 +71,83 @@ export default function MapPickerModal() {
   const [isLoadingLocationName, setIsLoadingLocationName] = useState(false)
   const [isLoadingDestination, setIsLoadingDestination] = useState(false)
   const [destinationError, setDestinationError] = useState(null)
+
+  const { lat, lon } = useParams()
   const mapRef = useRef(null)
   const prevLocRef = useRef(null)
 
-  const { lat, lon } = useParams()
-
   const ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjZhYzc3NTgwMzE4YTQyMTViZDYxMmViZmNkMjIzYjAwIiwiaCI6Im11cm11cjY0In0="
 
+  // Function to get place name from coordinates
   const getLocationName = async (lat, lng) => {
     try {
       const url = `http://localhost:5000/reverse-geocode?lat=${lat}&lon=${lng}`
       const response = await fetch(url)
-      if (!response.ok) throw new Error("Reverse geocoding failed")
       const data = await response.json()
-      const displayName = data.display_name || data.label || data?.raw?.properties?.label
-      return displayName || `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+      return data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`
     } catch (error) {
-      console.error("Error fetching location name:", error)
+      console.error('Error fetching location name:', error)
       return `${lat.toFixed(6)}, ${lng.toFixed(6)}`
     }
   }
 
+  // Function to fetch destination from database
   const fetchDestinationFromDB = async () => {
     setIsLoadingDestination(true)
     try {
+
       const data = {
-        latitude: lat,
-        longitude: lon,
+        latitude: Number(lat),
+        longitude: Number(lon)
       }
 
+      // Assuming your DB returns { latitude, longitude, placeName } or similar
       const destinationData = {
-        lat: parseFloat(data.latitude),
-        lng: parseFloat(data.longitude),
+        lat: data.latitude,
+        lng: data.longitude
       }
 
       setDestination(destinationData)
 
-      const placeName = await getLocationName(destinationData.lat, destinationData.lng)
-      setDestinationName(placeName)
+      // If place name is not in DB, fetch it
+      if (data.placeName) {
+        setDestinationName(data.placeName)
+      } else {
+        const placeName = await getLocationName(data.latitude, data.longitude)
+        setDestinationName(placeName)
+      }
 
       setDestinationError(null)
     } catch (error) {
-      console.error("Error fetching destination:", error)
-      setDestinationError("Failed to load destination from database")
+      console.error('Error fetching destination:', error)
+      setDestinationError('Failed to load destination from database')
     } finally {
       setIsLoadingDestination(false)
     }
   }
 
+  // Fetch destination on component mount
   useEffect(() => {
     fetchDestinationFromDB()
   }, [])
 
+  // Watch current location with enhanced live tracking
   useEffect(() => {
     if (!navigator.geolocation) {
       setLocationError("Geolocation is not supported by your browser")
       return
     }
 
+    // Get initial position
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        const loc = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        }
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
         setCurrentLoc(loc)
         prevLocRef.current = loc
         setLastLocationUpdate(new Date())
         setLocationError(null)
 
+        // Get location name
         setIsLoadingLocationName(true)
         const locationName = await getLocationName(loc.lat, loc.lng)
         setCurrentLocationName(locationName)
@@ -152,27 +159,27 @@ export default function MapPickerModal() {
       { enableHighAccuracy: true }
     )
 
+    // Watch position changes with very sensitive tracking
     const watchId = navigator.geolocation.watchPosition(
       async (pos) => {
-        const newLoc = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        }
-
+        const newLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+        console.log(newLoc)
+        // Always update if this is the first location
         if (!prevLocRef.current) {
           setCurrentLoc(newLoc)
           prevLocRef.current = newLoc
           return
         }
 
+        // Check if user has moved (very sensitive - even 1 meter)
         const dist = getDistanceFromLatLonInMeters(prevLocRef.current, newLoc)
-        if (dist >= 1) {
+        if (dist >= 1) { // Update if moved more than 1 meter (very sensitive)
           setCurrentLoc(newLoc)
           prevLocRef.current = newLoc
           setLastLocationUpdate(new Date())
-          console.log("New position detected:", newLoc)
-          console.log(`Moved ${dist.toFixed(2)} meters from last position`)
+          console.log(`Location updated: moved ${dist.toFixed(1)}m`)
 
+          // Update location name periodically (every 50 meters to avoid too many API calls)
           if (dist >= 50) {
             setIsLoadingLocationName(true)
             const locationName = await getLocationName(newLoc.lat, newLoc.lng)
@@ -187,14 +194,15 @@ export default function MapPickerModal() {
       },
       {
         enableHighAccuracy: true,
-        maximumAge: 500,
-        timeout: 10000,
+        maximumAge: 500, // Accept cached position if less than 0.5 seconds old
+        timeout: 10000 // Wait up to 10 seconds for location
       }
     )
 
     return () => navigator.geolocation.clearWatch(watchId)
   }, [])
 
+  // Fetch route when current location or destination changes
   useEffect(() => {
     if (!currentLoc || !destination) {
       setRouteCoords(null)
@@ -202,13 +210,12 @@ export default function MapPickerModal() {
       return
     }
 
+    // Calculate straight-line distance using Haversine formula
     const haversineDistance = getDistanceFromLatLonInMeters(currentLoc, destination)
 
+    // For very short distances (less than 50m), just show straight line
     if (haversineDistance < 50) {
-      setRouteCoords([
-        [currentLoc.lat, currentLoc.lng],
-        [destination.lat, destination.lng],
-      ])
+      setRouteCoords([[currentLoc.lat, currentLoc.lng], [destination.lat, destination.lng]])
       setRouteDistance(haversineDistance)
       return
     }
@@ -234,21 +241,16 @@ export default function MapPickerModal() {
         return res.json()
       })
       .then((data) => {
-        const coords = data.features[0].geometry.coordinates.map(
-          ([lng, lat]) => [lat, lng]
-        )
+        const coords = data.features[0].geometry.coordinates.map(([lng, lat]) => [lat, lng])
         const distance = data.features[0].properties.segments[0].distance
         setRouteCoords(coords)
         setRouteDistance(distance)
         setIsLoadingRoute(false)
       })
       .catch((err) => {
-        console.warn("⚠️ ORS route fetch failed, using straight line.")
         console.error(err)
-        setRouteCoords([
-          [currentLoc.lat, currentLoc.lng],
-          [destination.lat, destination.lng],
-        ])
+        // Fallback to Haversine distance and straight line
+        setRouteCoords([[currentLoc.lat, currentLoc.lng], [destination.lat, destination.lng]])
         setRouteDistance(haversineDistance)
         setIsLoadingRoute(false)
       })
@@ -270,10 +272,8 @@ export default function MapPickerModal() {
     return "Ready"
   }
 
-  const currentDistance =
-    currentLoc && destination
-      ? getDistanceFromLatLonInMeters(currentLoc, destination)
-      : null
+  const currentDistance = currentLoc && destination ?
+    getDistanceFromLatLonInMeters(currentLoc, destination) : null
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -289,6 +289,8 @@ export default function MapPickerModal() {
               <p className="text-sm text-gray-600">{getStatusMessage()}</p>
             </div>
           </div>
+
+          {/* Status indicator */}
           <div className="flex items-center space-x-4">
             {lastLocationUpdate && (
               <div className="text-xs text-gray-500">
@@ -305,7 +307,6 @@ export default function MapPickerModal() {
         </div>
       </div>
 
-      {/* Main content */}
       <div className="flex flex-1 gap-6 p-6">
         {/* Control Panel */}
         <div className="w-80 bg-white rounded-xl shadow-lg overflow-hidden">
@@ -380,6 +381,8 @@ export default function MapPickerModal() {
               <div className="mb-6">
                 <h3 className="font-semibold text-gray-900 mb-3">Distance & Route</h3>
                 <div className="space-y-3">
+
+                  {/* Route distance */}
                   {isLoadingRoute ? (
                     <div className="bg-gray-50 rounded-lg p-3">
                       <p className="text-sm text-gray-600">Calculating route...</p>
@@ -392,6 +395,8 @@ export default function MapPickerModal() {
                       </p>
                     </div>
                   ) : null}
+
+                  {/* Arrival status */}
                   {currentDistance < 10 && (
                     <div className="bg-yellow-50 rounded-lg p-3 text-center">
                       <p className="text-sm text-yellow-700 font-bold">🎉 You've arrived!</p>
@@ -417,7 +422,7 @@ export default function MapPickerModal() {
           </div>
         </div>
 
-        {/* Map Container */}
+        {/* Map */}
         <div className="flex-1 rounded-xl shadow-lg overflow-hidden">
           <MapContainer
             center={currentLoc || destination || [27.7, 85.3]}
@@ -430,8 +435,12 @@ export default function MapPickerModal() {
               attribution='&copy <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
             <RecenterMap latLng={currentLoc} />
+
             {currentLoc && <Marker position={currentLoc} icon={markerIcon} />}
-            {destination && <Marker position={destination} icon={destinationIcon} />}
+            {destination && (
+              <Marker position={destination} icon={destinationIcon} />
+            )}
+
             {routeCoords && (
               <Polyline
                 positions={routeCoords}
