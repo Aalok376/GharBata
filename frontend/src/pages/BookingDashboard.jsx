@@ -26,6 +26,7 @@ const BookingDashboard = () => {
   })
   const [stats, setStats] = useState({})
   const [formData, setFormData] = useState({})
+  const [formErrors, setFormErrors] = useState({})
 
   const API_BASE = 'http://localhost:5000/api/bookings'
 
@@ -74,7 +75,46 @@ const BookingDashboard = () => {
     fetchStats()
   }, [filters])
 
+  const validateForm = (type, data) => {
+    const errors = {}
+    
+    switch (type) {
+      case 'reject':
+        if (!data.rejection_reason || data.rejection_reason.trim() === '') {
+          errors.rejection_reason = 'Rejection reason is required'
+        }
+        break
+      case 'cancel':
+        if (!data.cancellation_reason || data.cancellation_reason.trim() === '') {
+          errors.cancellation_reason = 'Cancellation reason is required'
+        }
+        break
+      case 'reschedule':
+        if (!data.new_date) {
+          errors.new_date = 'New date is required'
+        }
+        if (!data.new_time) {
+          errors.new_time = 'New time is required'
+        }
+        if (!data.reschedule_reason || data.reschedule_reason.trim() === '') {
+          errors.reschedule_reason = 'Reschedule reason is required'
+        }
+        break
+    }
+    
+    return errors
+  }
+
   const handleBookingAction = async (bookingId, action, data = {}) => {
+    // Validate form for actions that require mandatory fields
+    if (['reject', 'cancel', 'reschedule'].includes(action)) {
+      const errors = validateForm(action, data)
+      if (Object.keys(errors).length > 0) {
+        setFormErrors(errors)
+        return
+      }
+    }
+
     try {
       const response = await fetch(`${API_BASE}/${bookingId}/${action}`, {
         method: 'PATCH',
@@ -90,6 +130,7 @@ const BookingDashboard = () => {
         fetchStats()
         setShowModal(false)
         setSelectedBooking(null)
+        setFormErrors({})
       } else {
         const errorData = await response.json()
         alert(errorData.error || 'An error occurred')
@@ -105,6 +146,7 @@ const BookingDashboard = () => {
     setSelectedBooking(booking)
     setShowModal(true)
     setFormData(booking || {})
+    setFormErrors({})
   }
 
   const getStatusColor = (status) => {
@@ -258,14 +300,16 @@ const BookingDashboard = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className="flex-shrink-0 h-10 w-10">
-                                <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center" onClick={() => {
-                                  navigate(`/clientProfileSetupPage/${booking?.client_id?.client_id}`)
+                                <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center cursor-pointer" onClick={() => {
+                                  if (booking?.client_id?.client_id) {
+                                    navigate(`/clientProfileSetupPage/${booking.client_id.client_id}`)
+                                  }
                                 }}>
                                   {booking.client_id?.profilePic ? (
                                     <img
                                       src={booking.client_id.profilePic}
-                                      className="h-5 w-5 rounded-full object-cover"
-                                      alt="G"
+                                      className="h-10 w-10 rounded-full object-cover"
+                                      alt="Profile"
                                     />
                                   ) : (
                                     <User className="h-5 w-5 text-gray-600" />
@@ -534,7 +578,7 @@ const BookingDashboard = () => {
                             `/bookings/direction/${selectedBooking.latitude}/${selectedBooking.longitude}`
                           )
                         }}
-                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-300"
+                        className="mt-2 inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-300"
                       >
                         <Navigation className="h-4 w-4 mr-2" />
                         Get Directions
@@ -690,7 +734,7 @@ const BookingDashboard = () => {
                               setShowModal(false)
                               setTimeout(() => openModal('cancel', selectedBooking), 100)
                             }}
-                            className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+                            className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
                           >
                             <XCircle className="h-4 w-4 mr-2" />
                             Cancel Booking
@@ -733,14 +777,26 @@ const BookingDashboard = () => {
               {modalType === 'reject' && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Rejection Reason</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Rejection Reason <span className="text-red-500">*</span>
+                    </label>
                     <textarea
                       value={formData.rejection_reason || ''}
-                      onChange={(e) => setFormData({ ...formData, rejection_reason: e.target.value })}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      onChange={(e) => {
+                        setFormData({ ...formData, rejection_reason: e.target.value })
+                        if (formErrors.rejection_reason) {
+                          setFormErrors({ ...formErrors, rejection_reason: '' })
+                        }
+                      }}
+                      className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        formErrors.rejection_reason ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       rows="3"
                       placeholder="Please provide a reason for rejection..."
                     />
+                    {formErrors.rejection_reason && (
+                      <p className="text-red-500 text-sm mt-1">{formErrors.rejection_reason}</p>
+                    )}
                   </div>
                   <div className="flex space-x-3">
                     <button
@@ -831,14 +887,26 @@ const BookingDashboard = () => {
               {modalType === 'cancel' && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Cancellation Reason</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Cancellation Reason <span className="text-red-500">*</span>
+                    </label>
                     <textarea
                       value={formData.cancellation_reason || ''}
-                      onChange={(e) => setFormData({ ...formData, cancellation_reason: e.target.value })}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      onChange={(e) => {
+                        setFormData({ ...formData, cancellation_reason: e.target.value })
+                        if (formErrors.cancellation_reason) {
+                          setFormErrors({ ...formErrors, cancellation_reason: '' })
+                        }
+                      }}
+                      className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        formErrors.cancellation_reason ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       rows="3"
                       placeholder="Please provide a reason for cancellation..."
                     />
+                    {formErrors.cancellation_reason && (
+                      <p className="text-red-500 text-sm mt-1">{formErrors.cancellation_reason}</p>
+                    )}
                   </div>
                   <div className="flex space-x-3">
                     <button
@@ -864,34 +932,70 @@ const BookingDashboard = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">New Date</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        New Date <span className="text-red-500">*</span>
+                      </label>
                       <input
                         type="date"
                         value={formData.new_date || ''}
-                        onChange={(e) => setFormData({ ...formData, new_date: e.target.value })}
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        onChange={(e) => {
+                          setFormData({ ...formData, new_date: e.target.value })
+                          if (formErrors.new_date) {
+                            setFormErrors({ ...formErrors, new_date: '' })
+                          }
+                        }}
+                        className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                          formErrors.new_date ? 'border-red-500' : 'border-gray-300'
+                        }`}
                         min={new Date().toISOString().split('T')[0]}
                       />
+                      {formErrors.new_date && (
+                        <p className="text-red-500 text-sm mt-1">{formErrors.new_date}</p>
+                      )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">New Time</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        New Time <span className="text-red-500">*</span>
+                      </label>
                       <input
                         type="time"
                         value={formData.new_time || ''}
-                        onChange={(e) => setFormData({ ...formData, new_time: e.target.value })}
-                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        onChange={(e) => {
+                          setFormData({ ...formData, new_time: e.target.value })
+                          if (formErrors.new_time) {
+                            setFormErrors({ ...formErrors, new_time: '' })
+                          }
+                        }}
+                        className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                          formErrors.new_time ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       />
+                      {formErrors.new_time && (
+                        <p className="text-red-500 text-sm mt-1">{formErrors.new_time}</p>
+                      )}
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Reschedule Reason</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Reschedule Reason <span className="text-red-500">*</span>
+                    </label>
                     <textarea
                       value={formData.reschedule_reason || ''}
-                      onChange={(e) => setFormData({ ...formData, reschedule_reason: e.target.value })}
-                      className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      onChange={(e) => {
+                        setFormData({ ...formData, reschedule_reason: e.target.value })
+                        if (formErrors.reschedule_reason) {
+                          setFormErrors({ ...formErrors, reschedule_reason: '' })
+                        }
+                      }}
+                      className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        formErrors.reschedule_reason ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       rows="3"
                       placeholder="Please provide a reason for rescheduling..."
                     />
+                    {formErrors.reschedule_reason && (
+                      <p className="text-red-500 text-sm mt-1">{formErrors.reschedule_reason}</p>
+                    )}
                   </div>
                   <div className="flex space-x-3">
                     <button
@@ -902,7 +1006,6 @@ const BookingDashboard = () => {
                         reschedule_reason: formData.reschedule_reason
                       })}
                       className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
-                      disabled={!formData.new_date || !formData.new_time}
                     >
                       Reschedule Booking
                     </button>
