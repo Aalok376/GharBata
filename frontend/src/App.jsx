@@ -50,7 +50,7 @@ function App() {
         <Route path='/professional/dashboard' element={<ProfessionalPage />} />
         <Route path='/professionalProfilePage/:userId' element={<ProfessionalProfilePage />} />
         <Route path='/professional/bookings/:technicianId' element={<BookingDashboard />} />
-        <Route path='/professional/reviews/:userId' element={<TechnicianReviewsPage />} />
+        <Route path='/professional/reviews/:technicianId' element={<TechnicianReviewsPage />} />
         <Route path='/bookings/direction/:lat/:lon' element={<MapPickerModal />} />
 
         <Route path='/chat/' element={<ChatPage />} />

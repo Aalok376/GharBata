@@ -12,6 +12,7 @@ export default function TechnicianProfile() {
   const [selectedFile, setSelectedFile] = useState(null)
   const [isOwnProfile, setIsOwnProfile] = useState(false)
   const [validationErrors, setValidationErrors] = useState({})
+  const [stats, setStats] = useState({}) // New state for stats
 
   const { userId } = useParams()
   const navigate = useNavigate()
@@ -31,6 +32,30 @@ export default function TechnicianProfile() {
     { key: 'friday', label: 'Friday', short: 'Fri' },
     { key: 'saturday', label: 'Saturday', short: 'Sat' }
   ]
+
+  // New function to fetch stats
+  const fetchStats = async (technicianId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/bookings/stats/overview?technician_id=${technicianId}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setStats(data.stats || {})
+      } else {
+        console.error('Failed to fetch stats')
+        setStats({})
+      }
+    } catch (error) {
+      console.error('Stats fetch error:', error)
+      setStats({})
+    }
+  }
 
   // Validation function
   const validateProfile = (profile) => {
@@ -206,6 +231,12 @@ export default function TechnicianProfile() {
           }
           setProfile(mergedProfile)
           setEditedProfile(mergedProfile)
+
+          // Only fetch stats for existing profiles (not first time)
+          if (!isFirstTime) {
+            const technicianId = prof._id || userId
+            await fetchStats(technicianId)
+          }
         }
       } catch (error) {
         console.error('Fetch error:', error)
@@ -365,6 +396,12 @@ export default function TechnicianProfile() {
         setValidationErrors({}) // Clear validation errors on successful save
         sessionStorage.removeItem('formData')
 
+        // Refresh stats after profile update (only for existing profiles)
+        if (!forFirstTime) {
+          const technicianId = updatedTechnician._id || userId
+          await fetchStats(technicianId)
+        }
+
         // Show success message
         setShowSuccess(true)
 
@@ -494,24 +531,32 @@ export default function TechnicianProfile() {
             </div>
           </div>
 
-          {/* Stats Section */}
+          {/* Stats Section - Updated to use API data */}
           <div className="p-8 bg-gradient-to-br from-slate-50 to-gray-50 border-b">
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div className="text-center p-6 bg-white rounded-xl shadow-sm">
                 <div className="text-3xl font-bold text-indigo-600 flex items-center justify-center">
                   <Star className="w-6 h-6 text-yellow-500 mr-1" />
                   {
-                    typeof profile?.rating === 'number'
-                      ? profile.rating.toFixed(1)
-                      : (typeof profile?.rating?.average === 'number'
-                        ? profile.rating.average.toFixed(1)
-                        : '0.0')
+                    // Use stats from API, fallback to profile data, then default
+                    stats?.avg_rating 
+                      ? parseFloat(stats.avg_rating).toFixed(1)
+                      : (typeof profile?.rating === 'number'
+                        ? profile.rating.toFixed(1)
+                        : (typeof profile?.rating?.average === 'number'
+                          ? profile.rating.average.toFixed(1)
+                          : '0.0'))
                   }
                 </div>
                 <div className="text-sm text-gray-600 mt-1">Rating</div>
               </div>
               <div className="text-center p-6 bg-white rounded-xl shadow-sm">
-                <div className="text-3xl font-bold text-green-600">{profile?.tasksCompleted || '0'}</div>
+                <div className="text-3xl font-bold text-green-600">
+                  {
+                    // Use completed bookings from API, fallback to profile data, then default
+                    stats?.completed || profile?.tasksCompleted || '0'
+                  }
+                </div>
                 <div className="text-sm text-gray-600 mt-1">Jobs Done</div>
               </div>
             </div>

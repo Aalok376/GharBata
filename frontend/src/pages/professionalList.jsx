@@ -13,6 +13,7 @@ const TechnicianDisplayPage = () => {
   const [showReviewsOverlay, setShowReviewsOverlay] = useState(false)
   const [selectedTechnicianReviews, setSelectedTechnicianReviews] = useState(null)
   const [loadingReviews, setLoadingReviews] = useState(false)
+  const [technicianRatings, setTechnicianRatings] = useState({})
 
   useEffect(() => {
     if (!initialLoad && serviceName !== selectedService) {
@@ -57,6 +58,9 @@ const TechnicianDisplayPage = () => {
         }))
 
         setTechnicians(formatted)
+        
+        // Fetch ratings for each technician for the selected service
+        fetchTechniciansRatings(formatted)
       } catch (err) {
         console.error('Failed to fetch technicians:', err)
       }
@@ -66,6 +70,45 @@ const TechnicianDisplayPage = () => {
       getTechnicians()
     }
   }, [selectedService])
+
+  // Function to fetch ratings for all technicians
+  const fetchTechniciansRatings = async (technicians) => {
+    const ratingsData = {}
+    
+    await Promise.all(
+      technicians.map(async (tech) => {
+        try {
+          const response = await fetch(
+            `http://localhost:5000/api/bookings/${tech._id}/reviews`,
+            {
+              method: 'GET',
+              credentials: 'include',
+            }
+          )
+          
+          if (response.ok) {
+            const data = await response.json()
+            if (data.success) {
+              // Get rating for current service
+              const serviceRating = data.data.reviews.byService[selectedService] || 
+                                 Object.entries(data.data.reviews.byService).find(([key]) => 
+                                   key.toLowerCase() === selectedService.toLowerCase() ||
+                                   selectedService.toLowerCase().includes(key.toLowerCase()) ||
+                                   key.toLowerCase().includes(selectedService.toLowerCase())
+                                 )?.[1] || { average: 0, totalRatings: 0 }
+              
+              ratingsData[tech._id] = serviceRating
+            }
+          }
+        } catch (error) {
+          console.error(`Error fetching ratings for ${tech.name}:`, error)
+          ratingsData[tech._id] = { average: 0, totalRatings: 0 }
+        }
+      })
+    )
+    
+    setTechnicianRatings(ratingsData)
+  }
 
   useEffect(() => {
     setInitialLoad(false)
@@ -125,12 +168,15 @@ const TechnicianDisplayPage = () => {
     return firstRate || 0
   }
 
-  // Fetch real reviews from API
+  // Fixed fetchReviews function to use the correct API endpoint
   const fetchReviews = async (technicianId, profession) => {
     try {
       setLoadingReviews(true)
+      console.log('Fetching reviews for technician:', technicianId, 'profession:', profession)
+      
+      // Use the same API endpoint we created for the reviews page
       const response = await fetch(
-        `http://localhost:5000/api/technicians/reviews/${technicianId}/${profession}`,
+        `http://localhost:5000/api/bookings/${technicianId}/reviews`,
         {
           method: 'GET',
           credentials: 'include',
@@ -142,19 +188,56 @@ const TechnicianDisplayPage = () => {
       }
 
       const data = await response.json()
-      return data.reviews || []
+      console.log('Reviews API response:', data)
+      
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to fetch reviews')
+      }
+
+      // Filter reviews for the specific service/profession
+      const allReviews = data.data.reviews.allReviews || []
+      const serviceReviews = allReviews.filter(review => 
+        review.service.toLowerCase() === profession.toLowerCase() ||
+        profession.toLowerCase().includes(review.service.toLowerCase()) ||
+        review.service.toLowerCase().includes(profession.toLowerCase())
+      )
+
+      console.log('Filtered reviews for service:', serviceReviews)
+      
+      // Get rating for this specific service
+      const serviceRating = data.data.reviews.byService[profession] || 
+                           Object.entries(data.data.reviews.byService).find(([key]) => 
+                             key.toLowerCase() === profession.toLowerCase() ||
+                             profession.toLowerCase().includes(key.toLowerCase()) ||
+                             key.toLowerCase().includes(profession.toLowerCase())
+                           )?.[1] || { average: 0, totalRatings: 0 }
+
+      return {
+        reviews: serviceReviews,
+        rating: serviceRating
+      }
     } catch (err) {
       console.error('Error fetching reviews:', err)
-      return []
+      return {
+        reviews: [],
+        rating: { average: 0, totalRatings: 0 }
+      }
     } finally {
       setLoadingReviews(false)
     }
   }
 
-  // Get rating for specific profession
-  const getRatingForProfession = (ratingObj, profession) => {
-    if (typeof ratingObj === 'object' && ratingObj !== null) {
-      const professionRating = ratingObj[profession]
+  // Get rating for specific profession - now uses fetched data
+  const getRatingForProfession = (technicianId, profession) => {
+    // First try to get from fetched ratings data
+    if (technicianRatings[technicianId]) {
+      return technicianRatings[technicianId]
+    }
+    
+    // Fallback to original method
+    const technician = allTechnicians.find(tech => tech._id === technicianId)
+    if (technician && typeof technician.rating === 'object' && technician.rating !== null) {
+      const professionRating = technician.rating[profession]
       if (professionRating && typeof professionRating.average === 'number') {
         return {
           average: professionRating.average,
@@ -166,13 +249,15 @@ const TechnicianDisplayPage = () => {
   }
 
   const handleShowReviews = async (technician) => {
-    const reviews = await fetchReviews(technician._id, selectedService)
-    const rating = getRatingForProfession(technician.rating, selectedService)
+    console.log('Showing reviews for technician:', technician.name, 'service:', selectedService)
+    
+    const reviewsData = await fetchReviews(technician._id, selectedService)
+    console.log('Reviews data received:', reviewsData)
 
     setSelectedTechnicianReviews({
       technician: technician,
-      reviews: reviews,
-      rating: rating
+      reviews: reviewsData.reviews,
+      rating: reviewsData.rating
     })
     setShowReviewsOverlay(true)
     document.body.style.overflow = 'hidden'
@@ -291,8 +376,8 @@ const TechnicianDisplayPage = () => {
           const rateA = getHourlyRateForService(a.hourlyRate, selectedService)
           const rateB = getHourlyRateForService(b.hourlyRate, selectedService)
           return rateA - rateB
-        case 'availability':
-          // Sort by tasks completed as a proxy for availability/popularity
+        case 'experience':
+          // Sort by tasks completed as a proxy for experience/popularity
           return (b.tasksCompleted || 0) - (a.tasksCompleted || 0)
         default:
           return 0
@@ -355,13 +440,8 @@ const TechnicianDisplayPage = () => {
             >
               <option value="rating">Sort by Rating</option>
               <option value="price">Sort by Price</option>
-              <option value="availability">Sort by Experience</option>
+              <option value="experience">Sort by Experience</option>
             </select>
-
-            <button className="px-4 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center gap-2">
-              <Filter className="w-4 h-4" />
-              Filters
-            </button>
           </div>
         </div>
 
@@ -370,9 +450,10 @@ const TechnicianDisplayPage = () => {
           {filteredAndSortedTechnicians.map(technician => {
             const availability = getNextAvailability(technician.availability)
             const currentHourlyRate = getHourlyRateForService(technician.hourlyRate, selectedService)
-            const professionRating = getRatingForProfession(technician.rating, selectedService)
+            const professionRating = getRatingForProfession(technician._id, selectedService)
 
             console.log(`Technician ${technician.name} - Rate for ${selectedService}:`, currentHourlyRate)
+            console.log(`Technician ${technician.name} - Rating for ${selectedService}:`, professionRating)
 
             return (
               <div key={technician._id} className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
@@ -416,7 +497,7 @@ const TechnicianDisplayPage = () => {
                             onClick={() => handleShowReviews(technician)}
                             className="text-gray-500 hover:text-blue-600 transition-colors cursor-pointer"
                           >
-                            ({professionRating.totalRatings > 0 ? professionRating.totalRatings : 0} reviews)
+                            ({professionRating.totalRatings > 0 ? professionRating.totalRatings : 'No'} reviews)
                           </button>
                         </div>
 
@@ -469,7 +550,6 @@ const TechnicianDisplayPage = () => {
                       <Clock className="w-4 h-4 text-gray-400" />
                       <div>
                         <div className="text-gray-600">Responds in {technician.responseTime}</div>
-                        <div className="text-gray-500 text-xs">{technician.tasksCompleted || 0} tasks completed</div>
                       </div>
                     </div>
                   </div>
@@ -559,8 +639,12 @@ const TechnicianDisplayPage = () => {
                   <div className="flex items-center gap-2 mt-1">
                     <div className="flex items-center gap-1">
                       <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-medium">{selectedTechnicianReviews.rating.average.toFixed(1)}</span>
-                      <span className="text-gray-500">({selectedTechnicianReviews.rating.totalRatings} reviews)</span>
+                      <span className="font-medium">
+                        {selectedTechnicianReviews.rating.average ? selectedTechnicianReviews.rating.average.toFixed(1) : '0.0'}
+                      </span>
+                      <span className="text-gray-500">
+                        ({selectedTechnicianReviews.rating.totalRatings} reviews for {selectedService})
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -583,28 +667,43 @@ const TechnicianDisplayPage = () => {
               ) : selectedTechnicianReviews.reviews.length > 0 ? (
                 <div className="space-y-6">
                   {selectedTechnicianReviews.reviews.map((review, index) => (
-                    <div key={review.userId || index} className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0">
+                    <div key={review._id || index} className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0">
                       <div className="flex items-start gap-4">
-                        <img
-                          src={review.user?.profilePic || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"}
-                          alt={`${review.user?.fname} ${review.user?.lname}`}
-                          className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-                        />
+                        {review.client?.profilePic ? (
+                          <img
+                            src={review.client.profilePic}
+                            alt={`${review.client.fname} ${review.client.lname}`}
+                            className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-gray-200"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                            {review.client?.initials || 'AN'}
+                          </div>
+                        )}
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="font-medium text-gray-900">
-                              {review.user?.fname} {review.user?.lname}
+                              {review.client ? `${review.client.fname} ${review.client.lname}` : 'Anonymous Customer'}
                             </h4>
                             <span className="text-sm text-gray-500">
-                              {new Date(review.createdAt).toLocaleDateString()}
+                              {new Date(review.reviewDate).toLocaleDateString()}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 mb-3">
+                            <div className="flex items-center gap-1">
+                              {[...Array(5)].map((_, i) => (
+                                <Star 
+                                  key={i} 
+                                  className={`w-4 h-4 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
+                                />
+                              ))}
+                              <span className="ml-1 text-sm text-gray-600">({review.rating}/5)</span>
+                            </div>
                             <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                              {review.profession}
+                              {review.service}
                             </span>
                           </div>
-                          <p className="text-gray-700 leading-relaxed">{review.reviewText}</p>
+                          <p className="text-gray-700 leading-relaxed">{review.feedback}</p>
                         </div>
                       </div>
                     </div>
