@@ -89,17 +89,6 @@ const BookingDashboard = () => {
           errors.cancellation_reason = 'Cancellation reason is required'
         }
         break
-      case 'reschedule':
-        if (!data.new_date) {
-          errors.new_date = 'New date is required'
-        }
-        if (!data.new_time) {
-          errors.new_time = 'New time is required'
-        }
-        if (!data.reschedule_reason || data.reschedule_reason.trim() === '') {
-          errors.reschedule_reason = 'Reschedule reason is required'
-        }
-        break
     }
     
     return errors
@@ -107,7 +96,7 @@ const BookingDashboard = () => {
 
   const handleBookingAction = async (bookingId, action, data = {}) => {
     // Validate form for actions that require mandatory fields
-    if (['reject', 'cancel', 'reschedule'].includes(action)) {
+    if (['reject', 'cancel'].includes(action)) {
       const errors = validateForm(action, data)
       if (Object.keys(errors).length > 0) {
         setFormErrors(errors)
@@ -156,7 +145,6 @@ const BookingDashboard = () => {
       in_progress: 'bg-purple-100 text-purple-800',
       completed: 'bg-green-100 text-green-800',
       cancelled: 'bg-red-100 text-red-800',
-      rescheduled: 'bg-orange-100 text-orange-800'
     }
     return colors[status] || 'bg-gray-100 text-gray-800'
   }
@@ -227,7 +215,6 @@ const BookingDashboard = () => {
                     <option value="in_progress">In Progress</option>
                     <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
-                    <option value="rescheduled">Rescheduled</option>
                   </select>
                 </div>
                 <div>
@@ -334,7 +321,7 @@ const BookingDashboard = () => {
                             </div>
                             <div className="flex items-center text-sm text-gray-500">
                               <Clock className="h-4 w-4 mr-1" />
-                              {booking.scheduled_time}
+                              {booking.scheduled_StartTime}-{booking.scheduled_EndTime}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -523,7 +510,6 @@ const BookingDashboard = () => {
                   {modalType === 'start' && 'Start Service'}
                   {modalType === 'complete' && 'Complete Service'}
                   {modalType === 'cancel' && 'Cancel Booking'}
-                  {modalType === 'reschedule' && 'Reschedule Booking'}
                 </h3>
                 <button
                   onClick={() => setShowModal(false)}
@@ -552,7 +538,7 @@ const BookingDashboard = () => {
                       <div className="space-y-2 text-sm">
                         <p><span className="font-medium">Service:</span> {selectedBooking.service}</p>
                         <p><span className="font-medium">Date:</span> {new Date(selectedBooking.scheduled_date).toLocaleDateString()}</p>
-                        <p><span className="font-medium">Time:</span> {selectedBooking.scheduled_time}</p>
+                        <p><span className="font-medium">Time:</span> {selectedBooking.scheduled_StartTime}-{selectedBooking.scheduled_EndTime}</p>
                         <p><span className="font-medium">Price:</span> Rs.{selectedBooking.final_price}</p>
                         <p><span className="font-medium">Status:</span>
                           <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedBooking.booking_status)}`}>
@@ -646,16 +632,6 @@ const BookingDashboard = () => {
                             <XCircle className="h-4 w-4 mr-2" />
                             Reject Booking
                           </button>
-                          <button
-                            onClick={() => {
-                              setShowModal(false)
-                              setTimeout(() => openModal('reschedule', selectedBooking), 100)
-                            }}
-                            className="inline-flex items-center px-4 py-2 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition-colors"
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Reschedule
-                          </button>
                         </>
                       )}
 
@@ -670,16 +646,6 @@ const BookingDashboard = () => {
                           >
                             <Play className="h-4 w-4 mr-2" />
                             Start Service
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowModal(false)
-                              setTimeout(() => openModal('reschedule', selectedBooking), 100)
-                            }}
-                            className="inline-flex items-center px-4 py-2 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition-colors"
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Reschedule
                           </button>
                           <button
                             onClick={() => {
@@ -705,41 +671,6 @@ const BookingDashboard = () => {
                           <Square className="h-4 w-4 mr-2" />
                           Complete Service
                         </button>
-                      )}
-
-                      {selectedBooking.booking_status === 'rescheduled' && (
-                        <>
-                          <button
-                            onClick={() => {
-                              setShowModal(false)
-                              setTimeout(() => openModal('start', selectedBooking), 100)
-                            }}
-                            className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors"
-                          >
-                            <Play className="h-4 w-4 mr-2" />
-                            Start Service
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowModal(false)
-                              setTimeout(() => openModal('reschedule', selectedBooking), 100)
-                            }}
-                            className="inline-flex items-center px-4 py-2 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700 transition-colors"
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Reschedule Again
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowModal(false)
-                              setTimeout(() => openModal('cancel', selectedBooking), 100)
-                            }}
-                            className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
-                          >
-                            <XCircle className="h-4 w-4 mr-2" />
-                            Cancel Booking
-                          </button>
-                        </>
                       )}
 
                       {['completed', 'cancelled'].includes(selectedBooking.booking_status) && (
@@ -923,97 +854,6 @@ const BookingDashboard = () => {
                       className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
                     >
                       Back
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {modalType === 'reschedule' && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        New Date <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="date"
-                        value={formData.new_date || ''}
-                        onChange={(e) => {
-                          setFormData({ ...formData, new_date: e.target.value })
-                          if (formErrors.new_date) {
-                            setFormErrors({ ...formErrors, new_date: '' })
-                          }
-                        }}
-                        className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          formErrors.new_date ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        min={new Date().toISOString().split('T')[0]}
-                      />
-                      {formErrors.new_date && (
-                        <p className="text-red-500 text-sm mt-1">{formErrors.new_date}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        New Time <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="time"
-                        value={formData.new_time || ''}
-                        onChange={(e) => {
-                          setFormData({ ...formData, new_time: e.target.value })
-                          if (formErrors.new_time) {
-                            setFormErrors({ ...formErrors, new_time: '' })
-                          }
-                        }}
-                        className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          formErrors.new_time ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                      />
-                      {formErrors.new_time && (
-                        <p className="text-red-500 text-sm mt-1">{formErrors.new_time}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Reschedule Reason <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      value={formData.reschedule_reason || ''}
-                      onChange={(e) => {
-                        setFormData({ ...formData, reschedule_reason: e.target.value })
-                        if (formErrors.reschedule_reason) {
-                          setFormErrors({ ...formErrors, reschedule_reason: '' })
-                        }
-                      }}
-                      className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        formErrors.reschedule_reason ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      rows="3"
-                      placeholder="Please provide a reason for rescheduling..."
-                    />
-                    {formErrors.reschedule_reason && (
-                      <p className="text-red-500 text-sm mt-1">{formErrors.reschedule_reason}</p>
-                    )}
-                  </div>
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={() => handleBookingAction(selectedBooking._id, 'reschedule', {
-                        new_date: formData.new_date,
-                        new_time: formData.new_time,
-                        rescheduled_by: getTechnicianId(selectedBooking),
-                        reschedule_reason: formData.reschedule_reason
-                      })}
-                      className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
-                    >
-                      Reschedule Booking
-                    </button>
-                    <button
-                      onClick={() => setShowModal(false)}
-                      className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
-                    >
-                      Cancel
                     </button>
                   </div>
                 </div>

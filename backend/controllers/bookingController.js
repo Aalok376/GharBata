@@ -23,7 +23,8 @@ router.post('/create', verifyToken, async (req, res) => {
       emergencyContactName,
       emergencyContactPhone,
       scheduled_date,
-      scheduled_time,
+      scheduled_StartTime,
+      scheduled_EndTime,
       specialInstructions,
       contactPreference,
       latitude,
@@ -47,7 +48,8 @@ router.post('/create', verifyToken, async (req, res) => {
     const existingBooking = await Booking.findOne({
       technician_id,
       scheduled_date: new Date(scheduled_date),
-      scheduled_time,
+      scheduled_StartTime,
+      scheduled_EndTime,
       booking_status: { $in: ['pending', 'confirmed', 'in_progress'] }
     })
 
@@ -69,7 +71,8 @@ router.post('/create', verifyToken, async (req, res) => {
       emergencyContactName,
       emergencyContactPhone,
       scheduled_date: new Date(scheduled_date),
-      scheduled_time,
+      scheduled_StartTime,
+      scheduled_EndTime,
       specialInstructions,
       contactPreference,
       latitude,
@@ -276,64 +279,6 @@ router.patch('/:id/complete', verifyToken, async (req, res) => {
   }
 })
 
-// RESCHEDULE BOOKING - FIXED status tracking
-router.patch('/:id/reschedule', verifyToken, async (req, res) => {
-  try {
-    const { id } = req.params
-    const { new_date, new_time, rescheduled_by, reschedule_reason } = req.body
-
-    const booking = await Booking.findById(id)
-    if (!booking) {
-      return res.status(404).json({ error: 'Booking not found' })
-    }
-
-    if (['completed', 'cancelled', 'in_progress'].includes(booking.booking_status)) {
-      return res.status(400).json({ error: 'Booking cannot be rescheduled in current status' })
-    }
-
-    // Check technician availability for new time
-    const conflictBooking = await Booking.findOne({
-      technician_id: booking.technician_id,
-      scheduled_date: new Date(new_date),
-      scheduled_time: new_time,
-      booking_status: { $in: ['pending', 'confirmed', 'in_progress', 'rescheduled'] },
-      _id: { $ne: id }
-    })
-
-    if (conflictBooking) {
-      return res.status(409).json({ error: 'Technician is not available at the new time' })
-    }
-
-    // Store old schedule in history
-    booking.schedule_history = booking.schedule_history || []
-    booking.schedule_history.push({
-      old_date: booking.scheduled_date,
-      old_time: booking.scheduled_time,
-      new_date: new Date(new_date),
-      new_time: new_time,
-      rescheduled_by,
-      rescheduled_at: new Date(),
-      reason: reschedule_reason
-    })
-
-    booking.scheduled_date = new Date(new_date)
-    booking.scheduled_time = new_time
-    
-    // Update status with proper tracking
-    await booking.updateStatus('confirmed', rescheduled_by, `Booking rescheduled: ${reschedule_reason || 'No reason provided'}`)
-
-    await booking.save()
-    await booking.populate(['client_id', 'technician_id'])
-
-    res.json({
-      message: 'Booking rescheduled successfully',
-      booking
-    })
-  } catch (error) {
-    res.status(400).json({ error: error.message })
-  }
-})
-
 // RAISE ISSUE (Client reports issue with cancelled booking) - FIXED validation
 router.post('/:id/raise-issue', verifyToken, async (req, res) => {
   try {
@@ -442,7 +387,8 @@ router.get('/issues/all', verifyToken, async (req, res) => {
                 _id: booking._id,
                 service: booking.service,
                 scheduled_date: booking.scheduled_date,
-                scheduled_time: booking.scheduled_time,
+                scheduled_StartTime: booking.scheduled_StartTime,
+                scheduled_EndTime: booking.scheduled_EndTime,
                 booking_status: booking.booking_status,
                 client_id: booking.client_id,
                 technician_id: booking.technician_id,
@@ -665,7 +611,7 @@ router.get('/technician/:technician_id/schedule', verifyToken, async (req, res) 
 
     const bookings = await Booking.find(filter)
       .populate('client_id')
-      .sort({ scheduled_date: 1, scheduled_time: 1 })
+      .sort({ scheduled_date: 1, scheduled_StartTime: 1,scheduled_EndTime:1 })
 
     res.json({ schedule: bookings })
   } catch (error) {

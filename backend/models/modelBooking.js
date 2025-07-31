@@ -62,7 +62,11 @@ const bookingSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
-  scheduled_time: {
+  scheduled_StartTime: {
+    type: String,
+    required: true,
+  },
+  scheduled_EndTime: {
     type: String,
     required: true,
   },
@@ -94,7 +98,7 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: {
-      values: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'rescheduled'],
+      values: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled'],
       message: 'Invalid booking status'
     },
     default: 'pending'
@@ -116,7 +120,7 @@ const bookingSchema = new mongoose.Schema({
   // Track previous status before cancellation
   previous_status: {
     type: String,
-    enum: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'rescheduled']
+    enum: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled']
   },
   
   // Complete status history tracking
@@ -124,7 +128,7 @@ const bookingSchema = new mongoose.Schema({
     status: {
       type: String,
       required: true,
-      enum: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'rescheduled']
+      enum: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled']
     },
     changed_by: {
       type: mongoose.Schema.Types.ObjectId,
@@ -218,23 +222,6 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  
-  // Reschedule history tracking
-  schedule_history: [{
-    old_date: Date,
-    old_time: String,
-    new_date: Date,
-    new_time: String,
-    rescheduled_by: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    rescheduled_at: {
-      type: Date,
-      default: Date.now
-    },
-    reason: String
-  }],
 
   // Service rating and feedback
   rating: {
@@ -314,11 +301,6 @@ bookingSchema.virtual('hasPendingIssues').get(function() {
 // Method to check if booking can be cancelled
 bookingSchema.methods.canBeCancelled = function() {
   return !['completed', 'cancelled'].includes(this.booking_status)
-}
-
-// Method to check if booking can be rescheduled
-bookingSchema.methods.canBeRescheduled = function() {
-  return !['completed', 'cancelled', 'in_progress'].includes(this.booking_status)
 }
 
 // FIXED: Method to check if client can raise an issue

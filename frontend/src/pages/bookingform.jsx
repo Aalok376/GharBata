@@ -16,7 +16,6 @@ export default function BookingForm() {
         apartment: '',
         city: '',
         date: '',
-        timeSlot: '',
         specialInstructions: '',
         contactPreference: 'phone',
         emergencyContact: '',
@@ -35,16 +34,6 @@ export default function BookingForm() {
     const [agreed, setAgreed] = useState(false)
     const [errors, setErrors] = useState({})
     const totalSteps = 4
-
-
-    useEffect(() => {
-        if (startTime && endTime) {
-            setFormData((prev) => ({
-                ...prev,
-                timeSlot: `${startTime} - ${endTime}`
-            }));
-        }
-    }, [startTime, endTime])
 
     const handleInputChange = (e) => {
         const { name, value } = e.target
@@ -166,7 +155,8 @@ export default function BookingForm() {
                         emergencyContactName: formData.emergencyContact,
                         emergencyContactPhone: formData.emergencyPhone,
                         scheduled_date: formData.date,
-                        scheduled_time: startTime,
+                        scheduled_StartTime: startTime,
+                        scheduled_EndTime: endTime,
                         specialInstructions: formData.specialInstructions,
                         contactPreference: formData.contactPreference,
                         latitude: formData.latitude || '0',
@@ -569,7 +559,7 @@ export default function BookingForm() {
                     <h3 className="font-semibold text-gray-800 mb-3">Service Schedule</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <p><span className="font-medium">Date:</span> {formData.date}</p>
-                        <p><span className="font-medium">Time:</span> {formData.timeSlot}</p>
+                        <p><span className="font-medium">Time:</span> {startTime}-{endTime}</p>
                     </div>
                     {formData.specialInstructions && (
                         <div className="mt-3">

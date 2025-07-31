@@ -458,7 +458,7 @@ const ClientBookingDashboard = () => {
                           </div>
                           <div className="flex items-center text-sm text-gray-500">
                             <Clock className="h-4 w-4 mr-1" />
-                            {booking.scheduled_time}
+                            {booking.scheduled_StartTime}-{booking.scheduled_EndTime}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -607,7 +607,7 @@ const ClientBookingDashboard = () => {
                       <div className="space-y-2 text-sm">
                         <p><span className="font-medium">Service:</span> {selectedBooking.service}</p>
                         <p><span className="font-medium">Date:</span> {new Date(selectedBooking.scheduled_date).toLocaleDateString()}</p>
-                        <p><span className="font-medium">Time:</span> {selectedBooking.scheduled_time}</p>
+                        <p><span className="font-medium">Time:</span> {selectedBooking.scheduled_StartTime}-{selectedBooking.scheduled_EndTime}</p>
                         <p><span className="font-medium">Price:</span> Rs.{selectedBooking.final_price}</p>
                         <p><span className="font-medium">Status:</span>
                           <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedBooking.booking_status)}`}>
