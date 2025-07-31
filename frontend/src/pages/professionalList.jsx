@@ -25,10 +25,10 @@ const TechnicianDisplayPage = () => {
     const getTechnicians = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5000/api/technicians/filteredTechnicians?category=${encodeURIComponent(selectedService)}`,{
-            method:'GET',
-            credentials: 'include',
-          }
+          `http://localhost:5000/api/technicians/filteredTechnicians?category=${encodeURIComponent(selectedService)}`, {
+          method: 'GET',
+          credentials: 'include',
+        }
         );
 
         if (!response.ok) {
@@ -38,7 +38,7 @@ const TechnicianDisplayPage = () => {
         const data = await response.json()
 
         const formatted = data.map((tech) => ({
-          _id: tech._id,
+          _id: tech._id || '',
           userId: tech.user._id,
           name: `${tech.user.fname} ${tech.user.lname}`,
           username: tech.user.username,
@@ -58,7 +58,7 @@ const TechnicianDisplayPage = () => {
         }))
 
         setTechnicians(formatted)
-        
+
         // Fetch ratings for each technician for the selected service
         fetchTechniciansRatings(formatted)
       } catch (err) {
@@ -71,42 +71,90 @@ const TechnicianDisplayPage = () => {
     }
   }, [selectedService])
 
-  // Function to fetch ratings for all technicians
+  // Updated function to fetch both ratings and reviews data
   const fetchTechniciansRatings = async (technicians) => {
     const ratingsData = {}
-    
+
     await Promise.all(
       technicians.map(async (tech) => {
         try {
-          const response = await fetch(
+          // Try to fetch ratings from reviews endpoint first
+          const reviewsResponse = await fetch(
             `http://localhost:5000/api/bookings/${tech._id}/reviews`,
             {
               method: 'GET',
               credentials: 'include',
             }
           )
-          
-          if (response.ok) {
-            const data = await response.json()
-            if (data.success) {
+
+          if (reviewsResponse.ok) {
+            const reviewsData = await reviewsResponse.json()
+            if (reviewsData.success) {
               // Get rating for current service
-              const serviceRating = data.data.reviews.byService[selectedService] || 
-                                 Object.entries(data.data.reviews.byService).find(([key]) => 
-                                   key.toLowerCase() === selectedService.toLowerCase() ||
-                                   selectedService.toLowerCase().includes(key.toLowerCase()) ||
-                                   key.toLowerCase().includes(selectedService.toLowerCase())
-                                 )?.[1] || { average: 0, totalRatings: 0 }
-              
+              const serviceRating = reviewsData.data.reviews.byService[selectedService] ||
+                Object.entries(reviewsData.data.reviews.byService).find(([key]) =>
+                  key.toLowerCase() === selectedService.toLowerCase() ||
+                  selectedService.toLowerCase().includes(key.toLowerCase()) ||
+                  key.toLowerCase().includes(selectedService.toLowerCase())
+                )?.[1] || { average: 0, totalRatings: 0 }
+
               ratingsData[tech._id] = serviceRating
+              return
             }
           }
+
+          // If reviews endpoint fails, try to fetch from ratings endpoint (if exists)
+          try {
+            const ratingsResponse = await fetch(
+              `http://localhost:5000/api/technicians/${tech._id}/ratings?service=${encodeURIComponent(selectedService)}`,
+              {
+                method: 'GET',
+                credentials: 'include',
+              }
+            )
+
+            if (ratingsResponse.ok) {
+              const ratingsData_alt = await ratingsResponse.json()
+              if (ratingsData_alt.success) {
+                ratingsData[tech._id] = {
+                  average: ratingsData_alt.data.average || 0,
+                  totalRatings: ratingsData_alt.data.totalRatings || 0
+                }
+                return
+              }
+            }
+          } catch (ratingsError) {
+            console.log('Ratings endpoint not available, using fallback')
+          }
+
+          // Fallback to technician's built-in rating data
+          if (tech.rating && typeof tech.rating === 'object') {
+            const professionRating = tech.rating[selectedService] ||
+              Object.entries(tech.rating).find(([key]) =>
+                key.toLowerCase() === selectedService.toLowerCase() ||
+                selectedService.toLowerCase().includes(key.toLowerCase()) ||
+                key.toLowerCase().includes(selectedService.toLowerCase())
+              )?.[1]
+
+            if (professionRating && typeof professionRating.average === 'number') {
+              ratingsData[tech._id] = {
+                average: professionRating.average,
+                totalRatings: professionRating.totalRatings || 0
+              }
+              return
+            }
+          }
+
+          // Final fallback
+          ratingsData[tech._id] = { average: tech.overallRating || 0, totalRatings: 0 }
+
         } catch (error) {
           console.error(`Error fetching ratings for ${tech.name}:`, error)
-          ratingsData[tech._id] = { average: 0, totalRatings: 0 }
+          ratingsData[tech._id] = { average: tech.overallRating || 0, totalRatings: 0 }
         }
       })
     )
-    
+
     setTechnicianRatings(ratingsData)
   }
 
@@ -114,10 +162,41 @@ const TechnicianDisplayPage = () => {
     setInitialLoad(false)
   }, [])
 
+  // Helper function to parse experience string into numerical value for sorting
+  const parseExperience = (experienceString) => {
+    if (!experienceString || typeof experienceString !== 'string') return 0
+
+    const exp = experienceString.toLowerCase().trim()
+
+    // Handle special cases
+    if (exp.includes('less than')) return 0.5 // Less than 1 year
+    if (exp.includes('more than')) {
+      const match = exp.match(/more than (\d+)/)
+      return match ? parseFloat(match[1]) + 0.5 : 0
+    }
+    if (exp.includes('-')) {
+      const match = exp.match(/(\d+\.?\d*)\s*-\s*(\d+\.?\d*)/)
+      if (match) {
+        const low = parseFloat(match[1])
+        const high = parseFloat(match[2])
+        return (low + high) / 2 // Average the range
+      }
+    }
+
+    // Default number extraction
+    const numberMatch = exp.match(/(\d+(\.\d+)?)/)
+    const number = numberMatch ? parseFloat(numberMatch[1]) : 0
+
+    // Convert months to years if needed
+    if (exp.includes('month')) return number / 12
+
+    return number // Years
+  }
+
   // Updated function to get hourly rate for a specific service/profession
   const getHourlyRateForService = (hourlyRateObj, service) => {
     console.log('Getting hourly rate for:', { hourlyRateObj, service })
-    
+
     if (!hourlyRateObj || typeof hourlyRateObj !== 'object') {
       console.log('Invalid hourlyRateObj:', hourlyRateObj)
       return 0
@@ -131,10 +210,10 @@ const TechnicianDisplayPage = () => {
 
     // Try case-insensitive match
     const serviceKeys = Object.keys(hourlyRateObj)
-    const matchingKey = serviceKeys.find(key => 
+    const matchingKey = serviceKeys.find(key =>
       key.toLowerCase() === service.toLowerCase()
     )
-    
+
     if (matchingKey) {
       console.log('Found case-insensitive match:', hourlyRateObj[matchingKey])
       return hourlyRateObj[matchingKey]
@@ -144,7 +223,7 @@ const TechnicianDisplayPage = () => {
     const partialMatch = serviceKeys.find(key => {
       const keyLower = key.toLowerCase()
       const serviceLower = service.toLowerCase()
-      
+
       // Handle special cases
       if (serviceLower.includes('hvac') && keyLower.includes('hvac')) return true
       if (serviceLower.includes('appliance') && keyLower.includes('appliance')) return true
@@ -152,7 +231,7 @@ const TechnicianDisplayPage = () => {
       if (serviceLower.includes('roofing') && keyLower.includes('roof')) return true
       if (serviceLower.includes('flooring') && keyLower.includes('floor')) return true
       if (serviceLower.includes('door') && keyLower.includes('door')) return true
-      
+
       // General substring matching
       return keyLower.includes(serviceLower) || serviceLower.includes(keyLower)
     })
@@ -173,7 +252,7 @@ const TechnicianDisplayPage = () => {
     try {
       setLoadingReviews(true)
       console.log('Fetching reviews for technician:', technicianId, 'profession:', profession)
-      
+
       // Use the same API endpoint we created for the reviews page
       const response = await fetch(
         `http://localhost:5000/api/bookings/${technicianId}/reviews`,
@@ -189,28 +268,28 @@ const TechnicianDisplayPage = () => {
 
       const data = await response.json()
       console.log('Reviews API response:', data)
-      
+
       if (!data.success) {
         throw new Error(data.message || 'Failed to fetch reviews')
       }
 
       // Filter reviews for the specific service/profession
       const allReviews = data.data.reviews.allReviews || []
-      const serviceReviews = allReviews.filter(review => 
+      const serviceReviews = allReviews.filter(review =>
         review.service.toLowerCase() === profession.toLowerCase() ||
         profession.toLowerCase().includes(review.service.toLowerCase()) ||
         review.service.toLowerCase().includes(profession.toLowerCase())
       )
 
       console.log('Filtered reviews for service:', serviceReviews)
-      
+
       // Get rating for this specific service
-      const serviceRating = data.data.reviews.byService[profession] || 
-                           Object.entries(data.data.reviews.byService).find(([key]) => 
-                             key.toLowerCase() === profession.toLowerCase() ||
-                             profession.toLowerCase().includes(key.toLowerCase()) ||
-                             key.toLowerCase().includes(profession.toLowerCase())
-                           )?.[1] || { average: 0, totalRatings: 0 }
+      const serviceRating = data.data.reviews.byService[profession] ||
+        Object.entries(data.data.reviews.byService).find(([key]) =>
+          key.toLowerCase() === profession.toLowerCase() ||
+          profession.toLowerCase().includes(key.toLowerCase()) ||
+          key.toLowerCase().includes(profession.toLowerCase())
+        )?.[1] || { average: 0, totalRatings: 0 }
 
       return {
         reviews: serviceReviews,
@@ -233,7 +312,7 @@ const TechnicianDisplayPage = () => {
     if (technicianRatings[technicianId]) {
       return technicianRatings[technicianId]
     }
-    
+
     // Fallback to original method
     const technician = allTechnicians.find(tech => tech._id === technicianId)
     if (technician && typeof technician.rating === 'object' && technician.rating !== null) {
@@ -245,12 +324,12 @@ const TechnicianDisplayPage = () => {
         }
       }
     }
-    return { average: 0, totalRatings: 0 }
+    return { average: technician?.overallRating || 0, totalRatings: 0 }
   }
 
   const handleShowReviews = async (technician) => {
     console.log('Showing reviews for technician:', technician.name, 'service:', selectedService)
-    
+
     const reviewsData = await fetchReviews(technician._id, selectedService)
     console.log('Reviews data received:', reviewsData)
 
@@ -272,7 +351,7 @@ const TechnicianDisplayPage = () => {
   const handleBookNow = (technician) => {
     const currentHourlyRate = getHourlyRateForService(technician.hourlyRate, selectedService)
     console.log('Booking with rate:', currentHourlyRate)
-    
+
     navigate(`/client/dashboard/booking/${selectedService}/${technician._id}/${currentHourlyRate}`, {
       state: {
         service: selectedService,
@@ -313,7 +392,7 @@ const TechnicianDisplayPage = () => {
 
   const getNextAvailability = (availability) => {
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
-    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    const days = ['monday', 'tuesday', 'Wednesday', 'thursday', 'friday', 'saturday', 'sunday']
     const todayIndex = days.indexOf(today)
 
     if (availability[today] && availability[today].available) {
@@ -371,14 +450,20 @@ const TechnicianDisplayPage = () => {
     .sort((a, b) => {
       switch (sortBy) {
         case 'rating':
-          return (b.overallRating || 0) - (a.overallRating || 0)
+          // Fixed: Use service-specific ratings for sorting
+          const ratingA = getRatingForProfession(a._id, selectedService)
+          const ratingB = getRatingForProfession(b._id, selectedService)
+          return (ratingB.average || 0) - (ratingA.average || 0)
         case 'price':
           const rateA = getHourlyRateForService(a.hourlyRate, selectedService)
           const rateB = getHourlyRateForService(b.hourlyRate, selectedService)
           return rateA - rateB
         case 'experience':
-          // Sort by tasks completed as a proxy for experience/popularity
-          return (b.tasksCompleted || 0) - (a.tasksCompleted || 0)
+          // Fixed: Sort by actual experience years, not tasks completed
+          const experienceA = parseExperience(a.experience)
+          const experienceB = parseExperience(b.experience)
+          console.log(`Sorting: ${a.name} (${a.experience} = ${experienceA}) vs ${b.name} (${b.experience} = ${experienceB})`)
+          return experienceB - experienceA // Higher experience first
         default:
           return 0
       }
@@ -692,9 +777,9 @@ const TechnicianDisplayPage = () => {
                           <div className="flex items-center gap-2 mb-3">
                             <div className="flex items-center gap-1">
                               {[...Array(5)].map((_, i) => (
-                                <Star 
-                                  key={i} 
-                                  className={`w-4 h-4 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} 
+                                <Star
+                                  key={i}
+                                  className={`w-4 h-4 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
                                 />
                               ))}
                               <span className="ml-1 text-sm text-gray-600">({review.rating}/5)</span>
