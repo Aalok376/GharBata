@@ -29,31 +29,6 @@ const technicianSchema = new mongoose.Schema({
   },
   responseTime: String,
   profilePic: { type: String, default: null },
-  rating: {
-    type: Map,
-    of: new mongoose.Schema({
-      average: { type: Number, default: 0 },
-      totalRatings: { type: Number, default: 0 },
-      sumRatings: { type: Number, default: 0 }
-    }, { _id: false }),
-    default: {}
-  },
-  tasksCompleted: { type: Number, default: 0 },
-  reviews: {
-  type: Map,
-  of: [
-    new mongoose.Schema({
-      userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-      profession: String,
-      reviewText: String,
-      createdAt: {
-        type: Date,
-        default: Date.now
-      }
-    }, { _id: false })
-  ],
-  default: {}
-}
 })
 
 export default mongoose.model('Technician', technicianSchema)
