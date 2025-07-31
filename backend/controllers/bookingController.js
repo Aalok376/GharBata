@@ -310,8 +310,8 @@ router.post('/:id/raise-issue', verifyToken, async (req, res) => {
 
     // Check if client can raise an issue (using the improved method)
     if (!booking.canRaiseIssue(client._id)) {
-      return res.status(400).json({ 
-        error: 'Cannot raise issue for this booking. Issues can only be reported for bookings that were accepted and then cancelled by the technician.' 
+      return res.status(400).json({
+        error: 'Cannot raise issue for this booking. Issues can only be reported for bookings that were accepted and then cancelled by the technician.'
       })
     }
 
@@ -350,25 +350,25 @@ router.get('/issues/all', verifyToken, async (req, res) => {
       'issues.0': { $exists: true }, // Has at least one issue
       ...matchFilter
     })
-    .populate({
-      path: 'client_id',
-      populate: {
-        path: 'user',
-        select: '-password'
-      }
-    })
-    .populate({
-      path: 'technician_id',
-      populate: {
-        path: 'user',
-        select: '-password'
-      }
-    })
-    .populate('issues.reported_by', '-password')
-    .populate('issues.resolved_by', '-password')
-    .sort({ 'issues.reported_at': -1 })
-    .skip(skip)
-    .limit(parseInt(limit))
+      .populate({
+        path: 'client_id',
+        populate: {
+          path: 'user',
+          select: '-password'
+        }
+      })
+      .populate({
+        path: 'technician_id',
+        populate: {
+          path: 'user',
+          select: '-password'
+        }
+      })
+      .populate('issues.reported_by', '-password')
+      .populate('issues.resolved_by', '-password')
+      .sort({ 'issues.reported_at': -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
 
     const total = await Booking.countDocuments({
       'issues.0': { $exists: true },
@@ -611,7 +611,7 @@ router.get('/technician/:technician_id/schedule', verifyToken, async (req, res) 
 
     const bookings = await Booking.find(filter)
       .populate('client_id')
-      .sort({ scheduled_date: 1, scheduled_StartTime: 1,scheduled_EndTime:1 })
+      .sort({ scheduled_date: 1, scheduled_StartTime: 1, scheduled_EndTime: 1 })
 
     res.json({ schedule: bookings })
   } catch (error) {
@@ -708,6 +708,291 @@ router.get('/stats/overview', verifyToken, async (req, res) => {
     res.json({ stats: result })
   } catch (error) {
     res.status(400).json({ error: error.message })
+  }
+})
+
+router.get('/technician/:technicianId/today', verifyToken, async (req, res) => {
+  try {
+    const { technicianId } = req.params
+
+    // Validate technician ID
+    if (!mongoose.Types.ObjectId.isValid(technicianId)) {
+      return res.status(400).json({ message: 'Invalid technician ID' })
+    }
+
+    // Get today's date range
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+
+    console.log('Fetching bookings for technician:', technicianId)
+    console.log('Date range:', today, 'to', tomorrow)
+
+    const bookings = await Booking.find({
+      technician_id: new mongoose.Types.ObjectId(technicianId),
+      scheduled_date: {
+        $gte: today,
+        $lt: tomorrow
+      }
+    })
+      .populate('client_id', 'fname lname email phoneNumber')
+      .sort({ scheduled_StartTime: 1 })
+      .lean()
+
+    res.status(200).json(bookings)
+  } catch (error) {
+    console.error('Error fetching today\'s bookings:', error)
+    res.status(500).json({
+      message: 'Failed to fetch today\'s bookings',
+      error: error.message
+    })
+  }
+})
+
+router.get('/technician/:technicianId/earnings', verifyToken, async (req, res) => {
+  try {
+    const { technicianId } = req.params
+
+    // Validate technician ID
+    if (!mongoose.Types.ObjectId.isValid(technicianId)) {
+      return res.status(400).json({ message: 'Invalid technician ID' })
+    }
+
+    const now = new Date()
+
+    // Today's earnings
+    const todayStart = new Date(now)
+    todayStart.setHours(0, 0, 0, 0)
+    const todayEnd = new Date(now)
+    todayEnd.setHours(23, 59, 59, 999)
+
+    // This week's earnings (Monday to Sunday)
+    const startOfWeek = new Date(now)
+    const day = startOfWeek.getDay()
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1) // adjust when day is Sunday
+    startOfWeek.setDate(diff)
+    startOfWeek.setHours(0, 0, 0, 0)
+
+    // This month's earnings
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    startOfMonth.setHours(0, 0, 0, 0)
+
+    console.log('Calculating earnings for technician:', technicianId)
+    console.log('Today range:', todayStart, 'to', todayEnd)
+    console.log('Week start:', startOfWeek)
+    console.log('Month start:', startOfMonth)
+
+    // Today's earnings
+    const todaysEarningsResult = await Booking.aggregate([
+      {
+        $match: {
+          technician_id: new mongoose.Types.ObjectId(technicianId),
+          booking_status: 'completed',
+          completed_at: {
+            $gte: todayStart,
+            $lte: todayEnd
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$final_price' },
+          count: { $sum: 1 }
+        }
+      }
+    ])
+
+    // Weekly earnings
+    const weeklyEarningsResult = await Booking.aggregate([
+      {
+        $match: {
+          technician_id: new mongoose.Types.ObjectId(technicianId),
+          booking_status: 'completed',
+          completed_at: { $gte: startOfWeek }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$final_price' },
+          count: { $sum: 1 }
+        }
+      }
+    ])
+
+    // Monthly earnings
+    const monthlyEarningsResult = await Booking.aggregate([
+      {
+        $match: {
+          technician_id: new mongoose.Types.ObjectId(technicianId),
+          booking_status: 'completed',
+          completed_at: { $gte: startOfMonth }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$final_price' },
+          count: { $sum: 1 }
+        }
+      }
+    ])
+
+    // Total completed jobs count
+    const totalCompletedJobs = await Booking.countDocuments({
+      technician_id: new mongoose.Types.ObjectId(technicianId),
+      booking_status: 'completed'
+    })
+
+    const earningsData = {
+      todaysEarnings: todaysEarningsResult[0]?.total || 0,
+      todaysJobsCount: todaysEarningsResult[0]?.count || 0,
+      weeklyEarnings: weeklyEarningsResult[0]?.total || 0,
+      weeklyJobsCount: weeklyEarningsResult[0]?.count || 0,
+      monthlyEarnings: monthlyEarningsResult[0]?.total || 0,
+      monthlyJobsCount: monthlyEarningsResult[0]?.count || 0,
+      totalCompletedJobs: totalCompletedJobs
+    }
+
+    console.log('Earnings data:', earningsData)
+
+    res.status(200).json(earningsData)
+  } catch (error) {
+    console.error('Error fetching earnings data:', error)
+    res.status(500).json({
+      message: 'Failed to fetch earnings data',
+      error: error.message
+    })
+  }
+})
+
+
+router.get('/:technicianId/reviews', async (req, res) => {
+  try {
+    const { technicianId } = req.params
+
+    // First check if technician exists
+    const technician = await Technician.findById(technicianId)
+
+    if (!technician) {
+      return res.status(404).json({
+        success: false,
+        message: 'Technician not found'
+      })
+    }
+
+    const bookingsWithReviews = await Booking.find({
+      technician_id: technicianId,
+      booking_status: 'completed',
+      rating: { $exists: true, $ne: null },
+      feedback: { $exists: true, $ne: null, $ne: '' }
+    })
+      .populate({
+        path: 'client_id',
+        select: 'profilePic',
+        populate: {
+          path: 'client_id',
+          select: 'fname lname username'
+        }
+      }) // Populate client details for reviews
+      .select('service rating feedback feedback_date completed_at client_id')
+      .sort({ feedback_date: -1 })
+      .lean()
+
+    // Calculate overall stats
+    let totalRatings = 0
+    let sumRatings = 0
+    const serviceStats = {}
+
+    // Process each review
+    const reviews = bookingsWithReviews.map(booking => {
+      totalRatings++
+      sumRatings += booking.rating
+
+      // Group by service
+      if (!serviceStats[booking.service]) {
+        serviceStats[booking.service] = {
+          totalRatings: 0,
+          sumRatings: 0,
+          reviews: []
+        }
+      }
+
+      serviceStats[booking.service].totalRatings++
+      serviceStats[booking.service].sumRatings += booking.rating
+
+      const review = {
+        _id: booking._id,
+        rating: booking.rating,
+        feedback: booking.feedback,
+        service: booking.service,
+        reviewDate: booking.feedback_date || booking.completed_at,
+        client: {
+          _id: booking.client_id.client_id._id,
+          fname: booking.client_id.client_id.fname,
+          lname: booking.client_id.client_id.lname,
+          email: booking.client_id.client_id.username,
+          profilePic: booking.client_id.profilePic
+        }
+      }
+
+      serviceStats[booking.service].reviews.push(review)
+      return review
+    })
+
+    // Calculate averages for each service
+    const serviceRatings = {}
+    Object.keys(serviceStats).forEach(service => {
+      serviceRatings[service] = {
+        average: serviceStats[service].totalRatings > 0
+          ? (serviceStats[service].sumRatings / serviceStats[service].totalRatings)
+          : 0,
+        totalRatings: serviceStats[service].totalRatings,
+        reviews: serviceStats[service].reviews
+      }
+    })
+
+    // Calculate overall average
+    const overallAverage = totalRatings > 0 ? (sumRatings / totalRatings) : 0
+
+    // Get total completed jobs
+    const totalCompletedJobs = await Booking.countDocuments({
+      technician_id: technicianId,
+      booking_status: 'completed'
+    })
+
+    res.json({
+      success: true,
+      data: {
+        technician: {
+          _id: technician._id,
+          fname: technician.user?.fname || '',
+          lname: technician.user?.lname || '',
+          professions: technician.professions || [],
+          profilePic: technician.profilePic,
+          tasksCompleted: totalCompletedJobs
+        },
+        reviews: {
+          total: totalRatings,
+          overall: {
+            average: Math.round(overallAverage * 10) / 10, // Round to 1 decimal
+            totalRatings: totalRatings
+          },
+          byService: serviceRatings,
+          allReviews: reviews
+        }
+      }
+    })
+
+  } catch (error) {
+    console.error('Error fetching technician reviews:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch technician reviews',
+      error: error.message
+    })
   }
 })
 
