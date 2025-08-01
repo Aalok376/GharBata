@@ -1,4 +1,5 @@
 import User from '../models/user.js'
+import Technician from '../models/technician.js'
 import OtpStore from '../models/verificationOtp.js'
 import TokenStore from '../models/RefreshToken.js'
 import bcrypt from 'bcryptjs'
@@ -62,8 +63,31 @@ export const login = async (req, res) => {
       return res.status(401).json({ success: false, msg: 'Invalid credentials: Incorrect password.' })
     }
 
-     const userId = user._id.toString()
-     res.cookie('UserId', userId, { httpOnly: true,secure: false,sameSite: 'Lax' })
+    const technician = await Technician.findOne({ user: user._id });
+
+    if (technician) {
+      if (technician.is_banned) {
+        const now = new Date();
+        if (technician.ban_severity === 'temporary' && technician.ban_end_date && technician.ban_end_date <= now) {
+
+          technician.is_banned = false;
+          technician.unbanned_at = now;
+          technician.unban_reason = 'Temporary ban expired automatically on login';
+          technician.ban_end_date = null;
+          await technician.save();
+          console.log(`Technician ${user.username} unbanned automatically on login.`);
+        } else {
+          return res.status(403).json({
+            success: false,
+            msg: `Access denied. Technician is banned${technician.ban_severity === 'temporary' ? ' until ' + technician.ban_end_date.toISOString() : ' permanently'}.`
+          })
+        }
+      }
+    }
+
+    // Set cookies and tokens
+    const userId = user._id.toString()
+    res.cookie('UserId', userId, { httpOnly: true, secure: false, sameSite: 'Lax' })
 
     const AccessToken = jwt.sign({ id: user._id }, process.env.JWT_ACCESS_SECRET, { expiresIn: '45m' })
     res.cookie('accessToken', AccessToken, {

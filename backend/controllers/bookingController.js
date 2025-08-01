@@ -4,6 +4,7 @@ import Client from '../models/client.js'
 import Booking from '../models/modelBooking.js'
 import Technician from '../models/technician.js'
 import { verifyToken } from '../middlewares/auth.js'
+import { getIssuesStatistics } from '../utils/issueStats.js'
 
 const router = express.Router()
 
@@ -279,7 +280,7 @@ router.patch('/:id/complete', verifyToken, async (req, res) => {
   }
 })
 
-// RAISE ISSUE (Client reports issue with cancelled booking) - FIXED validation
+// RAISE ISSUE (Client reports issue with cancelled booking)
 router.post('/:id/raise-issue', verifyToken, async (req, res) => {
   try {
     const { id } = req.params
@@ -288,34 +289,77 @@ router.post('/:id/raise-issue', verifyToken, async (req, res) => {
 
     // Validate required fields
     if (!issue_type || !issue_description) {
-      return res.status(400).json({ error: 'Issue type and description are required' })
+      return res.status(400).json({
+        success: false,
+        error: 'Issue type and description are required'
+      })
+    }
+
+    // Validate issue type
+    const validIssueTypes = [
+      'technician_cancelled_after_acceptance',
+      'last_minute_cancellation',
+      'unprofessional_behavior',
+      'no_show',
+      'poor_communication',
+      'other'
+    ]
+    if (!validIssueTypes.includes(issue_type)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid issue type'
+      })
     }
 
     // Find the booking
     const booking = await Booking.findById(id)
     if (!booking) {
-      return res.status(404).json({ error: 'Booking not found' })
+      return res.status(404).json({
+        success: false,
+        error: 'Booking not found'
+      })
     }
 
     // Find the client
     const client = await Client.findOne({ client_id: userId })
     if (!client) {
-      return res.status(404).json({ error: 'Client not found' })
+      return res.status(404).json({
+        success: false,
+        error: 'Client not found'
+      })
     }
 
     // Verify the client is authorized to report issue for this booking
     if (booking.client_id.toString() !== client._id.toString()) {
-      return res.status(403).json({ error: 'Unauthorized to report issue for this booking' })
+      return res.status(403).json({
+        success: false,
+        error: 'Unauthorized to report issue for this booking'
+      })
     }
 
-    // Check if client can raise an issue (using the improved method)
+    // Check if client can raise an issue (using the method from booking schema)
     if (!booking.canRaiseIssue(client._id)) {
       return res.status(400).json({
+        success: false,
         error: 'Cannot raise issue for this booking. Issues can only be reported for bookings that were accepted and then cancelled by the technician.'
       })
     }
 
-    // Add the issue using the new method
+    // Check for duplicate issues
+    const existingIssue = booking.issues.find(issue =>
+      issue.reported_by.toString() === userId.toString() &&
+      issue.issue_type === issue_type &&
+      issue.status !== 'resolved'
+    )
+
+    if (existingIssue) {
+      return res.status(400).json({
+        success: false,
+        error: 'You have already reported a similar issue for this booking'
+      })
+    }
+
+    // Add the issue using the method from booking schema
     await booking.addIssue({
       reported_by: userId,
       issue_type,
@@ -326,25 +370,51 @@ router.post('/:id/raise-issue', verifyToken, async (req, res) => {
     await booking.populate(['client_id', 'technician_id'])
 
     res.status(201).json({
+      success: true,
       message: 'Issue reported successfully. Our team will review it shortly.',
-      booking
+      booking,
+      issue_id: booking.issues[booking.issues.length - 1]._id
     })
   } catch (error) {
-    res.status(400).json({ error: error.message })
+    console.error('Error raising issue:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    })
   }
 })
 
-// GET BOOKING ISSUES (Admin endpoint to view all issues)
+// GET BOOKING ISSUES WITH ENHANCED FILTERING (Admin/Client endpoint)
 router.get('/issues/all', verifyToken, async (req, res) => {
   try {
-    const { status, severity, page = 1, limit = 10 } = req.query
+    const {
+      status,
+      severity,
+      issue_type,
+      technician_id,
+      client_id,
+      date_from,
+      date_to,
+      page = 1,
+      limit = 10,
+      sort_by = 'reported_at',
+      sort_order = 'desc'
+    } = req.query
 
     // Build filter for issues
     const matchFilter = {}
-    if (status) matchFilter['issues.status'] = status
-    if (severity) matchFilter['issues.severity'] = severity
+    if (technician_id) matchFilter['technician_id'] = technician_id
+    if (client_id) matchFilter['client_id'] = client_id
+
+    // Date filtering
+    if (date_from || date_to) {
+      matchFilter['issues.reported_at'] = {}
+      if (date_from) matchFilter['issues.reported_at'].$gte = new Date(date_from)
+      if (date_to) matchFilter['issues.reported_at'].$lte = new Date(date_to)
+    }
 
     const skip = (page - 1) * limit
+    const sortDirection = sort_order === 'desc' ? -1 : 1
 
     const bookingsWithIssues = await Booking.find({
       'issues.0': { $exists: true }, // Has at least one issue
@@ -366,7 +436,7 @@ router.get('/issues/all', verifyToken, async (req, res) => {
       })
       .populate('issues.reported_by', '-password')
       .populate('issues.resolved_by', '-password')
-      .sort({ 'issues.reported_at': -1 })
+      .sort({ [`issues.${sort_by}`]: sortDirection })
       .skip(skip)
       .limit(parseInt(limit))
 
@@ -375,71 +445,168 @@ router.get('/issues/all', verifyToken, async (req, res) => {
       ...matchFilter
     })
 
-    // Flatten issues for easier handling
+    // Flatten issues for easier handling with enhanced filtering
     const issuesWithBookingInfo = []
     bookingsWithIssues.forEach(booking => {
       booking.issues.forEach(issue => {
-        if (!status || issue.status === status) {
-          if (!severity || issue.severity === severity) {
-            issuesWithBookingInfo.push({
-              issue,
-              booking: {
-                _id: booking._id,
-                service: booking.service,
-                scheduled_date: booking.scheduled_date,
-                scheduled_StartTime: booking.scheduled_StartTime,
-                scheduled_EndTime: booking.scheduled_EndTime,
-                booking_status: booking.booking_status,
-                client_id: booking.client_id,
-                technician_id: booking.technician_id,
-                status_history: booking.status_history // Include status history for context
-              }
-            })
-          }
+        let includeIssue = true
+
+        if (status && status !== 'all' && issue.status !== status) includeIssue = false
+        if (severity && severity !== 'all' && issue.severity !== severity) includeIssue = false
+        if (issue_type && issue_type !== 'all' && issue.issue_type !== issue_type) includeIssue = false
+
+        if (includeIssue) {
+          issuesWithBookingInfo.push({
+            issue: {
+              ...issue.toObject(),
+              booking_id: booking._id
+            },
+            booking: {
+              _id: booking._id,
+              service: booking.service,
+              scheduled_date: booking.scheduled_date,
+              scheduled_StartTime: booking.scheduled_StartTime,
+              scheduled_EndTime: booking.scheduled_EndTime,
+              booking_status: booking.booking_status,
+              client_id: booking.client_id,
+              technician_id: booking.technician_id,
+              status_history: booking.status_history,
+              streetAddress: booking.streetAddress,
+              cityAddress: booking.cityAddress,
+              final_price: booking.final_price
+            }
+          })
         }
       })
     })
 
+    // Get statistics
+    const stats = await getIssuesStatistics()
+
     res.json({
+      success: true,
       issues: issuesWithBookingInfo,
       pagination: {
         current_page: parseInt(page),
         total_pages: Math.ceil(total / limit),
-        total_issues: total
+        total_issues: total,
+        limit: parseInt(limit)
+      },
+      stats
+    })
+  } catch (error) {
+    console.error('Error fetching issues:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    })
+  }
+})
+
+// GET SINGLE ISSUE DETAILS
+router.get('/:bookingId/issues/:issueId', verifyToken, async (req, res) => {
+  try {
+    const { bookingId, issueId } = req.params
+
+    const booking = await Booking.findById(bookingId)
+      .populate({
+        path: 'client_id',
+        populate: {
+          path: 'user',
+          select: '-password'
+        }
+      })
+      .populate({
+        path: 'technician_id',
+        populate: {
+          path: 'user',
+          select: '-password'
+        }
+      })
+      .populate('issues.reported_by', '-password')
+      .populate('issues.resolved_by', '-password')
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        error: 'Booking not found'
+      })
+    }
+
+    const issue = booking.issues.id(issueId)
+    if (!issue) {
+      return res.status(404).json({
+        success: false,
+        error: 'Issue not found'
+      })
+    }
+
+    res.json({
+      success: true,
+      issue,
+      booking: {
+        _id: booking._id,
+        service: booking.service,
+        scheduled_date: booking.scheduled_date,
+        scheduled_StartTime: booking.scheduled_StartTime,
+        scheduled_EndTime: booking.scheduled_EndTime,
+        booking_status: booking.booking_status,
+        client_id: booking.client_id,
+        technician_id: booking.technician_id,
+        streetAddress: booking.streetAddress,
+        cityAddress: booking.cityAddress,
+        final_price: booking.final_price,
+        status_history: booking.status_history
       }
     })
   } catch (error) {
-    res.status(400).json({ error: error.message })
+    console.error('Error fetching issue details:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    })
   }
 })
 
 // UPDATE ISSUE STATUS (Admin endpoint to resolve/dismiss issues)
-router.patch('/:bookingId/issues/:issueId/status', verifyToken, async (req, res) => {
+router.patch('/:bookingId/issues/:issueId/status', verifyToken, requireRole('admin'), async (req, res) => {
   try {
     const { bookingId, issueId } = req.params
-    const { status, admin_notes } = req.body
+    const { status, admin_notes, resolution_action } = req.body
     const adminUserId = req.user.id
 
     // Validate status
     const validStatuses = ['pending', 'under_review', 'resolved', 'dismissed']
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' })
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid status'
+      })
     }
 
     const booking = await Booking.findById(bookingId)
     if (!booking) {
-      return res.status(404).json({ error: 'Booking not found' })
+      return res.status(404).json({
+        success: false,
+        error: 'Booking not found'
+      })
     }
 
     // Find the specific issue
     const issue = booking.issues.id(issueId)
     if (!issue) {
-      return res.status(404).json({ error: 'Issue not found' })
+      return res.status(404).json({
+        success: false,
+        error: 'Issue not found'
+      })
     }
 
     // Update issue status
+    const previousStatus = issue.status
     issue.status = status
     if (admin_notes) issue.admin_notes = admin_notes
+    if (resolution_action) issue.resolution_action = resolution_action
+
     if (status === 'resolved' || status === 'dismissed') {
       issue.resolved_at = new Date()
       issue.resolved_by = adminUserId
@@ -448,12 +615,21 @@ router.patch('/:bookingId/issues/:issueId/status', verifyToken, async (req, res)
     await booking.save()
     await booking.populate(['client_id', 'technician_id', 'issues.reported_by', 'issues.resolved_by'])
 
+    // Log status change
+    console.log(`Issue ${issueId} status changed from ${previousStatus} to ${status} by admin ${adminUserId}`)
+
     res.json({
+      success: true,
       message: `Issue ${status} successfully`,
+      issue,
       booking
     })
   } catch (error) {
-    res.status(400).json({ error: error.message })
+    console.error('Error updating issue status:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    })
   }
 })
 
@@ -995,5 +1171,17 @@ router.get('/:technicianId/reviews', async (req, res) => {
     })
   }
 })
+
+function requireRole(role) {
+  return (req, res, next) => {
+    if (req.user.userType !== role) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied. Admin privileges required.'
+      })
+    }
+    next()
+  }
+}
 
 export default router

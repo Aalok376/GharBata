@@ -6,6 +6,7 @@ import passport from 'passport'
 import dotenv from 'dotenv'
 import './passportConfig.js'
 import TokenStore from './models/RefreshToken.js'
+import Technician from './models/technician.js'
 import { generateAccessToken, generateRefreshToken } from './utils/tokengenerator.js'
 
 dotenv.config()
@@ -64,9 +65,31 @@ app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'em
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login', session: false }),
   async (req, res) => {
-    // User is authenticated and available at req.user
 
     const user = req.user
+
+    const technician = await Technician.findOne({ user: user._id })
+
+    if (technician) {
+      if (technician.is_banned) {
+
+        const now = new Date()
+
+        if (technician.ban_severity === 'temporary' && technician.ban_end_date && technician.ban_end_date <= now) {
+
+          technician.is_banned = false
+          technician.unbanned_at = now
+          technician.unban_reason = 'Temporary ban expired automatically on login'
+          technician.ban_end_date = null
+          await technician.save()
+          console.log(`Technician ${user.username} unbanned automatically on login.`)
+
+        } else {
+
+          return res.status(403).send('Access denied. Technician is banned.')
+        }
+      }
+    }
 
     const AccessToken = generateAccessToken(user)
     const RefreshToken = generateRefreshToken(user)
