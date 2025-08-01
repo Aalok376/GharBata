@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { User, Phone, Mail, Save, Edit3, X, Camera, MapPin } from 'lucide-react'
+import { User, Phone, Mail, Save, Edit3, X, Camera, MapPin, MessageCircle } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 
 export default function ClientProfile() {
@@ -207,6 +207,29 @@ export default function ClientProfile() {
     }
   }
 
+  const handleMessageClick = (userId) => {
+    // Navigate to message/chat page with the userId
+    navigate(`/dashboard/chats/${userId}`)
+  }
+
+  const createConversations = async (receiverId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/chats/createConversations`, {
+        method: "POST",
+        credentials:'include',
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ receiverId }),
+      })
+      const data = await response.json()
+
+      return { data }
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-8 px-4">
       {/* Success Notification - Only show for own profile */}
@@ -370,10 +393,10 @@ export default function ClientProfile() {
             </div>
           )}
 
-          {/* Message for viewing other's profile */}
+          {/* Message for viewing other's profile with Message Button */}
           {!isOwnProfile && (
-            <div className="p-6 bg-gradient-to-br from-slate-50 to-gray-50 text-center">
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div className="p-6 bg-gradient-to-br from-slate-50 to-gray-50 space-y-3">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
                 <div className="text-blue-600 font-medium text-sm">
                   You are viewing {profile?.fname || 'this'} {profile?.lname || 'client'}'s profile
                 </div>
@@ -381,6 +404,18 @@ export default function ClientProfile() {
                   Contact them directly for communication
                 </div>
               </div>
+
+              {/* Message Button */}
+              <button
+                onClick={async() => {
+                  const { data } = await createConversations(userId)
+                  if (data) { handleMessageClick(userId) }
+                }}
+                className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-4 px-6 rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
+              >
+                <MessageCircle className="w-5 h-5" />
+                <span>Send Message</span>
+              </button>
             </div>
           )}
         </div>

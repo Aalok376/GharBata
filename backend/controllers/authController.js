@@ -52,8 +52,6 @@ export const login = async (req, res) => {
 
     const user = await User.findOne({ username })
 
-    console.log(user)
-
     if (!user) {
       return res.status(401).json({ success: false, msg: 'Invalid credentials: User not found.' })
     }
@@ -64,7 +62,10 @@ export const login = async (req, res) => {
       return res.status(401).json({ success: false, msg: 'Invalid credentials: Incorrect password.' })
     }
 
-    const AccessToken = jwt.sign({ id: user._id }, process.env.JWT_ACCESS_SECRET, { expiresIn: '30m' })
+     const userId = user._id.toString()
+     res.cookie('UserId', userId, { httpOnly: true,secure: false,sameSite: 'Lax' })
+
+    const AccessToken = jwt.sign({ id: user._id }, process.env.JWT_ACCESS_SECRET, { expiresIn: '45m' })
     res.cookie('accessToken', AccessToken, {
       httpOnly: true,
       secure: false,

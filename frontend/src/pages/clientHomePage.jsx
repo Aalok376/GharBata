@@ -20,8 +20,7 @@ const ClientPage = () => {
         { id: `/client/dashboard`, icon: '📊', text: 'Dashboard' },
         { id: `/client/orders/${clientId}`, icon: '📋', text: 'My Orders' },
         { id: `/client/earnings/${clientId}`, icon: '💰', text: 'Payment' },
-        { id: `/client/messages/${clientId}`, icon: '📱', text: 'Messages' },
-        { id: '/chat', icon: '📱', text: 'chat' },
+        { id: `/dashboard/chats/${userId}`, icon: '📱', text: 'Messages' },
         { id: '/logout', icon: '⚙️', text: 'Logout' },
     ]
 

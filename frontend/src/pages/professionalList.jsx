@@ -193,9 +193,25 @@ const TechnicianDisplayPage = () => {
     return number // Years
   }
 
+  const createConversations = async (receiverId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/chats/createConversations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ receiverId }),
+      })
+      const data = await response.json()
+
+      return { data }
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   // Updated function to get hourly rate for a specific service/profession
   const getHourlyRateForService = (hourlyRateObj, service) => {
-    console.log('Getting hourly rate for:', { hourlyRateObj, service })
 
     if (!hourlyRateObj || typeof hourlyRateObj !== 'object') {
       console.log('Invalid hourlyRateObj:', hourlyRateObj)
@@ -243,7 +259,6 @@ const TechnicianDisplayPage = () => {
 
     // If no match found, return the first available rate or 0
     const firstRate = Object.values(hourlyRateObj)[0]
-    console.log('No match found, returning first rate or 0:', firstRate || 0)
     return firstRate || 0
   }
 
@@ -251,7 +266,6 @@ const TechnicianDisplayPage = () => {
   const fetchReviews = async (technicianId, profession) => {
     try {
       setLoadingReviews(true)
-      console.log('Fetching reviews for technician:', technicianId, 'profession:', profession)
 
       // Use the same API endpoint we created for the reviews page
       const response = await fetch(
@@ -267,7 +281,6 @@ const TechnicianDisplayPage = () => {
       }
 
       const data = await response.json()
-      console.log('Reviews API response:', data)
 
       if (!data.success) {
         throw new Error(data.message || 'Failed to fetch reviews')
@@ -280,8 +293,6 @@ const TechnicianDisplayPage = () => {
         profession.toLowerCase().includes(review.service.toLowerCase()) ||
         review.service.toLowerCase().includes(profession.toLowerCase())
       )
-
-      console.log('Filtered reviews for service:', serviceReviews)
 
       // Get rating for this specific service
       const serviceRating = data.data.reviews.byService[profession] ||
@@ -328,10 +339,8 @@ const TechnicianDisplayPage = () => {
   }
 
   const handleShowReviews = async (technician) => {
-    console.log('Showing reviews for technician:', technician.name, 'service:', selectedService)
 
     const reviewsData = await fetchReviews(technician._id, selectedService)
-    console.log('Reviews data received:', reviewsData)
 
     setSelectedTechnicianReviews({
       technician: technician,
@@ -350,7 +359,6 @@ const TechnicianDisplayPage = () => {
 
   const handleBookNow = (technician) => {
     const currentHourlyRate = getHourlyRateForService(technician.hourlyRate, selectedService)
-    console.log('Booking with rate:', currentHourlyRate)
 
     navigate(`/client/dashboard/booking/${selectedService}/${technician._id}/${currentHourlyRate}`, {
       state: {
@@ -362,12 +370,7 @@ const TechnicianDisplayPage = () => {
   }
 
   const handleMessage = (technician) => {
-    navigate(`/dashboard/chat/${technician._id}`, {
-      state: {
-        technician: technician,
-        service: selectedService
-      }
-    })
+    navigate(`/dashboard/chats/${technician.userId}`)
   }
 
   const formatAvailability = (availability, day) => {
@@ -537,9 +540,6 @@ const TechnicianDisplayPage = () => {
             const currentHourlyRate = getHourlyRateForService(technician.hourlyRate, selectedService)
             const professionRating = getRatingForProfession(technician._id, selectedService)
 
-            console.log(`Technician ${technician.name} - Rate for ${selectedService}:`, currentHourlyRate)
-            console.log(`Technician ${technician.name} - Rating for ${selectedService}:`, professionRating)
-
             return (
               <div key={technician._id} className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                 <div className="p-6">
@@ -668,7 +668,14 @@ const TechnicianDisplayPage = () => {
                       {currentHourlyRate === 0 ? 'Rate Not Set' : 'Book Now'}
                     </button>
                     <button
-                      onClick={() => handleMessage(technician)}
+                      onClick={() => {
+                        
+                        const {data}=createConversations(technician.userId)
+                        if (data){
+                          handleMessage(technician)
+                        }
+                      }
+                      }
                       className="px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center"
                       title={`Message ${technician.name}`}
                     >

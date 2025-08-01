@@ -42,7 +42,7 @@ const ProfessionalPage = () => {
         { id: `/professional/bookings/${technicianId}`, icon: '💼', text: 'Jobs' },
         { id: `/professional/earnings/${technicianId}`, icon: '💰', text: 'Earnings' },
         { id: `/professional/reviews/${technicianId}`, icon: '⭐', text: 'Reviews' },
-        { id: `/professional/messages/${technicianId}`, icon: '📱', text: 'Messages' },
+        { id: `/dashboard/chats/${userId}`, icon: '📱', text: 'Messages' },
         { id: '/logout', icon: '⚙️', text: 'Logout' },
     ]
 
@@ -176,7 +176,7 @@ const ProfessionalPage = () => {
             if (response.ok) {
                 const statsData = await response.json()
                 console.log('Overview stats response:', statsData) // Debug log
-                
+
                 // Handle both array and direct object responses
                 let overviewData = null
                 if (Array.isArray(statsData) && statsData.length > 0) {
@@ -186,7 +186,7 @@ const ProfessionalPage = () => {
                     // If it's an object, check if it has a 'stats' property
                     overviewData = statsData.stats || statsData
                 }
-                
+
                 if (overviewData) {
                     console.log('Processing overview data:', overviewData) // Debug log
                     setStats(prev => ({
@@ -423,7 +423,7 @@ const ProfessionalPage = () => {
                         <section className="bg-white bg-opacity-90 backdrop-blur-lg rounded-2xl p-8 shadow-lg mb-12">
                             <div className="flex justify-between items-center mb-8">
                                 <h3 className="text-2xl font-semibold text-gray-800">Today's Schedule</h3>
-                                <button 
+                                <button
                                     className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:from-blue-600 hover:to-blue-700"
                                     onClick={() => navigateToJobs()}
                                 >
@@ -444,7 +444,7 @@ const ProfessionalPage = () => {
                                                 }
                                             </div>
                                         </div>
-                                        
+
                                         <div className="flex-1 mb-4 lg:mb-0">
                                             <div className="font-semibold text-gray-800 text-lg mb-2">{booking.service}</div>
                                             <div className="text-gray-600 text-sm flex flex-wrap gap-4 mb-2">
@@ -460,7 +460,7 @@ const ProfessionalPage = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        
+
                                         <div className="flex flex-col gap-2 items-end">
                                             <div className={`px-3 py-1 rounded-full text-sm font-semibold text-white text-center min-w-20 ${getBookingStatusColor(booking.booking_status)}`}>
                                                 {getBookingStatusText(booking.booking_status)}
@@ -506,7 +506,7 @@ const ProfessionalPage = () => {
                                     <h3 className="text-2xl font-semibold text-gray-800 mb-2">Weekly Availability</h3>
                                     <p className="text-gray-600">Manage your working hours for each day</p>
                                 </div>
-                                <button 
+                                <button
                                     className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1.5 rounded-md font-medium text-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:from-blue-600 hover:to-blue-700"
                                     onClick={() => navigate(`/professionalProfilePage/${userId}`)}
                                 >
@@ -515,16 +515,14 @@ const ProfessionalPage = () => {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
                                 {technicianData?.availability && Object.entries(technicianData.availability).map(([day, schedule]) => (
-                                    <div key={day} className={`relative p-6 rounded-2xl border-2 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
-                                        schedule.available 
-                                            ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 hover:border-green-300' 
+                                    <div key={day} className={`relative p-6 rounded-2xl border-2 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${schedule.available
+                                            ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 hover:border-green-300'
                                             : 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200 hover:border-gray-300'
-                                    }`}>
+                                        }`}>
                                         {/* Status Indicator */}
-                                        <div className={`absolute top-2 right-2 w-3 h-3 rounded-full ${
-                                            schedule.available ? 'bg-green-400' : 'bg-gray-400'
-                                        }`}></div>
-                                        
+                                        <div className={`absolute top-2 right-2 w-3 h-3 rounded-full ${schedule.available ? 'bg-green-400' : 'bg-gray-400'
+                                            }`}></div>
+
                                         <div className="text-center">
                                             <div className="font-bold text-gray-800 mb-3 text-lg capitalize">{day}</div>
                                             {schedule.available ? (
@@ -540,7 +538,7 @@ const ProfessionalPage = () => {
                                                         {formatTime(schedule.endTime)}
                                                     </div>
                                                     <div className="text-xs text-gray-500 mt-2">
-                                                        {schedule.startTime && schedule.endTime && 
+                                                        {schedule.startTime && schedule.endTime &&
                                                             `${Math.ceil((new Date(`2000-01-01T${schedule.endTime}`) - new Date(`2000-01-01T${schedule.startTime}`)) / (1000 * 60 * 60))} hours`
                                                         }
                                                     </div>
@@ -568,7 +566,7 @@ const ProfessionalPage = () => {
                                     <h3 className="text-2xl font-semibold text-gray-800 mb-2">Your Services & Rates</h3>
                                     <p className="text-gray-600">Manage your service offerings and hourly rates</p>
                                 </div>
-                                <button 
+                                <button
                                     className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1.5 rounded-md font-medium text-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:from-blue-600 hover:to-blue-700"
                                     onClick={() => navigate(`/professionalProfilePage/${userId}`)}
                                 >
@@ -581,19 +579,19 @@ const ProfessionalPage = () => {
                                         {/* Service Icon */}
                                         <div className="flex justify-center mb-3">
                                             <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-lg text-white shadow-md">
-                                                {profession.includes('Plumb') ? '🔧' : 
-                                                 profession.includes('Electric') ? '⚡' : 
-                                                 profession.includes('Clean') ? '🧹' : 
-                                                 profession.includes('Garden') ? '🌱' : 
-                                                 profession.includes('Paint') ? '🎨' : '🔨'}
+                                                {profession.includes('Plumb') ? '🔧' :
+                                                    profession.includes('Electric') ? '⚡' :
+                                                        profession.includes('Clean') ? '🧹' :
+                                                            profession.includes('Garden') ? '🌱' :
+                                                                profession.includes('Paint') ? '🎨' : '🔨'}
                                             </div>
                                         </div>
-                                        
+
                                         {/* Service Name */}
                                         <div className="text-center mb-3">
                                             <h4 className="font-bold text-gray-800 mb-1 text-sm">{profession}</h4>
                                         </div>
-                                        
+
                                         {/* Hourly Rate */}
                                         <div className="text-center">
                                             <div className="bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg p-3">

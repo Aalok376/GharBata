@@ -24,8 +24,7 @@ import TechnicianReviewsPage from './pages/reviewsPage'
 
 import MapPickerModal from './pages/MapPicker'
 
-
-import ChatPage from './pages/Chat_page'
+import MessagingApp from './pages/chatPage'
 
 function App() {
   return (
@@ -53,7 +52,7 @@ function App() {
         <Route path='/professional/reviews/:technicianId' element={<TechnicianReviewsPage />} />
         <Route path='/bookings/direction/:lat/:lon' element={<MapPickerModal />} />
 
-        <Route path='/chat/' element={<ChatPage />} />
+        <Route path='/dashboard/chats/:userId' element={<MessagingApp />} />
       </Routes>
     </Router>
 

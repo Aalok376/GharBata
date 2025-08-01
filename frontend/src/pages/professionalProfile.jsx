@@ -450,6 +450,23 @@ export default function TechnicianProfile() {
     }
   }
 
+  const createConversations = async (receiverId) => {
+    try {
+        const response = await fetch(`http://localhost:5000/api/chats/createConversations`, {
+            method: "POST",
+            credentials:'include',
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ receiverId }),
+        })
+        const data = await response.json()
+
+        return { data }
+    } catch (error) {
+        console.error(error)
+    }
+}
   // Validation error component
   const ValidationError = ({ error }) => {
     if (!error) return null
@@ -985,7 +1002,13 @@ export default function TechnicianProfile() {
       <div className="text-center">
         <button
           type="button"
-          onClick={() => navigate(`/chats/${userId}`)}
+          onClick={async() => {
+            
+            const {data}=await createConversations(userId)
+            if(data){
+              navigate(`/dashboard/chats/${userId}`)
+            }
+          }}
           className="group relative inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-2xl shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transform hover:scale-105 transition-all duration-300 ease-out"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
