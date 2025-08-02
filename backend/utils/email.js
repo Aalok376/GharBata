@@ -11,22 +11,22 @@ const transporter = nodemailer.createTransport({
   },
 })
 
-export const sendEmail=async(receiptent,verification_code)=>{
-try{
-      // send mail with defined transport object
-  const info = await transporter.sendMail({
-    from: `"GharBata 👻" <${process.env.EMAIL_USER}>`, 
-    to: receiptent,
-    subject: "Verification OTP",
-    text: "Verification OTP",
-    html: verification_code,
-  })
+export const sendEmail = async (recipient, subject, htmlContent) => {
+  try {
 
-  console.log("Message sent: %s", info.messageId)
-}
-catch(error){
+    const info = await transporter.sendMail({
+      from: `"GharBata" <${process.env.EMAIL_USER}>`,
+      to: recipient,
+      subject: subject || "Verification OTP",
+      text: subject || "Verification OTP",
+      html: htmlContent
+    })
+
+    console.log("Message sent: %s", info.messageId)
+  } catch (error) {
     console.log(error)
+  }
 }
-}
+
 
 

@@ -878,7 +878,12 @@ router.get('/stats/overview', verifyToken, async (req, res) => {
 
     const result = {
       ...(stats[0] || {}),
-      issue_breakdown: issueStats[0] || {}
+      issue_breakdown: issueStats[0] || {
+        pending_issues: 0,
+        under_review_issues: 0,
+        resolved_issues: 0,
+        dismissed_issues: 0
+      }
     }
 
     res.json({ stats: result })
@@ -912,7 +917,7 @@ router.get('/technician/:technicianId/today', verifyToken, async (req, res) => {
         $lt: tomorrow
       }
     })
-      .populate('client_id', 'fname lname email phoneNumber')
+      .populate('client_id', 'fname lname username phoneNumber')
       .sort({ scheduled_StartTime: 1 })
       .lean()
 

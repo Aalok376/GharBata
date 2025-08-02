@@ -26,6 +26,8 @@ import MapPickerModal from './pages/MapPicker'
 
 import MessagingApp from './pages/chatPage'
 
+import AdminDashboard from './pages/adminDashboard'
+
 function App() {
   return (
     <Router>
@@ -53,6 +55,8 @@ function App() {
         <Route path='/bookings/direction/:lat/:lon' element={<MapPickerModal />} />
 
         <Route path='/dashboard/chats/:userId' element={<MessagingApp />} />
+
+        <Route path='/admin/dashboard' element={<AdminDashboard />} />
       </Routes>
     </Router>
 

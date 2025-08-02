@@ -19,6 +19,15 @@ const banHistorySchema = new mongoose.Schema({
   }
 }, { _id: true })
 
+const warningHistorySchema = new mongoose.Schema({
+  warned_at: { type: Date, required: true },
+  warned_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  reason: { type: String, required: true },
+  warning_message: { type: String, required: true },
+  related_issue_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Issue' },
+  booking_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking' }
+}, { _id: true })
+
 const technicianSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   professions: [String],
@@ -57,7 +66,9 @@ const technicianSchema = new mongoose.Schema({
   unbanned_at: { type: Date },
   unbanned_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   unban_reason: { type: String },
-  ban_history: [banHistorySchema]
+  ban_history: [banHistorySchema],
+
+   warning_history: [warningHistorySchema]
 })
 
 export default mongoose.model('Technician', technicianSchema)

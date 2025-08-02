@@ -52,6 +52,9 @@ const ClientLogin = () => {
             navigate("/professional/dashboard")
           }
         }
+        else if (userType === 'admin') {
+          navigate(`/admin/dashboard`)
+        }
 
       } else {
         // Handle different types of login errors
