@@ -165,25 +165,27 @@ router.post('/technicians/:technicianId/warn', verifyToken, requireRole('admin')
     technician.warning_history.push(warningEntry)
     await technician.save()
 
-    const emailMessage = `
-                      Dear ${technician.user.name},
-                      
-                      We are reaching out to inform you that your technician account has received an official warning due to the following reason:
-                      
-                      "${reason}"
-                      
-                      This warning has been issued in connection with a reported issue during a service appointment.
-                      
-                      We kindly request that you review your conduct and take this matter seriously. Continued violations may lead to a temporary or permanent suspension of your account.
-                      
-                      If you have any questions or believe this warning was issued in error, please contact our support team.
-                      
-                      Thank you for being a part of the GharBata community.
-                      
-                      Best regards,  
-                      GharBata Admin Team
-                      `
-
+   const emailMessage = `
+                         Dear ${technician.user.name},
+                         
+                         We are reaching out to inform you that your technician account has received an official warning due to the following reason:
+                         
+                         "${reason}"
+                         
+                         Additional details provided in the warning message:
+                         "${warning_message}"
+                         
+                         This warning has been issued in connection with a reported issue during a service appointment.
+                         
+                         We kindly request that you review your conduct and take this matter seriously. Continued violations may lead to a temporary or permanent suspension of your account.
+                         
+                         If you have any questions or believe this warning was issued in error, please contact our support team.
+                         
+                         Thank you for being a part of the GharBata community.
+                         
+                         Best regards,  
+                         GharBata Admin Team
+      `
     await sendEmail(
       technician.user.username,
       "Account Warning Notification – GharBata",
@@ -440,6 +442,18 @@ router.post('/technicians/process-expired-bans', verifyToken, requireRole('admin
     })
   } catch (error) {
     console.error('Error processing expired bans:', error)
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    })
+  }
+})
+
+router.post('/contact', verifyToken, requireRole('admin'), async (req, res) => {
+  try {
+    
+  } catch (error) {
+    console.error('Error contacting:', error)
     res.status(500).json({
       success: false,
       error: 'Internal server error'

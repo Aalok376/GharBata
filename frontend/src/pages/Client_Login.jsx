@@ -445,7 +445,7 @@ const ClientLogin = () => {
         </div>
 
         <div className="signup-link">
-          Don't have an account? <NavLink to="/client_signup">Sign up</NavLink>
+          Don't have an account? <NavLink to="/gharbata/signup">Sign up</NavLink>
         </div>
       </div>
     </div>

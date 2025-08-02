@@ -68,7 +68,7 @@ const technicianSchema = new mongoose.Schema({
   unban_reason: { type: String },
   ban_history: [banHistorySchema],
 
-   warning_history: [warningHistorySchema]
+  warning_history: [warningHistorySchema]
 })
 
 export default mongoose.model('Technician', technicianSchema)

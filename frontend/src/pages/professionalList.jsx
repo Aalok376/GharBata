@@ -200,6 +200,7 @@ const TechnicianDisplayPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials:'include',
         body: JSON.stringify({ receiverId }),
       })
       const data = await response.json()
@@ -668,9 +669,9 @@ const TechnicianDisplayPage = () => {
                       {currentHourlyRate === 0 ? 'Rate Not Set' : 'Book Now'}
                     </button>
                     <button
-                      onClick={() => {
+                      onClick={async() => {
                         
-                        const {data}=createConversations(technician.userId)
+                        const {data}= await createConversations(technician.userId)
                         if (data){
                           handleMessage(technician)
                         }

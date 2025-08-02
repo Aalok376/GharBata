@@ -3,6 +3,7 @@ import mongoose from 'mongoose'
 import Client from '../models/client.js'
 import Booking from '../models/modelBooking.js'
 import Technician from '../models/technician.js'
+import User from '../models/user.js'
 import { verifyToken } from '../middlewares/auth.js'
 import { getIssuesStatistics } from '../utils/issueStats.js'
 
@@ -423,7 +424,7 @@ router.get('/issues/all', verifyToken, async (req, res) => {
       .populate({
         path: 'client_id',
         populate: {
-          path: 'user',
+          path: 'client_id',
           select: '-password'
         }
       })
@@ -512,7 +513,7 @@ router.get('/:bookingId/issues/:issueId', verifyToken, async (req, res) => {
       .populate({
         path: 'client_id',
         populate: {
-          path: 'user',
+          path: 'client_id',
           select: '-password'
         }
       })
@@ -1178,14 +1179,27 @@ router.get('/:technicianId/reviews', async (req, res) => {
 })
 
 function requireRole(role) {
-  return (req, res, next) => {
-    if (req.user.userType !== role) {
-      return res.status(403).json({
-        success: false,
-        error: 'Access denied. Admin privileges required.'
-      })
+  return async (req, res, next) => {
+    try {
+      const userId = req.user.id
+
+      const user = await User.findById(userId)
+      if (!user) {
+        return res.status(404).json({ success: false, error: 'User not found' })
+      }
+
+      if (user.userType !== role) {
+        return res.status(403).json({
+          success: false,
+          error: 'Access denied. Admin privileges required.'
+        })
+      }
+
+      next()
+    } catch (err) {
+      console.error('Error in requireRole:', err)
+      res.status(500).json({ success: false, error: 'Server error' })
     }
-    next()
   }
 }
 

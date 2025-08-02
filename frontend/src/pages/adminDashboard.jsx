@@ -258,7 +258,7 @@ const AdminDashboard = () => {
   // Consolidated state management
   const [activeTab, setActiveTab] = useState('overview')
   const [loading, setLoading] = useState(false)
-  
+
   // Data states
   const [stats, setStats] = useState({
     total_bookings: 0,
@@ -272,11 +272,11 @@ const AdminDashboard = () => {
     pending_issues: 0,
     total_banned: 0
   })
-  
+
   const [bookings, setBookings] = useState([])
   const [issues, setIssues] = useState([])
   const [bannedTechnicians, setBannedTechnicians] = useState([])
-  
+
   // Selection states
   const [selectedBooking, setSelectedBooking] = useState(null)
   const [selectedIssue, setSelectedIssue] = useState(null)
@@ -287,6 +287,7 @@ const AdminDashboard = () => {
     unbanReason: '',
     issueNotes: '',
     selectedIssueAction: '',
+    issueActionStatus: '', // NEW: Track the actual status to be set
     technicianAction: '',
     technicianActionReason: '',
     warningMessage: '',
@@ -337,7 +338,7 @@ const AdminDashboard = () => {
 
   const closeModal = useCallback((modalName) => {
     modalsRef.current[modalName] = false
-    
+
     // Reset modal-specific form data
     if (modalName === 'unban') {
       formDataRef.current.unbanReason = ''
@@ -346,6 +347,7 @@ const AdminDashboard = () => {
       Object.assign(formDataRef.current, {
         issueNotes: '',
         selectedIssueAction: '',
+        issueActionStatus: '', // Reset this too
         technicianAction: '',
         technicianActionReason: '',
         warningMessage: '',
@@ -534,8 +536,9 @@ const AdminDashboard = () => {
     setLoading(false)
   }, [formData.unbanReason, selectedTechnician?._id, closeModal, fetchBannedTechnicians])
 
+  // FIXED: Issue action handler now uses the correct status
   const handleIssueAction = useCallback(async () => {
-    if (!formData.selectedIssueAction) return
+    if (!formData.issueActionStatus) return
 
     setLoading(true)
     try {
@@ -544,8 +547,9 @@ const AdminDashboard = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
-          status: formData.selectedIssueAction,
+          status: formData.issueActionStatus, // Use the correct status
           admin_notes: formData.issueNotes
         })
       })
@@ -555,20 +559,20 @@ const AdminDashboard = () => {
       await fetchIssues()
       await fetchStats()
       closeModal('issue')
-      alert(`Issue ${formData.selectedIssueAction} successfully`)
+      alert(`Issue ${formData.issueActionStatus} successfully`)
     } catch (error) {
       console.error('Error updating issue:', error)
       alert('Failed to update issue. Please try again.')
     }
     setLoading(false)
-  }, [formData.selectedIssueAction, formData.issueNotes, selectedIssue, closeModal, fetchIssues, fetchStats])
+  }, [formData.issueActionStatus, formData.issueNotes, selectedIssue, closeModal, fetchIssues, fetchStats])
 
   const handleTechnicianAction = useCallback(async () => {
     if (!formData.technicianAction || !formData.technicianActionReason.trim()) return
 
     setLoading(true)
     try {
-      const technicianId = selectedIssue.booking.technician_id.user._id
+      const technicianId = selectedIssue.booking.technician_id._id
 
       let endpoint = ''
       let payload = {}
@@ -1104,6 +1108,7 @@ const BookingRow = React.memo(({ booking, onViewDetails, onOpenModal }) => (
   </tr>
 ))
 
+// FIXED: IssueCard now shows action button for pending and under_review issues
 const IssueCard = React.memo(({ item, onViewDetails, onOpenModal }) => (
   <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
     <div className="flex items-start justify-between">
@@ -1126,16 +1131,32 @@ const IssueCard = React.memo(({ item, onViewDetails, onOpenModal }) => (
         </div>
       </div>
       <div className="flex space-x-2">
-        <button
-          onClick={() => {
-            onViewDetails(item)
-            onOpenModal('issue')
-          }}
-          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-          title="View Details & Take Action"
-        >
-          <Gavel className="h-4 w-4" />
-        </button>
+        {/* Show action button for pending and under_review issues */}
+        {(item.issue.status === 'pending' || item.issue.status === 'under_review') && (
+          <button
+            onClick={() => {
+              onViewDetails(item)
+              onOpenModal('issue')
+            }}
+            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+            title="View Details & Take Action"
+          >
+            <Gavel className="h-4 w-4" />
+          </button>
+        )}
+        {/* Always show view button for resolved/dismissed issues */}
+        {(item.issue.status === 'resolved' || item.issue.status === 'dismissed') && (
+          <button
+            onClick={() => {
+              onViewDetails(item)
+              onOpenModal('issue')
+            }}
+            className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg"
+            title="View Details"
+          >
+            <Eye className="h-4 w-4" />
+          </button>
+        )}
       </div>
     </div>
   </div>
@@ -1359,6 +1380,7 @@ const TechnicianViewModal = React.memo(({ isOpen, onClose, selectedTechnician, o
   </Modal>
 ))
 
+// FIXED: IssueModal with proper status handling
 const IssueModal = React.memo(({ isOpen, onClose, selectedIssue, formData, onChange, updateFormData, onIssueAction, onTechnicianAction, loading }) => (
   <Modal
     isOpen={isOpen}
@@ -1396,6 +1418,14 @@ const IssueModal = React.memo(({ isOpen, onClose, selectedIssue, formData, onCha
                 <span className="ml-2 font-medium">{selectedIssue.booking.technician_id?.user?.fname} {selectedIssue.booking.technician_id?.user?.lname}</span>
               </div>
               <div>
+                <span className="text-gray-600">Username:</span>
+                <span className="ml-2 font-medium">{selectedIssue.booking.technician_id?.user?.username || 'Not available'}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Previous Warnings:</span>
+                <span className="ml-2 font-medium">{selectedIssue.booking.technician_id?.warning_history?.length || 0}</span>
+              </div>
+              <div>
                 <span className="text-gray-600">Status:</span>
                 <StatusBadge status={selectedIssue.booking.booking_status} />
               </div>
@@ -1408,7 +1438,8 @@ const IssueModal = React.memo(({ isOpen, onClose, selectedIssue, formData, onCha
           </div>
         </div>
 
-        {selectedIssue.issue.status === 'pending' && (
+        {/* Only show action section for pending and under_review issues */}
+        {(selectedIssue.issue.status === 'pending' || selectedIssue.issue.status === 'under_review') && (
           <div className="border rounded-lg p-4">
             <h5 className="font-medium text-gray-900 mb-3">Take Action</h5>
 
@@ -1442,17 +1473,15 @@ const IssueModal = React.memo(({ isOpen, onClose, selectedIssue, formData, onCha
                   <select
                     id="issue-resolution"
                     name="issue-resolution"
-                    value={formData.issueNotes ? 'custom' : ''}
+                    value={formData.issueActionStatus}
                     onChange={(e) => {
-                      if (e.target.value === 'resolved') {
-                        updateFormData({ issueNotes: 'Issue has been reviewed and resolved appropriately.' })
-                      } else if (e.target.value === 'under_review') {
-                        updateFormData({ issueNotes: 'Issue is being investigated further.' })
-                      } else if (e.target.value === 'dismissed') {
-                        updateFormData({ issueNotes: 'Issue has been reviewed and deemed not actionable.' })
-                      } else {
-                        updateFormData({ issueNotes: '' })
-                      }
+                      const status = e.target.value
+                      updateFormData({
+                        issueActionStatus: status,
+                        issueNotes: status === 'resolved' ? 'Issue has been reviewed and resolved appropriately.' :
+                          status === 'under_review' ? 'Issue is being investigated further.' :
+                            status === 'dismissed' ? 'Issue has been reviewed and deemed not actionable.' : ''
+                      })
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
@@ -1471,18 +1500,18 @@ const IssueModal = React.memo(({ isOpen, onClose, selectedIssue, formData, onCha
                   />
                 </div>
 
-                {formData.issueNotes && (
-                  <div className={`p-3 rounded-lg border ${formData.issueNotes.includes('resolved') ? 'bg-green-50 border-green-200' :
-                    formData.issueNotes.includes('review') ? 'bg-yellow-50 border-yellow-200' :
+                {formData.issueActionStatus && (
+                  <div className={`p-3 rounded-lg border ${formData.issueActionStatus === 'resolved' ? 'bg-green-50 border-green-200' :
+                    formData.issueActionStatus === 'under_review' ? 'bg-yellow-50 border-yellow-200' :
                       'bg-gray-50 border-gray-200'
                     }`}>
-                    <p className={`text-sm ${formData.issueNotes.includes('resolved') ? 'text-green-700' :
-                      formData.issueNotes.includes('review') ? 'text-yellow-700' :
+                    <p className={`text-sm ${formData.issueActionStatus === 'resolved' ? 'text-green-700' :
+                      formData.issueActionStatus === 'under_review' ? 'text-yellow-700' :
                         'text-gray-700'
                       }`}>
                       <strong>Preview:</strong> {
-                        formData.issueNotes.includes('resolved') ? 'This issue will be marked as resolved.' :
-                          formData.issueNotes.includes('review') ? 'This issue will be put under review for further investigation.' :
+                        formData.issueActionStatus === 'resolved' ? 'This issue will be marked as resolved.' :
+                          formData.issueActionStatus === 'under_review' ? 'This issue will be put under review for further investigation.' :
                             'This issue will be dismissed as invalid or not actionable.'
                       }
                     </p>
@@ -1596,27 +1625,22 @@ const IssueModal = React.memo(({ isOpen, onClose, selectedIssue, formData, onCha
       </Button>
 
       {/* Issue Resolution Confirmation */}
-      {selectedIssue?.issue.status === 'pending' && formData.selectedIssueAction === 'issue_action' && formData.issueNotes.trim() && (
-        <Button
-          variant="primary"
-          onClick={() => {
-            const action = formData.issueNotes.includes('resolved') ? 'resolved' :
-              formData.issueNotes.includes('review') ? 'under_review' : 'dismissed'
-            const originalAction = formData.selectedIssueAction
-            updateFormData({ selectedIssueAction: action })
-            onIssueAction().then(() => {
-              updateFormData({ selectedIssueAction: originalAction })
-            })
-          }}
-          loading={loading}
-          className="flex-1"
-        >
-          Update Issue Status
-        </Button>
-      )}
+      {(selectedIssue?.issue.status === 'pending' || selectedIssue?.issue.status === 'under_review') &&
+        formData.selectedIssueAction === 'issue_action' &&
+        formData.issueActionStatus &&
+        formData.issueNotes.trim() && (
+          <Button
+            variant="primary"
+            onClick={onIssueAction}
+            loading={loading}
+            className="flex-1"
+          >
+            Update Issue Status
+          </Button>
+        )}
 
       {/* Technician Action Confirmation */}
-      {selectedIssue?.issue.status === 'pending' &&
+      {(selectedIssue?.issue.status === 'pending' || selectedIssue?.issue.status === 'under_review') &&
         formData.selectedIssueAction === 'technician_action' &&
         formData.technicianAction &&
         formData.technicianActionReason.trim() &&
