@@ -294,6 +294,7 @@ const AdminDashboard = () => {
     suspensionDays: '3',
     tempBanDays: '7',
     contactType: '',
+    contactEmail: '', // NEW: Store the email address
     message: ''
   })
 
@@ -358,6 +359,7 @@ const AdminDashboard = () => {
     if (modalName === 'contact') {
       Object.assign(formDataRef.current, {
         contactType: '',
+        contactEmail: '',
         message: ''
       })
     }
@@ -644,22 +646,58 @@ const AdminDashboard = () => {
     setLoading(false)
   }, [formData.technicianAction, formData.technicianActionReason, formData.warningMessage, formData.tempBanDays, selectedIssue, closeModal, fetchIssues, fetchStats, fetchBannedTechnicians])
 
-  const handleContactClick = useCallback((type) => {
-    updateFormData({ contactType: type, message: '' })
+  // FIXED: Updated handleContactClick to store both type and email
+  const handleContactClick = useCallback((type, email) => {
+    updateFormData({ 
+      contactType: type, 
+      contactEmail: email,
+      message: '' 
+    })
     openModal('contact')
   }, [updateFormData, openModal])
 
-  const handleSendMessage = useCallback(() => {
+  // FIXED: Updated handleSendMessage to call the API
+  const handleSendMessage = useCallback(async () => {
     if (!formData.message.trim()) {
       alert('Please enter a message before sending.')
       return
     }
 
-    console.log(`Sending message to ${formData.contactType}:`, formData.message)
-    alert(`Message sent to ${formData.contactType}!\n\nMessage: ${formData.message}`)
+    if (!formData.contactEmail) {
+      alert('No email address available.')
+      return
+    }
 
-    closeModal('contact')
-  }, [formData.message, formData.contactType, closeModal])
+    setLoading(true)
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          message: formData.message,
+          email: formData.contactEmail
+        })
+      })
+
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+
+      const data = await response.json()
+      
+      if (data.success) {
+        alert(`Message sent successfully to ${formData.contactType}!`)
+        closeModal('contact')
+      } else {
+        alert('Failed to send message. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error sending message:', error)
+      alert('Failed to send message. Please try again.')
+    }
+    setLoading(false)
+  }, [formData.message, formData.contactEmail, formData.contactType, closeModal])
 
   // Memoized filtered bookings
   const filteredBookings = useMemo(() => {
@@ -1049,6 +1087,7 @@ const AdminDashboard = () => {
         formData={formData}
         onChange={handleChange}
         onSend={handleSendMessage}
+        loading={loading}
       />
     </div>
   )
@@ -1362,7 +1401,7 @@ const TechnicianViewModal = React.memo(({ isOpen, onClose, selectedTechnician, o
           </Button>
           <Button
             variant="secondary"
-            onClick={() => onContact('Technician')}
+            onClick={() => onContact('Technician', selectedTechnician.user?.username)}
             className="flex items-center"
           >
             <Mail className="h-4 w-4 mr-2" />
@@ -1742,7 +1781,7 @@ const BookingModal = React.memo(({ isOpen, onClose, selectedBooking, onContact, 
           <div className="flex gap-3">
             <Button
               size="sm"
-              onClick={() => onContact('Client')}
+              onClick={() => onContact('Client', selectedBooking.email)}
             >
               <Mail className="h-4 w-4 mr-2" />
               Contact Client
@@ -1751,7 +1790,7 @@ const BookingModal = React.memo(({ isOpen, onClose, selectedBooking, onContact, 
             <Button
               size="sm"
               variant="success"
-              onClick={() => onContact('Technician')}
+              onClick={() => onContact('Technician', selectedBooking?.technician_id?.user?.username)}
             >
               <Mail className="h-4 w-4 mr-2" />
               Contact Technician
@@ -1776,7 +1815,7 @@ const BookingModal = React.memo(({ isOpen, onClose, selectedBooking, onContact, 
   </Modal>
 ))
 
-const ContactModal = React.memo(({ isOpen, onClose, formData, onChange, onSend }) => (
+const ContactModal = React.memo(({ isOpen, onClose, formData, onChange, onSend, loading }) => (
   <Modal
     isOpen={isOpen}
     onClose={onClose}
@@ -1784,6 +1823,11 @@ const ContactModal = React.memo(({ isOpen, onClose, formData, onChange, onSend }
     maxWidth="max-w-xl"
   >
     <div className="space-y-4">
+      <div className="bg-gray-50 rounded-lg p-3">
+        <p className="text-sm text-gray-600">Sending message to:</p>
+        <p className="font-medium text-gray-900">{formData.contactEmail}</p>
+      </div>
+
       <div>
         <label htmlFor="contact-message" className="block text-sm font-medium text-gray-700 mb-2">
           Message
@@ -1808,6 +1852,7 @@ const ContactModal = React.memo(({ isOpen, onClose, formData, onChange, onSend }
           size="sm"
           onClick={onSend}
           disabled={!formData.message.trim()}
+          loading={loading}
         >
           <Send className="h-4 w-4 mr-2" />
           Send Message

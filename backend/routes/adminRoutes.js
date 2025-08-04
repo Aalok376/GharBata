@@ -165,7 +165,7 @@ router.post('/technicians/:technicianId/warn', verifyToken, requireRole('admin')
     technician.warning_history.push(warningEntry)
     await technician.save()
 
-   const emailMessage = `
+    const emailMessage = `
                          Dear ${technician.user.name},
                          
                          We are reaching out to inform you that your technician account has received an official warning due to the following reason:
@@ -451,7 +451,11 @@ router.post('/technicians/process-expired-bans', verifyToken, requireRole('admin
 
 router.post('/contact', verifyToken, requireRole('admin'), async (req, res) => {
   try {
-    
+    const { message, email } = req.body
+
+    await sendEmail(email, 'Message from GharBata & Team', message)
+
+    res.status(200).json({ success: true, msg: 'Mseeage Sent!' })
   } catch (error) {
     console.error('Error contacting:', error)
     res.status(500).json({
