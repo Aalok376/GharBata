@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Calendar, Clock, MapPin, User, Phone, Mail, CreditCard, Home } from 'lucide-react'
+import { Calendar, Clock, MapPin, User, Phone, Mail, CreditCard, Home, CheckCircle } from 'lucide-react'
 import { SelectLocationOverlay } from '../components/selectLocation'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -24,7 +24,8 @@ export default function BookingForm() {
         longitude: '',
         service: service,
         technician_id: technicianId,
-        final_price: finalPrice
+        final_price: finalPrice,
+        paymentMethod: 'cash' // New field for payment method
     })
 
     const [showMapOverlay, setShowMapOverlay] = useState(false)
@@ -33,7 +34,8 @@ export default function BookingForm() {
     const [currentStep, setCurrentStep] = useState(1)
     const [agreed, setAgreed] = useState(false)
     const [errors, setErrors] = useState({})
-    const totalSteps = 4
+    const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+    const totalSteps = 5 // Updated to 5 steps
 
     const handleInputChange = (e) => {
         const { name, value } = e.target
@@ -46,6 +48,39 @@ export default function BookingForm() {
                 ...prev,
                 [name]: value
             }))
+        }
+    }
+
+    const handlePaymentMethodChange = (paymentMethod) => {
+        setFormData(prev => ({
+            ...prev,
+            paymentMethod: paymentMethod
+        }))
+
+        if (paymentMethod === 'khalti') {
+            // Validate all previous steps before redirecting
+            if (validateStep(1) && validateStep(2) && validateStep(3)) {
+                // Store current form data in localStorage before redirecting
+                const bookingData = {
+                    ...formData,
+                    paymentMethod: 'khalti',
+                    startTime: startTime,
+                    endTime: endTime
+                }
+                
+                // Store data to complete the booking after payment
+                localStorage.setItem('pendingBookingData', JSON.stringify(bookingData))
+                
+                // Redirect to Khalti payment page
+                navigate(`/payment/khalti/${technicianId}`)
+            } else {
+                // If validation fails, show error and don't redirect
+                alert('Please complete all previous steps before proceeding to payment')
+                setFormData(prev => ({
+                    ...prev,
+                    paymentMethod: 'cash' // Reset to cash if validation fails
+                }))
+            }
         }
     }
 
@@ -80,7 +115,12 @@ export default function BookingForm() {
                 newErrors.endTime = 'End time must be after start time'
             }
         }
+
         if (step === 4) {
+            if (!formData.paymentMethod) newErrors.paymentMethod = 'Please select a payment method'
+        }
+
+        if (step === 5) {
             if (!agreed) newErrors.checkbox = 'Please accept terms and conditions'
         }
 
@@ -90,6 +130,11 @@ export default function BookingForm() {
 
     const nextStep = () => {
         if (validateStep(currentStep) && currentStep < totalSteps) {
+            // For step 4 (payment), ensure a payment method is selected
+            if (currentStep === 4 && !formData.paymentMethod) {
+                setErrors({ paymentMethod: 'Please select a payment method' })
+                return
+            }
             setCurrentStep(currentStep + 1)
         }
     }
@@ -104,7 +149,7 @@ export default function BookingForm() {
     const handleSubmit = async (e) => {
         e.preventDefault()
 
-        if (validateStep(4)) {
+        if (validateStep(5)) {
 
             if (!formData.latitude || !formData.longitude) {
                 const location = formData.address;
@@ -161,7 +206,8 @@ export default function BookingForm() {
                         contactPreference: formData.contactPreference,
                         latitude: formData.latitude || '0',
                         longitude: formData.longitude || '0',
-                        final_price: formData.final_price || '0'
+                        final_price: formData.final_price || '0',
+                        paymentMethod: formData.paymentMethod
                     })
                 })
 
@@ -169,10 +215,10 @@ export default function BookingForm() {
 
                 if (response.ok) {
                     console.log('Booking created successfully:', data.booking)
+                    setShowSuccessMessage(true)
                     setTimeout(() => {
                         navigate('/client/dashboard', { replace: true })
                     }, 5000)
-                    // You can redirect or reset form here
                 } else {
                     console.error('Error creating booking:', data.error)
                     alert('Error creating booking: ' + data.error)
@@ -187,7 +233,7 @@ export default function BookingForm() {
     const renderProgressBar = () => (
         <div className="mb-8">
             <div className="flex items-center justify-between mb-2">
-                {[1, 2, 3, 4].map((step) => (
+                {[1, 2, 3, 4, 5].map((step) => (
                     <div
                         key={step}
                         className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold ${step <= currentStep
@@ -209,6 +255,7 @@ export default function BookingForm() {
                 <span>Personal Info</span>
                 <span>Address</span>
                 <span>Schedule</span>
+                <span>Payment</span>
                 <span>Review</span>
             </div>
         </div>
@@ -530,6 +577,73 @@ export default function BookingForm() {
         <div className="space-y-6">
             <div className="flex items-center mb-6">
                 <CreditCard className="w-6 h-6 text-blue-600 mr-3" />
+                <h2 className="text-2xl font-bold text-gray-800">Payment Method</h2>
+            </div>
+
+            <div className="bg-gray-50 rounded-lg p-6">
+                <h3 className="font-semibold text-gray-800 mb-4">Choose Your Payment Method *</h3>
+                <div className="space-y-4">
+                    <button
+                        type="button"
+                        onClick={() => handlePaymentMethodChange('khalti')}
+                        className="w-full flex items-center p-4 border-2 border-blue-200 bg-blue-50 rounded-lg hover:border-blue-400 hover:bg-blue-100 cursor-pointer transition-all duration-200 transform hover:scale-[1.02]"
+                    >
+                        <div className="flex-1 text-left">
+                            <div className="font-medium text-blue-800 text-lg">Pay with Khalti</div>
+                            <div className="text-sm text-blue-600">Secure digital wallet payment - Click to proceed</div>
+                        </div>
+                        <div className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium">
+                            Pay Now
+                        </div>
+                    </button>
+                    
+                    <label className={`w-full flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                        formData.paymentMethod === 'cash' 
+                            ? 'border-green-400 bg-green-50' 
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}>
+                        <input
+                            type="radio"
+                            name="paymentMethod"
+                            value="cash"
+                            checked={formData.paymentMethod === 'cash'}
+                            onChange={handleInputChange}
+                            className="mr-4 h-4 w-4 text-green-600"
+                        />
+                        <div className="flex-1">
+                            <div className={`font-medium text-lg ${
+                                formData.paymentMethod === 'cash' ? 'text-green-800' : 'text-gray-800'
+                            }`}>
+                                Cash on Service Completion
+                            </div>
+                            <div className={`text-sm ${
+                                formData.paymentMethod === 'cash' ? 'text-green-600' : 'text-gray-600'
+                            }`}>
+                                Pay in cash after the service is completed
+                            </div>
+                        </div>
+                        {formData.paymentMethod === 'cash' && (
+                            <div className="ml-4 w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
+                                <CheckCircle className="w-4 h-4 text-white" />
+                            </div>
+                        )}
+                    </label>
+                </div>
+                {errors.paymentMethod && <p className="text-red-500 text-xs mt-2">{errors.paymentMethod}</p>}
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-semibold text-blue-800 mb-2">Service Cost</h3>
+                <div className="text-2xl font-bold text-blue-900">Rs. {finalPrice || '0'}</div>
+                <p className="text-sm text-blue-700 mt-1">Final price includes all applicable taxes and fees</p>
+            </div>
+        </div>
+    )
+
+    const renderStep5 = () => (
+        <div className="space-y-6">
+            <div className="flex items-center mb-6">
+                <CheckCircle className="w-6 h-6 text-blue-600 mr-3" />
                 <h2 className="text-2xl font-bold text-gray-800">Review & Confirm</h2>
             </div>
 
@@ -568,6 +682,14 @@ export default function BookingForm() {
                         </div>
                     )}
                 </div>
+
+                <div>
+                    <h3 className="font-semibold text-gray-800 mb-3">Payment Information</h3>
+                    <div className="text-sm">
+                        <p><span className="font-medium">Payment Method:</span> {formData.paymentMethod === 'khalti' ? 'Via Khalti' : 'Cash on Service Completion'}</p>
+                        <p><span className="font-medium">Total Amount:</span> Rs. {finalPrice || '0'}</p>
+                    </div>
+                </div>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -586,11 +708,35 @@ export default function BookingForm() {
                 {errors.checkbox && <p className="text-red-500 text-xs mt-1">{errors.checkbox}</p>}
             </div>
         </div>
-
-
     )
+
+    // Success Message Component
+    const SuccessMessage = () => (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">Booking Confirmed!</h2>
+                <p className="text-gray-600 mb-4">
+                    Your service has been successfully booked. You will receive a confirmation email shortly.
+                </p>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                    <p className="text-sm text-green-800">
+                        <strong>What's next?</strong><br />
+                        • You'll receive booking confirmation via email<br />
+                        • Our technician will contact you before the scheduled time<br />
+                        • Redirecting to dashboard in a few seconds...
+                    </p>
+                </div>
+            </div>
+        </div>
+    )
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+            {showSuccessMessage && <SuccessMessage />}
+            
             <div className="max-w-4xl mx-auto">
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                     <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6">
@@ -611,6 +757,7 @@ export default function BookingForm() {
                             {currentStep === 2 && renderStep2()}
                             {currentStep === 3 && renderStep3()}
                             {currentStep === 4 && renderStep4()}
+                            {currentStep === 5 && renderStep5()}
 
                             <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
                                 <button

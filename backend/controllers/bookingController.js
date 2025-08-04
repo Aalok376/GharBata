@@ -31,7 +31,8 @@ router.post('/create', verifyToken, async (req, res) => {
       contactPreference,
       latitude,
       longitude,
-      final_price
+      final_price,
+      paymentMethod
     } = req.body
 
     const userId = req.user.id
@@ -81,6 +82,7 @@ router.post('/create', verifyToken, async (req, res) => {
       longitude,
       final_price,
       booking_status: 'pending',
+      paymentMethod,
       // Initialize status history with the initial 'pending' status
       status_history: [{
         status: 'pending',
