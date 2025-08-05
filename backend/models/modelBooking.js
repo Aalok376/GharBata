@@ -36,6 +36,10 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  refunded: {
+    type: Boolean,
+    default: false,
+  },
   streetAddress: {
     type: String,
     required: true,

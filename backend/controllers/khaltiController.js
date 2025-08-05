@@ -47,7 +47,7 @@ export const initiatePayment = async (req, res) => {
 
 
     try {
-        const { amount, orderId, customerInfo, productDetails, technicianId, service } = req.body
+        const { amount, orderId, customerInfo, productDetails, returnUrl } = req.body
         const userId = req.user.id
 
         if (!amount || !orderId || !customerInfo) {
@@ -60,7 +60,7 @@ export const initiatePayment = async (req, res) => {
         }
 
         const payload = {
-            return_url: `${process.env.FRONTEND_URL}/client/dashboard/booking/${service}/${technicianId}/${amount}`,
+            return_url: returnUrl,
             website_url: process.env.FRONTEND_URL,
             amount: Math.round(amount * 100),
             purchase_order_id: orderId,

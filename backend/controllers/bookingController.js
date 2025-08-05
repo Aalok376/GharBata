@@ -1197,6 +1197,31 @@ router.get('/:technicianId/reviews', async (req, res) => {
   }
 })
 
+router.patch('/:id/refund', async (req, res) => {
+  try {
+    const bookingId = req.params.id;
+
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      bookingId,
+      { refunded: true },
+      { new: true }
+    );
+
+    if (!updatedBooking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Booking refunded successfully',
+      booking: updatedBooking
+    });
+  } catch (error) {
+    console.error('Error updating refund status:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+})
+
 function requireRole(role) {
   return async (req, res, next) => {
     try {

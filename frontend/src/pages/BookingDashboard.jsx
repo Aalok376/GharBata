@@ -1,6 +1,441 @@
 import React, { useState, useEffect } from 'react'
-import { Calendar, Clock, User, Phone, Mail, MapPin, CheckCircle, XCircle, Play, Square, Edit, Eye, Filter, ChevronLeft, ChevronRight, Star, MessageSquare, Navigation, BarChart3, Search } from 'lucide-react'
+import { Calendar, Clock, User, Phone, Mail, MapPin, CheckCircle, XCircle, Play, Square, Edit, Eye, Filter, ChevronLeft, ChevronRight, Star, MessageSquare, Navigation, BarChart3, Search, CreditCard, X } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
+
+const API_BASE_URL = 'http://localhost:5000'
+const FRONTEND_URL = 'http://localhost:5173'
+
+// Enhanced Refund Payment Callback Component with detailed debugging
+const RefundPaymentCallback = ({ onComplete }) => {
+  const [paymentStatus, setPaymentStatus] = useState('verifying')
+  const [paymentData, setPaymentData] = useState(null)
+  const [refundProcessed, setRefundProcessed] = useState(false)
+  const [debugInfo, setDebugInfo] = useState([])
+
+  const addDebugInfo = (message) => {
+    console.log(`[RefundPaymentCallback] ${message}`)
+    setDebugInfo(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`])
+  }
+
+  useEffect(() => {
+    addDebugInfo('RefundPaymentCallback component mounted')
+    verifyPayment()
+  }, [])
+
+  const verifyPayment = async () => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const pidx = urlParams.get('pidx')
+    const status = urlParams.get('status')
+
+    addDebugInfo(`URL Parameters: pidx=${pidx}, status=${status}`)
+
+    // Check stored data
+    const refundData = sessionStorage.getItem('refundPaymentData')
+    addDebugInfo(`SessionStorage - refundPaymentData: ${refundData ? 'EXISTS' : 'MISSING'}`)
+
+    if (!pidx) {
+      addDebugInfo('ERROR: No pidx found in URL')
+      setPaymentStatus('error')
+      return
+    }
+
+    try {
+      addDebugInfo('Starting refund payment verification...')
+      const response = await fetch(`${API_BASE_URL}/api/payment/verify`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ pidx }),
+      })
+
+      addDebugInfo(`Verify API Response Status: ${response.status}`)
+      const result = await response.json()
+      addDebugInfo(`Verify API Response: ${JSON.stringify(result)}`)
+
+      if (result.success && result.data) {
+        setPaymentData(result.data)
+        const verifiedStatus = result.data.status.toLowerCase()
+        setPaymentStatus(verifiedStatus)
+        addDebugInfo(`Refund payment status set to: ${verifiedStatus}`)
+
+        if (verifiedStatus === 'completed') {
+          addDebugInfo('Refund payment completed, processing refund...')
+          await completeRefundAfterPayment(result.data)
+        }
+      } else {
+        addDebugInfo(`Refund payment verification failed: ${result.message || 'Unknown error'}`)
+        setPaymentStatus('error')
+      }
+    } catch (error) {
+      addDebugInfo(`Refund payment verification error: ${error.message}`)
+      setPaymentStatus('error')
+    }
+  }
+
+  const completeRefundAfterPayment = async (paymentResult) => {
+    const refundDataStr = sessionStorage.getItem('refundPaymentData')
+
+    if (!refundDataStr) {
+      addDebugInfo('ERROR: No refund data found in sessionStorage')
+      alert('Error: No refund data found. Please try again.')
+      return
+    }
+
+    try {
+      const refundData = JSON.parse(refundDataStr)
+      addDebugInfo(`Retrieved refund data: ${JSON.stringify(refundData)}`)
+
+      // Update booking refund status
+      addDebugInfo(`Calling refund API for booking: ${refundData.booking_id}`)
+      const refundResponse = await fetch(`${API_BASE_URL}/api/bookings/${refundData.booking_id}/refund`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+
+      const refundResult = await refundResponse.json()
+      addDebugInfo(`Refund API Response: ${JSON.stringify(refundResult)}`)
+
+      if (refundResult.success) {
+        addDebugInfo('Refund processing completed successfully!')
+        setRefundProcessed(true)
+      } else {
+        throw new Error(refundResult.message || 'Failed to update refund status')
+      }
+
+      // Clear stored data
+      sessionStorage.removeItem('refundPaymentData')
+      addDebugInfo('SessionStorage cleared')
+
+      // Redirect after delay
+      setTimeout(() => {
+        addDebugInfo('Calling onComplete(true)')
+        onComplete(true)
+      }, 3000)
+
+    } catch (error) {
+      addDebugInfo(`Refund completion error: ${error.message}`)
+      alert('Refund payment successful but processing failed: ' + error.message)
+      setPaymentStatus('error')
+    }
+  }
+
+  const getStatusMessage = () => {
+    switch (paymentStatus) {
+      case 'completed':
+        if (refundProcessed) {
+          return {
+            message: 'Refund Processed Successfully!',
+            subtitle: 'Returning to dashboard...',
+            className: 'success',
+            icon: '✅'
+          }
+        } else {
+          return {
+            message: 'Refund Payment Successful!',
+            subtitle: 'Processing your refund...',
+            className: 'success',
+            icon: '✅'
+          }
+        }
+      case 'pending':
+        return {
+          message: 'Refund payment is being processed...',
+          subtitle: 'Please wait while we verify your refund payment',
+          className: 'pending',
+          icon: '⏳'
+        }
+      case 'failed':
+      case 'expired':
+      case 'canceled':
+        return {
+          message: 'Refund Payment Failed or Cancelled',
+          subtitle: 'The refund payment was not completed',
+          className: 'error',
+          icon: '❌'
+        }
+      case 'verifying':
+        return {
+          message: 'Verifying refund payment...',
+          subtitle: 'Please wait while we confirm your refund payment',
+          className: 'pending',
+          icon: '🔄'
+        }
+      case 'error':
+        return {
+          message: 'An error occurred',
+          subtitle: 'There was a problem processing your refund',
+          className: 'error',
+          icon: '❌'
+        }
+      default:
+        return {
+          message: 'Unknown refund status',
+          subtitle: 'Please contact support if this persists',
+          className: 'error',
+          icon: '❓'
+        }
+    }
+  }
+
+  const statusInfo = getStatusMessage()
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className={`bg-white p-8 rounded-xl shadow-lg text-center max-w-2xl mx-auto border-t-4 ${statusInfo.className === 'success' ? 'border-green-500' :
+        statusInfo.className === 'error' ? 'border-red-500' : 'border-yellow-500'
+        }`}>
+        <div className="text-5xl mb-4">{statusInfo.icon}</div>
+        <h2 className="text-2xl font-bold mb-2 text-gray-800">{statusInfo.message}</h2>
+        <p className="text-gray-600 mb-6">{statusInfo.subtitle}</p>
+
+        {paymentData && (
+          <div className="bg-gray-50 p-4 rounded-lg mb-6 text-left">
+            <h3 className="text-lg font-semibold text-purple-700 mb-3">Refund Payment Details</h3>
+            <div className="space-y-2 text-sm">
+              <p><strong>Amount:</strong> NPR {paymentData.amount}</p>
+              <p><strong>Transaction ID:</strong> {paymentData.transaction_id || 'N/A'}</p>
+              <p><strong>Status:</strong> {paymentData.status}</p>
+              {paymentData.pidx && <p><strong>Payment ID:</strong> {paymentData.pidx}</p>}
+            </div>
+          </div>
+        )}
+
+        {/* Debug Information Panel - Only show in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 text-left">
+            <h4 className="font-bold text-yellow-800 mb-2">Debug Information:</h4>
+            <div className="max-h-40 overflow-y-auto text-xs text-yellow-700 space-y-1">
+              {debugInfo.map((info, index) => (
+                <div key={index} className="font-mono">{info}</div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {paymentStatus === 'completed' && !refundProcessed && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <p className="text-sm text-blue-800">
+              Your refund payment was successful! We're now processing your refund...
+            </p>
+          </div>
+        )}
+
+        {refundProcessed && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+            <p className="text-sm text-green-800">
+              🎉 Your refund has been processed successfully! You will be redirected to the dashboard shortly.
+            </p>
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          {(paymentStatus === 'failed' || paymentStatus === 'canceled' || paymentStatus === 'error') && (
+            <button
+              onClick={() => onComplete(false)}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105"
+            >
+              Back to Dashboard
+            </button>
+          )}
+
+          {/* Debug button - Only show in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <button
+              onClick={() => {
+                console.log('Current debugInfo:', debugInfo)
+                console.log('SessionStorage contents:', {
+                  refundPaymentData: sessionStorage.getItem('refundPaymentData')
+                })
+              }}
+              className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg text-sm"
+            >
+              Log Debug Info
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Enhanced Khalti Refund Overlay Component
+const KhaltiRefundOverlay = ({ isOpen, onClose, booking, onRefundComplete }) => {
+  const [customerInfo, setCustomerInfo] = useState(null)
+  const [refundInitiating, setRefundInitiating] = useState(false)
+  const { technicianId } = useParams()
+
+  useEffect(() => {
+    const fetchCustomerInfo = async () => {
+      if (!isOpen || !booking?.client_id) return
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/payment/getPaymentsdetails`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ clientId: booking.client_id })
+        })
+
+        const result = await response.json()
+
+        setCustomerInfo({
+          name: `${result.fname} ${result.lname}`,
+          email: result.username,
+          phone: result.khaltiNumber
+        })
+      } catch (error) {
+        console.error('Error fetching customer info:', error)
+      }
+    }
+
+    fetchCustomerInfo()
+  }, [isOpen, booking?.client_id])
+
+  const handleKhaltiRefund = async () => {
+
+    if (!customerInfo) return
+
+    setRefundInitiating(true)
+    const orderId = `REFUND_${Date.now()}`
+
+    // Store refund data for after payment completion
+    const completeRefundData = {
+      booking_id: booking._id,
+      client_id: booking.client_id,
+      original_amount: booking.final_price,
+      refund_reason: 'Booking cancelled',
+      orderId: orderId
+    }
+
+    // Store refund data for after payment
+    sessionStorage.setItem('refundPaymentData', JSON.stringify(completeRefundData))
+
+    const refundData = {
+      amount: parseInt(booking.final_price) || 10,
+      orderId,
+      customerInfo: {
+        name: customerInfo.name,
+        username: customerInfo.email,
+        phone: customerInfo.phone
+      },
+      productDetails: {
+        name: `Refund - ${booking.service}`,
+        identity: orderId,
+        quantity: 1
+      },
+      returnUrl: `${FRONTEND_URL}/professional/bookings/${technicianId}`
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/payment/initiate`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(refundData),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // Store payment info for callback handling
+        sessionStorage.setItem('khaltiRefundData', JSON.stringify(result.data))
+
+        // Redirect to Khalti payment page for refund
+        window.location.href = result.data.payment_url
+      } else {
+        alert('Refund initiation failed: ' + result.message)
+        setRefundInitiating(false)
+      }
+    } catch (error) {
+      console.error('Refund initiation error:', error)
+      alert('Refund initiation failed: ' + error.message)
+      setRefundInitiating(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+        >
+          <X className="w-6 h-6" />
+        </button>
+
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CreditCard className="w-8 h-8 text-red-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Process Refund</h2>
+          <p className="text-gray-600">Process refund for cancelled booking</p>
+        </div>
+
+        {customerInfo ? (
+          <div className="space-y-4">
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-semibold text-gray-800 mb-3">Booking Details</h3>
+              <div className="space-y-2 text-sm">
+                <p><span className="font-medium">Service:</span> {booking.service}</p>
+                <p><span className="font-medium">Customer:</span> {booking.fname} {booking.lname}</p>
+                <p><span className="font-medium">Date:</span> {new Date(booking.scheduled_date).toLocaleDateString()}</p>
+                <p><span className="font-medium">Refund Amount:</span> <span className="text-2xl font-bold text-red-600">Rs. {booking.final_price}</span></p>
+              </div>
+            </div>
+
+            <div className="bg-red-50 p-4 rounded-lg">
+              <h3 className="font-semibold text-red-800 mb-3">Customer Information</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center">
+                  <User className="w-4 h-4 text-red-600 mr-2" />
+                  <span>{customerInfo.name}</span>
+                </div>
+                <div className="flex items-center">
+                  <Mail className="w-4 h-4 text-red-600 mr-2" />
+                  <span>{customerInfo.email}</span>
+                </div>
+                <div className="flex items-center">
+                  <Phone className="w-4 h-4 text-red-600 mr-2" />
+                  <span>{customerInfo.phone}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p className="text-sm text-yellow-800">
+                <strong>Note:</strong> This will initiate a refund process through Khalti.
+                The customer will need to complete the refund authorization.
+              </p>
+            </div>
+
+            <button
+              onClick={handleKhaltiRefund}
+              disabled={refundInitiating}
+              className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white font-bold py-3 px-6 rounded-lg hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105"
+            >
+              {refundInitiating ? 'Redirecting to Khalti...' : 'Process Refund via Khalti'}
+            </button>
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-red-600">Loading customer information...</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 const BookingDashboard = () => {
   // Get technician_id from URL params or use a default for demo
@@ -13,6 +448,8 @@ const BookingDashboard = () => {
   const [selectedBooking, setSelectedBooking] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [modalType, setModalType] = useState('')
+  const [showRefundOverlay, setShowRefundOverlay] = useState(false)
+  const [showRefundCallback, setShowRefundCallback] = useState(false)
   const [filters, setFilters] = useState({
     status: '',
     technician_id: technicianId,
@@ -29,6 +466,18 @@ const BookingDashboard = () => {
   const [formErrors, setFormErrors] = useState({})
 
   const API_BASE = 'http://localhost:5000/api/bookings'
+
+  // Enhanced callback detection for refund - similar to first code
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const allPidx = urlParams.getAll('pidx')
+    const pidx = allPidx.find(p => p && p.trim() !== '') || null
+
+    if (pidx) {
+      console.log('Refund callback detected with pidx:', pidx)
+      setShowRefundCallback(true)
+    }
+  }, [])
 
   const fetchBookings = async (page = 1) => {
     setLoading(true)
@@ -77,7 +526,7 @@ const BookingDashboard = () => {
 
   const validateForm = (type, data) => {
     const errors = {}
-    
+
     switch (type) {
       case 'reject':
         if (!data.rejection_reason || data.rejection_reason.trim() === '') {
@@ -90,7 +539,7 @@ const BookingDashboard = () => {
         }
         break
     }
-    
+
     return errors
   }
 
@@ -138,6 +587,11 @@ const BookingDashboard = () => {
     setFormErrors({})
   }
 
+  const openRefundModal = (booking) => {
+    setSelectedBooking(booking)
+    setShowRefundOverlay(true)
+  }
+
   const getStatusColor = (status) => {
     const colors = {
       pending: 'bg-yellow-100 text-yellow-800',
@@ -165,8 +619,52 @@ const BookingDashboard = () => {
       : booking.technician_id
   }
 
+  // Check if booking is refundable (cancelled, khalti payment, not already refunded)
+  const isRefundable = (booking) => {
+    return booking.booking_status === 'cancelled' &&
+      booking.paymentMethod === 'khalti' &&
+      !booking.refunded
+  }
+
+  // Show refund payment callback if needed - similar to first code's payment callback
+  if (showRefundCallback) {
+    return (
+      <RefundPaymentCallback
+        onComplete={(success) => {
+          if (success) {
+            // Clear session storage
+            sessionStorage.removeItem('refundPaymentData')
+            sessionStorage.removeItem('khaltiRefundData')
+            setShowRefundCallback(false)
+            // Clear URL parameters
+            window.history.replaceState({}, document.title, window.location.pathname)
+            // Refresh bookings
+            fetchBookings(pagination.current_page)
+            fetchStats()
+          } else {
+            sessionStorage.removeItem('refundPaymentData')
+            sessionStorage.removeItem('khaltiRefundData')
+            setShowRefundCallback(false)
+            window.history.replaceState({}, document.title, window.location.pathname)
+          }
+        }}
+      />
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Khalti Refund Overlay */}
+      <KhaltiRefundOverlay
+        isOpen={showRefundOverlay}
+        onClose={() => setShowRefundOverlay(false)}
+        booking={selectedBooking}
+        onRefundComplete={() => {
+          setShowRefundOverlay(false)
+          fetchBookings(pagination.current_page)
+        }}
+      />
+
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -328,17 +826,35 @@ const BookingDashboard = () => {
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(booking.booking_status)}`}>
                               {booking.booking_status.replace('_', ' ').toUpperCase()}
                             </span>
+                            {booking.refunded && (
+                              <div className="mt-1">
+                                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                  REFUNDED
+                                </span>
+                              </div>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             Rs.{booking.final_price}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button
-                              onClick={() => openModal('view', booking)}
-                              className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-1 rounded-lg transition-colors"
-                            >
-                              View Details
-                            </button>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => openModal('view', booking)}
+                                className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-1 rounded-lg transition-colors"
+                              >
+                                View Details
+                              </button>
+                              {/* Add Refund Button for cancelled Khalti bookings that are not already refunded */}
+                              {isRefundable(booking) && (
+                                <button
+                                  onClick={() => openRefundModal(booking)}
+                                  className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-1 rounded-lg transition-colors"
+                                >
+                                  Refund
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -540,11 +1056,19 @@ const BookingDashboard = () => {
                         <p><span className="font-medium">Date:</span> {new Date(selectedBooking.scheduled_date).toLocaleDateString()}</p>
                         <p><span className="font-medium">Time:</span> {selectedBooking.scheduled_StartTime}-{selectedBooking.scheduled_EndTime}</p>
                         <p><span className="font-medium">Price:</span> Rs.{selectedBooking.final_price}</p>
+                        <p><span className="font-medium">Payment:</span> {selectedBooking.paymentMethod || 'cash'}</p>
                         <p><span className="font-medium">Status:</span>
                           <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedBooking.booking_status)}`}>
                             {selectedBooking.booking_status.replace('_', ' ').toUpperCase()}
                           </span>
                         </p>
+                        {selectedBooking.refunded && (
+                          <p><span className="font-medium">Refund Status:</span>
+                            <span className="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                              REFUNDED
+                            </span>
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -673,9 +1197,33 @@ const BookingDashboard = () => {
                         </button>
                       )}
 
-                      {['completed', 'cancelled'].includes(selectedBooking.booking_status) && (
+                      {/* Refund button for cancelled Khalti bookings that are not already refunded */}
+                      {isRefundable(selectedBooking) && (
+                        <button
+                          onClick={() => {
+                            setShowModal(false)
+                            setTimeout(() => openRefundModal(selectedBooking), 100)
+                          }}
+                          className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+                        >
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          Process Refund
+                        </button>
+                      )}
+
+                      {selectedBooking.booking_status === 'completed' && (
                         <div className="text-sm text-gray-500 italic py-2">
-                          No actions available for {selectedBooking.booking_status} bookings.
+                          No actions available for completed bookings.
+                        </div>
+                      )}
+
+                      {selectedBooking.booking_status === 'cancelled' && !isRefundable(selectedBooking) && (
+                        <div className="text-sm text-gray-500 italic py-2">
+                          {selectedBooking.refunded
+                            ? 'Booking has already been refunded.'
+                            : selectedBooking.paymentMethod !== 'khalti'
+                              ? 'No actions available for cancelled cash bookings.'
+                              : 'No actions available.'}
                         </div>
                       )}
                     </div>
@@ -719,9 +1267,8 @@ const BookingDashboard = () => {
                           setFormErrors({ ...formErrors, rejection_reason: '' })
                         }
                       }}
-                      className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        formErrors.rejection_reason ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${formErrors.rejection_reason ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       rows="3"
                       placeholder="Please provide a reason for rejection..."
                     />
@@ -829,9 +1376,8 @@ const BookingDashboard = () => {
                           setFormErrors({ ...formErrors, cancellation_reason: '' })
                         }
                       }}
-                      className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        formErrors.cancellation_reason ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${formErrors.cancellation_reason ? 'border-red-500' : 'border-gray-300'
+                        }`}
                       rows="3"
                       placeholder="Please provide a reason for cancellation..."
                     />
