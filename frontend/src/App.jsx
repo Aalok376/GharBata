@@ -25,7 +25,6 @@ import TechnicianReviewsPage from './pages/reviewsPage'
 import MapPickerModal from './pages/MapPicker'
 import MessagingApp from './pages/chatPage'
 import PaymentDashboard from './pages/earningDashboard'
-import Khaltipage from './pages/khaltee'
 
 import AdminDashboard from './pages/adminDashboard'
 
