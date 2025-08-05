@@ -30,7 +30,7 @@ const PaymentCallback = ({ onComplete }) => {
 
     addDebugInfo(`URL Parameters: pidx=${pidx}, status=${status}`)
 
-    // Check stored data
+    // Check sessionStorage contents
     const pendingData = sessionStorage.getItem('pendingBookingData')
     const khaltiData = sessionStorage.getItem('khaltiPaymentData')
     addDebugInfo(`SessionStorage - pendingBookingData: ${pendingData ? 'EXISTS' : 'MISSING'}`)
@@ -46,7 +46,6 @@ const PaymentCallback = ({ onComplete }) => {
       addDebugInfo('Starting payment verification...')
       const response = await fetch(`${API_BASE_URL}/api/payment/verify`, {
         method: 'POST',
-        credentials:'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -314,11 +313,10 @@ const PaymentCallback = ({ onComplete }) => {
   )
 }
 
-// Enhanced Khalti Payment Overlay with availability check
+// Enhanced Khalti Payment Overlay
 const KhaltiPaymentOverlay = ({ isOpen, onClose, formData, startTime, endTime, onPaymentComplete }) => {
   const [customerInfo, setCustomerInfo] = useState(null)
   const [paymentInitiating, setPaymentInitiating] = useState(false)
-  const [checkingAvailability, setCheckingAvailability] = useState(false)
 
   useEffect(() => {
     const fetchCustomerInfo = async () => {
@@ -349,50 +347,8 @@ const KhaltiPaymentOverlay = ({ isOpen, onClose, formData, startTime, endTime, o
     fetchCustomerInfo()
   }, [isOpen, formData.technician_id])
 
-  // Check availability before initiating payment
-  const checkAvailability = async () => {
-    setCheckingAvailability(true)
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/bookings/check-availability`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          technician_id: formData.technician_id,
-          scheduled_date: formData.date,
-          scheduled_StartTime: startTime,
-          scheduled_EndTime: endTime
-        }),
-      })
-
-      const result = await response.json()
-
-      if (response.ok && result.available) {
-        return true
-      } else {
-        alert(result.message || 'Technician is not available at this time. Please select a different time slot.')
-        return false
-      }
-    } catch (error) {
-      console.error('Error checking availability:', error)
-      alert('Error checking technician availability. Please try again.')
-      return false
-    } finally {
-      setCheckingAvailability(false)
-    }
-  }
-
   const handleKhaltiPayment = async () => {
     if (!customerInfo) return
-
-    // First check availability
-    const isAvailable = await checkAvailability()
-    if (!isAvailable) {
-      return
-    }
 
     setPaymentInitiating(true)
     const orderId = `BOOKING_${Date.now()}`
@@ -445,7 +401,6 @@ const KhaltiPaymentOverlay = ({ isOpen, onClose, formData, startTime, endTime, o
     try {
       const response = await fetch(`${API_BASE_URL}/api/payment/initiate`, {
         method: 'POST',
-        credentials:'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -523,12 +478,10 @@ const KhaltiPaymentOverlay = ({ isOpen, onClose, formData, startTime, endTime, o
 
             <button
               onClick={handleKhaltiPayment}
-              disabled={paymentInitiating || checkingAvailability}
+              disabled={paymentInitiating}
               className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold py-3 px-6 rounded-lg hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105"
             >
-              {checkingAvailability ? 'Checking Availability...' : 
-               paymentInitiating ? 'Redirecting to Khalti...' : 
-               'Pay with Khalti'}
+              {paymentInitiating ? 'Redirecting to Khalti...' : 'Pay with Khalti'}
             </button>
           </div>
         ) : (
@@ -582,7 +535,6 @@ export default function BookingForm() {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
   const [showKhaltiOverlay, setShowKhaltiOverlay] = useState(false)
   const [showPaymentCallback, setShowPaymentCallback] = useState(false)
-  const [checkingAvailability, setCheckingAvailability] = useState(false)
   const totalSteps = 5
 
   // Enhanced callback detection
@@ -672,50 +624,8 @@ export default function BookingForm() {
     }
   }
 
-  // Check availability before cash booking
-  const checkAvailability = async () => {
-    setCheckingAvailability(true)
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/bookings/check-availability`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          technician_id: formData.technician_id,
-          scheduled_date: formData.date,
-          scheduled_StartTime: startTime,
-          scheduled_EndTime: endTime
-        }),
-      })
-
-      const result = await response.json()
-
-      if (response.ok && result.available) {
-        return true
-      } else {
-        alert(result.message || 'Technician is not available at this time. Please select a different time slot.')
-        return false
-      }
-    } catch (error) {
-      console.error('Error checking availability:', error)
-      alert('Error checking technician availability. Please try again.')
-      return false
-    } finally {
-      setCheckingAvailability(false)
-    }
-  }
-
   const handleCashBooking = async () => {
     if (!validateStep(5)) return
-
-    // Check availability first
-    const isAvailable = await checkAvailability()
-    if (!isAvailable) {
-      return
-    }
 
     let finalFormData = { ...formData }
 
@@ -1109,7 +1019,6 @@ export default function BookingForm() {
               name="startTime"
               value={startTime}
               onChange={handleInputChange}
-              step="60"
               className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.startTime ? 'border-red-500' : 'border-gray-300'
                 }`}
               required
@@ -1119,7 +1028,6 @@ export default function BookingForm() {
               name="endTime"
               value={endTime}
               onChange={handleInputChange}
-              step="60"
               className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.endTime ? 'border-red-500' : 'border-gray-300'
                 }`}
               required
@@ -1397,10 +1305,10 @@ export default function BookingForm() {
                       <button
                         type="button"
                         onClick={handleCashBooking}
-                        disabled={!formData.paymentMethod || checkingAvailability}
+                        disabled={!formData.paymentMethod}
                         className="px-8 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
                       >
-                        {checkingAvailability ? 'Checking Availability...' : 'Confirm Booking'}
+                        Confirm Booking
                       </button>
                     ) : formData.paymentMethod === 'khalti' ? (
                       <button

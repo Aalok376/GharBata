@@ -12,12 +12,16 @@ const clientSchema = new mongoose.Schema({
     trim: true
   },
   profilePic: {
-   type:String,
-   default:null
+    type: String,
+    default: null
   },
   contactNumber: {
     type: String,
     default: null
+  },
+  khaltiNumber: {
+    type: String,
+    default: null,
   }
 }, {
   timestamps: true

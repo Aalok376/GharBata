@@ -9,7 +9,38 @@ import { getIssuesStatistics } from '../utils/issueStats.js'
 
 const router = express.Router()
 
-// CREATE BOOKING
+
+router.post('/check-availability', verifyToken, async (req, res) => {
+  try {
+    const { technician_id, scheduled_date, scheduled_StartTime, scheduled_EndTime } = req.body
+
+    if (!technician_id || !scheduled_date || !scheduled_StartTime || !scheduled_EndTime) {
+      return res.status(400).json({ error: 'Missing required fields for availability check' })
+    }
+
+    const technician = await Technician.findById(technician_id)
+    if (!technician) {
+      return res.status(404).json({ error: 'Technician not found' })
+    }
+
+    const existingBooking = await Booking.findOne({
+      technician_id,
+      scheduled_date: new Date(scheduled_date),
+      scheduled_StartTime,
+      scheduled_EndTime,
+      booking_status: { $in: ['pending', 'confirmed', 'in_progress'] }
+    })
+
+    if (existingBooking) {
+      return res.status(409).json({ available: false, message: 'Technician is not available at this time' })
+    }
+
+    return res.status(200).json({ available: true, message: 'Technician is available' })
+  } catch (error) {
+    return res.status(500).json({ error: 'Server error while checking availability' })
+  }
+})
+
 router.post('/create', verifyToken, async (req, res) => {
   try {
     const {
@@ -36,7 +67,7 @@ router.post('/create', verifyToken, async (req, res) => {
     } = req.body
 
     const userId = req.user.id
-    // Validate client and technician exist
+
     const client = await Client.findOne({ client_id: userId })
     const technician = await Technician.findById(technician_id)
 
@@ -45,19 +76,6 @@ router.post('/create', verifyToken, async (req, res) => {
     }
     if (!technician) {
       return res.status(404).json({ error: 'Technician not found' })
-    }
-
-    // Check technician availability
-    const existingBooking = await Booking.findOne({
-      technician_id,
-      scheduled_date: new Date(scheduled_date),
-      scheduled_StartTime,
-      scheduled_EndTime,
-      booking_status: { $in: ['pending', 'confirmed', 'in_progress'] }
-    })
-
-    if (existingBooking) {
-      return res.status(409).json({ error: 'Technician is not available at this time' })
     }
 
     const newBooking = new Booking({
@@ -83,7 +101,6 @@ router.post('/create', verifyToken, async (req, res) => {
       final_price,
       booking_status: 'pending',
       paymentMethod,
-      // Initialize status history with the initial 'pending' status
       status_history: [{
         status: 'pending',
         changed_by: userId,

@@ -50,6 +50,7 @@ import technicianRoutes from './routes/technicianRoutes.js'
 import boookingroutes from './controllers/bookingController.js'
 import messageRoutes from './routes/messageRoutes.js'
 import adminRoutes from './routes/adminRoutes.js'
+import khaltiRoutes from './routes/khaltiRoutes.js'
 
 
 app.use('/api/auth', authRoutes)
@@ -59,6 +60,7 @@ app.use('/api/technicians', technicianRoutes)
 app.use('/api/bookings', boookingroutes)
 app.use('/api/chats', messageRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/payment', khaltiRoutes)
 
 
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }))

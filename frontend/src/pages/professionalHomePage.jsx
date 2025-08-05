@@ -40,7 +40,7 @@ const ProfessionalPage = () => {
     const Components = [
         { id: `/professional/dashboard`, icon: '📊', text: 'Dashboard' },
         { id: `/professional/bookings/${technicianId}`, icon: '💼', text: 'Jobs' },
-        { id: `/professional/earnings/${technicianId}`, icon: '💰', text: 'Earnings' },
+        { id: `/technician/earnings/${technicianId}`, icon: '💰', text: 'Earnings' },
         { id: `/professional/reviews/${technicianId}`, icon: '⭐', text: 'Reviews' },
         { id: `/dashboard/chats/${userId}`, icon: '📱', text: 'Messages' },
         { id: '/logout', icon: '⚙️', text: 'Logout' },
