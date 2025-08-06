@@ -68,7 +68,7 @@ const ClientPage = () => {
             if (data.success) {
                 sessionStorage.clear()
                 // Navigate to login page and replace history so user can't go back
-                navigate('/gharbata/login', { replace: true })
+                navigate('/', { replace: true })
                 window.location.reload()
             } else {
                 alert('Logout failed: ' + data.msg)

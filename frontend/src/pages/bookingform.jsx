@@ -91,52 +91,15 @@ const PaymentCallback = ({ onComplete }) => {
             const bookingData = JSON.parse(pendingBookingDataStr)
             addDebugInfo(`Retrieved booking data: ${JSON.stringify(bookingData)}`)
 
-            // Handle geocoding if needed
-            let finalBookingData = { ...bookingData }
-
-            if (!bookingData.latitude || !bookingData.longitude || bookingData.latitude === '0' || bookingData.longitude === '0') {
-                addDebugInfo('Geocoding required - no valid coordinates found')
-                const location = bookingData.streetAddress
-
-                try {
-                    addDebugInfo(`Starting geocoding for address: ${location}`)
-                    const geoResponse = await fetch(`${API_BASE_URL}/geocode?q=${encodeURIComponent(location)}`, {
-                        method: 'GET',
-                        credentials: 'include',
-                    })
-
-                    addDebugInfo(`Geocoding API response status: ${geoResponse.status}`)
-                    const geoData = await geoResponse.json()
-
-                    if (geoData.error) {
-                        addDebugInfo(`Geocoding error: ${geoData.error}`)
-                        alert('Error getting location coordinates: ' + geoData.error)
-                        setPaymentStatus('error')
-                        return
-                    } else {
-                        addDebugInfo(`Geocoding successful - lat: ${geoData.lat}, lon: ${geoData.lon}`)
-                        finalBookingData.latitude = geoData.lat
-                        finalBookingData.longitude = geoData.lon
-                    }
-                } catch (error) {
-                    addDebugInfo(`Geocoding network error: ${error.message}`)
-                    alert('Error getting location coordinates: ' + error.message)
-                    setPaymentStatus('error')
-                    return
-                }
-            } else {
-                addDebugInfo(`Using existing coordinates - lat: ${bookingData.latitude}, lon: ${bookingData.longitude}`)
-            }
-
             const completeBookingData = {
-                ...finalBookingData,
+                ...bookingData,
                 paymentStatus: 'completed',
                 transactionId: paymentResult.transaction_id,
                 khaltiPidx: paymentResult.pidx,
                 paymentMethod: 'khalti'
             }
 
-            addDebugInfo(`Sending booking creation request with coordinates...`)
+            addDebugInfo(`Sending booking creation request...`)
             const bookingResponse = await fetch(`${API_BASE_URL}/api/bookings/create`, {
                 method: 'POST',
                 credentials: 'include',
@@ -315,11 +278,11 @@ const PaymentCallback = ({ onComplete }) => {
     )
 }
 
-// Enhanced Khalti Payment Overlay with availability check
-const KhaltiPaymentOverlay = ({ isOpen, onClose, formData, startTime, endTime, onPaymentComplete }) => {
+// Enhanced Khalti Payment Overlay with pre-payment validation
+const KhaltiPaymentOverlay = ({ isOpen, onClose, formData, startTime, endTime, onPaymentComplete, totalPrice }) => {
     const [customerInfo, setCustomerInfo] = useState(null)
     const [paymentInitiating, setPaymentInitiating] = useState(false)
-    const [checkingAvailability, setCheckingAvailability] = useState(false)
+    const [validating, setValidating] = useState(false)
 
     useEffect(() => {
         const fetchCustomerInfo = async () => {
@@ -350,12 +313,13 @@ const KhaltiPaymentOverlay = ({ isOpen, onClose, formData, startTime, endTime, o
         fetchCustomerInfo()
     }, [isOpen, formData.technician_id])
 
-    // Check availability before initiating payment
-    const checkAvailability = async () => {
-        setCheckingAvailability(true)
+    // Enhanced pre-payment validation
+    const validateBeforePayment = async () => {
+        setValidating(true)
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/bookings/check-availability`, {
+            // 1. Check availability
+            const availabilityResponse = await fetch(`${API_BASE_URL}/api/bookings/check-availability`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -369,36 +333,70 @@ const KhaltiPaymentOverlay = ({ isOpen, onClose, formData, startTime, endTime, o
                 }),
             })
 
-            const result = await response.json()
+            const availabilityResult = await availabilityResponse.json()
 
-            if (response.ok && result.available) {
-                return true
-            } else {
-                alert(result.message || 'Technician is not available at this time. Please select a different time slot.')
+            if (!availabilityResponse.ok || !availabilityResult.available) {
+                alert(availabilityResult.message || 'Technician is not available at this time. Please select a different time slot.')
                 return false
             }
+
+            // 2. Ensure coordinates are available
+            let finalFormData = { ...formData }
+
+            if (!formData.latitude || !formData.longitude || formData.latitude === '0' || formData.longitude === '0') {
+                console.log('Geocoding required - no valid coordinates found')
+                const location = formData.address
+
+                try {
+                    const geoResponse = await fetch(`${API_BASE_URL}/geocode?q=${encodeURIComponent(location)}`, {
+                        method: 'GET',
+                        credentials: 'include',
+                    })
+
+                    const geoData = await geoResponse.json()
+
+                    if (geoData.error) {
+                        alert('Error getting location coordinates: ' + geoData.error)
+                        return false
+                    } else {
+                        finalFormData.latitude = geoData.lat
+                        finalFormData.longitude = geoData.lon
+                    }
+                } catch (error) {
+                    alert('Error getting location coordinates: ' + error.message)
+                    return false
+                }
+            }
+
+            // Update formData with coordinates if they were fetched
+            if (finalFormData.latitude !== formData.latitude || finalFormData.longitude !== formData.longitude) {
+                // Update parent form data
+                Object.assign(formData, finalFormData)
+            }
+
+            return true
         } catch (error) {
-            console.error('Error checking availability:', error)
-            alert('Error checking technician availability. Please try again.')
+            console.error('Error during pre-payment validation:', error)
+            alert('Error validating booking requirements. Please try again.')
             return false
         } finally {
-            setCheckingAvailability(false)
+            setValidating(false)
         }
     }
 
     const handleKhaltiPayment = async () => {
         if (!customerInfo) return
 
-        // First check availability
-        const isAvailable = await checkAvailability()
-        if (!isAvailable) {
+        // Validate all requirements before payment
+        const isValid = await validateBeforePayment()
+        if (!isValid) {
             return
         }
 
         setPaymentInitiating(true)
         const orderId = `BOOKING_${Date.now()}`
 
-        // Store complete booking data for after payment completion
+        // Store complete booking data for after payment completion (with coordinates)
         const completeBookingData = {
             technician_id: formData.technician_id,
             fname: formData.fname,
@@ -418,7 +416,7 @@ const KhaltiPaymentOverlay = ({ isOpen, onClose, formData, startTime, endTime, o
             contactPreference: formData.contactPreference,
             latitude: formData.latitude || '0',
             longitude: formData.longitude || '0',
-            final_price: formData.final_price || '10',
+            final_price: totalPrice.toString(),
             paymentMethod: 'khalti',
             orderId: orderId
         }
@@ -427,7 +425,7 @@ const KhaltiPaymentOverlay = ({ isOpen, onClose, formData, startTime, endTime, o
         sessionStorage.setItem('pendingBookingData', JSON.stringify(completeBookingData))
 
         const paymentData = {
-            amount: parseInt(formData.final_price) || 10,
+            amount: parseInt(totalPrice) || 10,
             orderId,
             customerInfo: {
                 name: customerInfo.name,
@@ -439,7 +437,7 @@ const KhaltiPaymentOverlay = ({ isOpen, onClose, formData, startTime, endTime, o
                 identity: orderId,
                 quantity: 1
             },
-            returnUrl: `${FRONTEND_URL}/client/dashboard/booking/${formData.service}/${formData.technician_id}/${formData.final_price}`
+            returnUrl: `${FRONTEND_URL}/client/dashboard/booking/${formData.service}/${formData.technician_id}/${totalPrice}`
         }
 
         try {
@@ -499,7 +497,7 @@ const KhaltiPaymentOverlay = ({ isOpen, onClose, formData, startTime, endTime, o
                                 <p><span className="font-medium">Service:</span> {formData.service}</p>
                                 <p><span className="font-medium">Date:</span> {formData.date}</p>
                                 <p><span className="font-medium">Time:</span> {startTime} - {endTime}</p>
-                                <p><span className="font-medium">Amount:</span> <span className="text-2xl font-bold text-purple-600">Rs. {formData.final_price}</span></p>
+                                <p><span className="font-medium">Total Amount:</span> <span className="text-2xl font-bold text-purple-600">Rs. {totalPrice}</span></p>
                             </div>
                         </div>
 
@@ -523,10 +521,10 @@ const KhaltiPaymentOverlay = ({ isOpen, onClose, formData, startTime, endTime, o
 
                         <button
                             onClick={handleKhaltiPayment}
-                            disabled={paymentInitiating || checkingAvailability}
+                            disabled={paymentInitiating || validating}
                             className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold py-3 px-6 rounded-lg hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105"
                         >
-                            {checkingAvailability ? 'Checking Availability...' :
+                            {validating ? 'Validating Requirements...' :
                                 paymentInitiating ? 'Redirecting to Khalti...' :
                                     'Pay with Khalti'}
                         </button>
@@ -582,8 +580,23 @@ export default function BookingForm() {
     const [showSuccessMessage, setShowSuccessMessage] = useState(false)
     const [showKhaltiOverlay, setShowKhaltiOverlay] = useState(false)
     const [showPaymentCallback, setShowPaymentCallback] = useState(false)
-    const [checkingAvailability, setCheckingAvailability] = useState(false)
+    const [validating, setValidating] = useState(false)
     const totalSteps = 5
+
+    // Calculate total price based on duration
+    const calculateTotalPrice = () => {
+        if (!startTime || !endTime || !finalPrice) return 0
+
+        const start = new Date(`1970-01-01T${startTime}:00`)
+        const end = new Date(`1970-01-01T${endTime}:00`)
+        const durationHours = (end - start) / (1000 * 60 * 60)
+
+        if (durationHours <= 0) return 0
+
+        return Math.round(parseFloat(finalPrice) * durationHours)
+    }
+
+    const totalPrice = calculateTotalPrice()
 
     // Enhanced callback detection
     useEffect(() => {
@@ -672,11 +685,12 @@ export default function BookingForm() {
         }
     }
 
-    // Check availability before cash booking
-    const checkAvailability = async () => {
-        setCheckingAvailability(true)
+    // Enhanced pre-booking validation for cash payments
+    const validateBeforeCashBooking = async () => {
+        setValidating(true)
 
         try {
+            // 1. Check availability
             const response = await fetch(`${API_BASE_URL}/api/bookings/check-availability`, {
                 method: 'POST',
                 credentials: 'include',
@@ -693,56 +707,55 @@ export default function BookingForm() {
 
             const result = await response.json()
 
-            if (response.ok && result.available) {
-                return true
-            } else {
+            if (!response.ok || !result.available) {
                 alert(result.message || 'Technician is not available at this time. Please select a different time slot.')
                 return false
             }
+
+            // 2. Ensure coordinates are available
+            if (!formData.latitude || !formData.longitude || formData.latitude === '0' || formData.longitude === '0') {
+                const location = formData.address
+
+                try {
+                    const geoResponse = await fetch(`${API_BASE_URL}/geocode?q=${encodeURIComponent(location)}`, {
+                        method: 'GET',
+                        credentials: 'include',
+                    })
+                    const geoData = await geoResponse.json()
+
+                    if (geoData.error) {
+                        alert('Error getting location coordinates: ' + geoData.error)
+                        return false
+                    } else {
+                        setFormData(prev => ({
+                            ...prev,
+                            latitude: geoData.lat,
+                            longitude: geoData.lon
+                        }))
+                    }
+                } catch (error) {
+                    alert('Error getting location coordinates: ' + error.message)
+                    return false
+                }
+            }
+
+            return true
         } catch (error) {
-            console.error('Error checking availability:', error)
-            alert('Error checking technician availability. Please try again.')
+            console.error('Error during pre-booking validation:', error)
+            alert('Error validating booking requirements. Please try again.')
             return false
         } finally {
-            setCheckingAvailability(false)
+            setValidating(false)
         }
     }
 
     const handleCashBooking = async () => {
         if (!validateStep(5)) return
 
-        // Check availability first
-        const isAvailable = await checkAvailability()
-        if (!isAvailable) {
+        // Validate all requirements before booking
+        const isValid = await validateBeforeCashBooking()
+        if (!isValid) {
             return
-        }
-
-        let finalFormData = { ...formData }
-
-        // Handle geocoding if needed
-        if (!formData.latitude || !formData.longitude) {
-            const location = formData.address
-
-            try {
-                const geoResponse = await fetch(`${API_BASE_URL}/geocode?q=${encodeURIComponent(location)}`, {
-                    method: 'GET',
-                    credentials: 'include',
-                })
-                const geoData = await geoResponse.json()
-
-                if (geoData.error) {
-                    console.error(geoData.error)
-                    alert('Error getting location coordinates: ' + geoData.error)
-                    return
-                } else {
-                    finalFormData.latitude = geoData.lat
-                    finalFormData.longitude = geoData.lon
-                }
-            } catch (error) {
-                console.error('Geocoding error:', error)
-                alert('Error getting location coordinates')
-                return
-            }
         }
 
         try {
@@ -753,26 +766,26 @@ export default function BookingForm() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    technician_id: finalFormData.technician_id,
-                    fname: finalFormData.fname,
-                    lname: finalFormData.lname,
-                    email: finalFormData.email,
-                    phoneNumber: finalFormData.phone,
-                    streetAddress: finalFormData.address,
-                    apartMent: finalFormData.apartment,
-                    cityAddress: finalFormData.city,
-                    service: finalFormData.service,
-                    emergencyContactName: finalFormData.emergencyContact,
-                    emergencyContactPhone: finalFormData.emergencyPhone,
-                    scheduled_date: finalFormData.date,
+                    technician_id: formData.technician_id,
+                    fname: formData.fname,
+                    lname: formData.lname,
+                    email: formData.email,
+                    phoneNumber: formData.phone,
+                    streetAddress: formData.address,
+                    apartMent: formData.apartment,
+                    cityAddress: formData.city,
+                    service: formData.service,
+                    emergencyContactName: formData.emergencyContact,
+                    emergencyContactPhone: formData.emergencyPhone,
+                    scheduled_date: formData.date,
                     scheduled_StartTime: startTime,
                     scheduled_EndTime: endTime,
-                    specialInstructions: finalFormData.specialInstructions,
-                    contactPreference: finalFormData.contactPreference,
-                    latitude: finalFormData.latitude || '0',
-                    longitude: finalFormData.longitude || '0',
-                    final_price: finalFormData.final_price || '0',
-                    paymentMethod: finalFormData.paymentMethod
+                    specialInstructions: formData.specialInstructions,
+                    contactPreference: formData.contactPreference,
+                    latitude: formData.latitude || '0',
+                    longitude: formData.longitude || '0',
+                    final_price: totalPrice.toString(),
+                    paymentMethod: formData.paymentMethod
                 })
             })
 
@@ -1133,6 +1146,20 @@ export default function BookingForm() {
                 </div>
             </div>
 
+            {/* Price Calculation Display */}
+            {startTime && endTime && totalPrice > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 className="font-semibold text-blue-800 mb-2">Price Calculation</h3>
+                    <div className="text-sm text-blue-700 space-y-1">
+                        <p><span className="font-medium">Rate per hour:</span> Rs. {finalPrice}</p>
+                        <p><span className="font-medium">Duration:</span> {((new Date(`1970-01-01T${endTime}:00`) - new Date(`1970-01-01T${startTime}:00`)) / (1000 * 60 * 60)).toFixed(1)} hours</p>
+                        <p className="text-lg font-bold text-blue-900 pt-2 border-t border-blue-200">
+                            <span className="font-medium">Total Cost:</span> Rs. {totalPrice}
+                        </p>
+                    </div>
+                </div>
+            )}
+
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                     Special Instructions (Optional)
@@ -1203,7 +1230,11 @@ export default function BookingForm() {
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <h3 className="font-semibold text-blue-800 mb-2">Service Cost</h3>
-                    <div className="text-2xl font-bold text-blue-900">Rs. {finalPrice || '0'}</div>
+                    <div className="text-sm text-blue-700 space-y-1">
+                        <p><span className="font-medium">Rate per hour:</span> Rs. {finalPrice}</p>
+                        <p><span className="font-medium">Duration:</span> {startTime && endTime ? ((new Date(`1970-01-01T${endTime}:00`) - new Date(`1970-01-01T${startTime}:00`)) / (1000 * 60 * 60)).toFixed(1) : '0'} hours</p>
+                    </div>
+                    <div className="text-2xl font-bold text-blue-900 mt-2">Rs. {totalPrice}</div>
                     <p className="text-sm text-blue-700 mt-1">Final price includes all applicable taxes and fees</p>
                 </div>
             </div>
@@ -1299,7 +1330,11 @@ export default function BookingForm() {
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="font-semibold text-blue-800 mb-2">Service Cost</h3>
-                <div className="text-2xl font-bold text-blue-900">Rs. {finalPrice || '0'}</div>
+                <div className="text-sm text-blue-700 space-y-1">
+                    <p><span className="font-medium">Rate per hour:</span> Rs. {finalPrice}</p>
+                    <p><span className="font-medium">Duration:</span> {startTime && endTime ? ((new Date(`1970-01-01T${endTime}:00`) - new Date(`1970-01-01T${startTime}:00`)) / (1000 * 60 * 60)).toFixed(1) : '0'} hours</p>
+                </div>
+                <div className="text-2xl font-bold text-blue-900 mt-2">Rs. {totalPrice}</div>
                 <p className="text-sm text-blue-700 mt-1">Final price includes all applicable taxes and fees</p>
             </div>
         </div>
@@ -1339,6 +1374,7 @@ export default function BookingForm() {
                 formData={formData}
                 startTime={startTime}
                 endTime={endTime}
+                totalPrice={totalPrice}
                 onPaymentComplete={() => {
                     setShowKhaltiOverlay(false)
                 }}
@@ -1397,18 +1433,19 @@ export default function BookingForm() {
                                             <button
                                                 type="button"
                                                 onClick={handleCashBooking}
-                                                disabled={!formData.paymentMethod || checkingAvailability}
+                                                disabled={!formData.paymentMethod || validating || totalPrice <= 0}
                                                 className="px-8 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
                                             >
-                                                {checkingAvailability ? 'Checking Availability...' : 'Confirm Booking'}
+                                                {validating ? 'Validating Requirements...' : `Confirm Booking - Rs. ${totalPrice}`}
                                             </button>
                                         ) : formData.paymentMethod === 'khalti' ? (
                                             <button
                                                 type="button"
                                                 onClick={handleKhaltiPayment}
-                                                className="px-8 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-all duration-200 transform hover:scale-105"
+                                                disabled={totalPrice <= 0}
+                                                className="px-8 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
                                             >
-                                                Pay Now
+                                                Pay Rs. {totalPrice} with Khalti
                                             </button>
                                         ) : (
                                             <button
@@ -1422,6 +1459,15 @@ export default function BookingForm() {
                                     </div>
                                 )}
                             </div>
+
+                            {/* Display warning if no valid time selected */}
+                            {currentStep === totalSteps && totalPrice <= 0 && (
+                                <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                    <p className="text-yellow-800 text-sm">
+                                        ⚠️ Please select valid start and end times to calculate the total cost.
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

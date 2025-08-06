@@ -118,7 +118,7 @@ const TechnicianReviewsPage = () => {
 
             if (data.success) {
                 sessionStorage.clear()
-                navigate('/gharbata/login')
+                navigate('/')
             } else {
                 alert('Logout failed: ' + data.msg)
             }

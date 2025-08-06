@@ -12,7 +12,6 @@ const Navbar = () => {
                 <NavLink>
                     <li><NavLinks to="#services">Services</NavLinks></li>
                     <li><NavLinks to="#how-it-works">How It Works</NavLinks></li>
-                    <li><NavLinks to="#contact">Contact</NavLinks></li>
                 </NavLink>
                 <SignUpBtn/>
             </NavBar>

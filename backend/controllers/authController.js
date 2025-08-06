@@ -136,34 +136,95 @@ export const Logout = async (req, res) => {
   }
 }
 
-export const deleteUser = async (req, res) => {
-  const userID = req.user.id
-
-  const { username, password } = req.body
+export const UpdateUserPassword = async (req, res) => {
+  const { username, newPassword } = req.body
 
   try {
-    const UserTodelete = await User.findById(userID)
-    if (!UserTodelete) {
-      return res.status(404).json({ success: false, msg: 'User not Found' })
-    }
-    else if (username !== UserTodelete.username) {
-      return res.status(401).json({ success: false, msg: 'Invalid Username' })
+    const UserToUpdate = await User.findOne({ username })
+
+    if (!UserToUpdate) {
+      return res.status(404).json({ success: false, msg: 'User not found' })
     }
 
-    const isMatch = await bcrypt.compare(password, UserTodelete.password)
-    if (!isMatch) {
-      return res.status(401).json({ success: false, msg: 'Invalid credentials: Incorrect password.' })
-    }
+    UserToUpdate.password = newPassword
+    await UserToUpdate.save()
 
-    await RefreshToken.deleteOne({ username: UserTodelete.username })
-    res.clearCookie('refreshToken', { httpOnly: true })
-    res.clearCookie('accessToken', { httpOnly: true })
-
-    await User.deleteOne({ _id: userID })
-
-    return res.status(200).json({ success: true, msg: 'User deleted Successfully' })
+    return res.status(200).json({ success: true, msg: 'Password updated successfully' })
   } catch (error) {
     console.error(error)
-    return res.status(505).json({ success: false, msg: 'Internal server error' })
+    return res.status(500).json({ success: false, msg: 'Internal server error' })
+  }
+}
+
+export const getMail = async (req, res) => {
+  const { username } = req.body
+  try {
+
+    if (!username) {
+      return res.status(400).json({ success: false, msg: 'Please provide all data' })
+    }
+    const otp = Math.floor(100000 + Math.random() * 900000).toString()
+    sendEmail(username, otp)
+
+    const otpDb = new OtpStore({ username, otp })
+    await otpDb.save()
+
+    return res.status(200).json({ success: true, msg: 'OTP sent to your email. Please verify to complete signup.' })
+
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ success: false, msg: 'Internal server Error!' })
+  }
+}
+
+export const verifyOtpForUpdate = async (req, res) => {
+  try {
+    const { username, userInputOtp } = req.body
+
+    if (!username || !userInputOtp) {
+      return res.status(400).json({ success: false, msg: 'Username and OTP are required' })
+    }
+
+    const record = await OtpStore.findOne({ username })
+    if (!record) {
+      return res.status(400).json({ success: false, msg: 'OTP has expired or is invalid' })
+    }
+
+    if (record.otp !== userInputOtp) {
+      return res.status(400).json({ success: false, msg: 'Invalid OTP' })
+    }
+
+    await OtpStore.deleteOne({ username })
+
+    return res.status(200).json({ success: true, msg: 'OTP verified successfully' })
+  } catch (error) {
+    console.error('OTP verification failed:', error)
+    res.status(500).json({ success: false, msg: 'Internal server error' })
+  }
+}
+
+
+export const contactUs = async (req, res) => {
+  try {
+    const { name, email, message } = req.body
+
+    if (!name || !email || !message) {
+      return res.status(400).json({ success: false, msg: 'Please fill all required fields.' })
+    }
+
+    const subject = `New Contact Message from ${name}`
+    const body = `
+      <h3>Contact Message</h3>
+      <p><strong>Name:</strong> ${name}</p>
+      <p><strong>Email:</strong> ${email}</p>
+      <p><strong>Message:</strong></p>
+      <p>${message}</p>
+    `
+    await sendEmail('treasuretracker8@gmail.com', subject, body)
+
+    return res.status(200).json({ success: true, msg: 'Your message has been sent successfully!' })
+  } catch (error) {
+    console.error('Contact form error:', error)
+    return res.status(500).json({ success: false, msg: 'Internal Server Error!' })
   }
 }

@@ -233,7 +233,7 @@ const ProfessionalPage = () => {
 
             if (data.success) {
                 sessionStorage.clear()
-                navigate('/gharbata/login', { replace: true })
+                navigate('/', { replace: true })
                 window.location.reload()
             } else {
                 alert('Logout failed: ' + data.msg)
