@@ -12,6 +12,7 @@ import { generateAccessToken, generateRefreshToken } from './utils/tokengenerato
 dotenv.config()
 
 const app = express()
+app.set('trust proxy', 1)
 
 app.use(cors({
   origin: 'http://localhost:5173',
@@ -21,7 +22,6 @@ app.use(cors({
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
-app.set('trust proxy', 1)
 
 app.use(session({
   secret: process.env.SESSION_SECRET,
@@ -30,6 +30,7 @@ app.use(session({
   cookie: {
     secure: true, // set to true if HTTPS
     httpOnly: true,
+    sameSite: 'None',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   }
 }))
@@ -107,20 +108,20 @@ app.get('/auth/google/callback',
     await tokenStoree.save()
 
     const userId = user._id.toString()
-    res.cookie('UserId', userId, { httpOnly: true, secure: true, sameSite: 'Lax' })
+    res.cookie('UserId', userId, { httpOnly: true, secure: true, sameSite: 'None' })
 
     // Set tokens as httpOnly cookies
     res.cookie('accessToken', AccessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax',
+      sameSite: 'None',
       maxAge: 30 * 60 * 1000, // 30 minutes
     })
 
     res.cookie('refreshToken', RefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax',
+      sameSite: 'None',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     })
 
