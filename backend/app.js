@@ -107,7 +107,7 @@ app.get('/auth/google/callback',
     await tokenStoree.save()
 
     const userId = user._id.toString()
-    res.cookie('UserId', userId, { httpOnly: true, secure: false, sameSite: 'Lax' })
+    res.cookie('UserId', userId, { httpOnly: true, secure: true, sameSite: 'Lax' })
 
     // Set tokens as httpOnly cookies
     res.cookie('accessToken', AccessToken, {
