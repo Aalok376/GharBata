@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:5000'
+const BASE_URL = 'https://gharbata.onrender.com'
 
 export const SignUp = async ({ username, password, fname, lname }) => {
   try {

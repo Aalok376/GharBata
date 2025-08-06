@@ -28,7 +28,7 @@ const PaymentDashboard = () => {
     const checkKhaltiStatus = async () => {
         setKhaltiLoading(true)
         try {
-            const Response = await fetch(`http://localhost:5000/api/payment/check-khalti-number?role=${role}&id=${id}`, {
+            const Response = await fetch(`https://gharbata.onrender.com/api/payment/check-khalti-number?role=${role}&id=${id}`, {
                 method: 'GET',
                 credentials: 'include',
             })
@@ -65,7 +65,7 @@ const PaymentDashboard = () => {
         setKhaltiError('')
 
         try {
-            const Response = await fetch(`http://localhost:5000/api/payment/update-khalti-number`, {
+            const Response = await fetch(`https://gharbata.onrender.com/api/payment/update-khalti-number`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -104,7 +104,7 @@ const PaymentDashboard = () => {
         setError('')
 
         try {
-            const Response = await fetch(`http://localhost:5000/api/payment/getPayments`, {
+            const Response = await fetch(`https://gharbata.onrender.com/api/payment/getPayments`, {
                 method: 'GET',
                 credentials: 'include',
             })

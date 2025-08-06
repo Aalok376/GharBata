@@ -4,7 +4,7 @@ import { Calendar, Clock, MapPin, User, Phone, Mail, CreditCard, Home, CheckCirc
 import { SelectLocationOverlay } from '../components/selectLocation'
 import { useNavigate, useParams } from 'react-router-dom'
 
-const API_BASE_URL = 'http://localhost:5000'
+const API_BASE_URL = 'https://gharbata.onrender.com'
 const FRONTEND_URL='http://localhost:5173'
 
 // Enhanced PaymentCallback with detailed debugging

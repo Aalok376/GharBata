@@ -91,8 +91,8 @@ const Client_Signup = () => {
 
     const googleHref =
         userType === 'technician'
-            ? 'http://localhost:5000/auth/google?userType=technician'
-            : 'http://localhost:5000/auth/google?userType=client'
+            ? 'https://gharbata.onrender.com/auth/google?userType=technician'
+            : 'https://gharbata.onrender.com/auth/google?userType=client'
 
     return (
         <>

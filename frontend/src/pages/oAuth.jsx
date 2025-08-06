@@ -26,7 +26,7 @@ const OAuthSuccess = () => {
       setLoading(true)
 
       if (userType === 'client') {
-        fetch('http://localhost:5000/api/clients/getClientprofilestatus', {
+        fetch('https://gharbata.onrender.com/api/clients/getClientprofilestatus', {
           method: 'POST',
           credentials: 'include',
           headers: {
@@ -48,7 +48,7 @@ const OAuthSuccess = () => {
             navigate('/client/dashboard')
           })
       } else if (userType === 'technician') {
-        fetch('http://localhost:5000/api/clients/getClientprofilestatus', {
+        fetch('https://gharbata.onrender.com/api/clients/getClientprofilestatus', {
           method: 'POST',
           credentials: 'include',
           headers: {

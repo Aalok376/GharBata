@@ -40,7 +40,7 @@ const MessagingApp = () => {
 
                 const { io } = await import('https://cdn.socket.io/4.4.1/socket.io.esm.min.js')
 
-                socket.current = io("http://localhost:5000", {
+                socket.current = io("https://gharbata.onrender.com", {
                     withCredentials: true,
                     reconnection: true,
                     reconnectionAttempts: 20,
@@ -93,7 +93,7 @@ const MessagingApp = () => {
         try {
             setLoading(true)
             setError(null)
-            const response = await fetch('http://localhost:5000/api/chats/getConversations', {
+            const response = await fetch('https://gharbata.onrender.com/api/chats/getConversations', {
                 method: 'GET',
                 credentials: 'include',
             })
@@ -127,7 +127,7 @@ const MessagingApp = () => {
     const fetchMessages = async (conversationId) => {
         try {
             setLoading(true)
-            const response = await fetch(`http://localhost:5000/api/chats/getMessage/${conversationId}`, {
+            const response = await fetch(`https://gharbata.onrender.com/api/chats/getMessage/${conversationId}`, {
                 method: "GET",
                 credentials: 'include',
             })
@@ -182,7 +182,7 @@ const MessagingApp = () => {
         if (!messageInput.trim() || !selectedConversation) return
 
         try {
-            const response = await fetch('http://localhost:5000/api/chats/sendMessage', {
+            const response = await fetch('https://gharbata.onrender.com/api/chats/sendMessage', {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -219,7 +219,7 @@ const MessagingApp = () => {
         if (!newText.trim()) return
 
         try {
-            const response = await fetch('http://localhost:5000/api/chats/editMessage', {
+            const response = await fetch('https://gharbata.onrender.com/api/chats/editMessage', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -250,7 +250,7 @@ const MessagingApp = () => {
     const deleteMessage = async (messageId) => {
         try {
             const response = await fetch(
-                `http://localhost:5000/api/chats/removeMessage/${selectedConversation._id}/${messageId}`,
+                `https://gharbata.onrender.com/api/chats/removeMessage/${selectedConversation._id}/${messageId}`,
                 {
                     method: 'DELETE',
                     credentials: 'include',

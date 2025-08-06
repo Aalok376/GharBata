@@ -49,7 +49,7 @@ const ProfessionalPage = () => {
     // Fetch technician profile data
     const fetchProfile = async () => {
         try {
-            const profileResponse = await fetch('http://localhost:5000/api/technicians/getTechnicians', {
+            const profileResponse = await fetch('https://gharbata.onrender.com/api/technicians/getTechnicians', {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -114,7 +114,7 @@ const ProfessionalPage = () => {
         try {
             const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
 
-            const response = await fetch(`http://localhost:5000/api/bookings/technician/${techId}/today`, {
+            const response = await fetch(`https://gharbata.onrender.com/api/bookings/technician/${techId}/today`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {
@@ -138,7 +138,7 @@ const ProfessionalPage = () => {
     // Fetch earnings data
     const fetchEarningsData = async (techId) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/bookings/technician/${techId}/earnings`, {
+            const response = await fetch(`https://gharbata.onrender.com/api/bookings/technician/${techId}/earnings`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {
@@ -165,7 +165,7 @@ const ProfessionalPage = () => {
     // Fetch overview stats from the new API - FIXED
     const fetchOverviewStats = async (techId) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/bookings/stats/overview?technician_id=${techId}`, {
+            const response = await fetch(`https://gharbata.onrender.com/api/bookings/stats/overview?technician_id=${techId}`, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {
@@ -225,7 +225,7 @@ const ProfessionalPage = () => {
 
     const handleLogout = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/auth/logoutuser', {
+            const response = await fetch('https://gharbata.onrender.com/api/auth/logoutuser', {
                 method: 'GET',
                 credentials: 'include',
             })
@@ -296,7 +296,7 @@ const ProfessionalPage = () => {
 
     const handleUpdateStatus = async (bookingId, newStatus) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/bookings/${bookingId}/status`, {
+            const response = await fetch(`https://gharbata.onrender.com/api/bookings/${bookingId}/status`, {
                 method: 'PUT',
                 credentials: 'include',
                 headers: {

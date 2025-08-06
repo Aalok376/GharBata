@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Calendar, Clock, User, Phone, Mail, MapPin, CheckCircle, XCircle, Play, Square, Edit, Eye, Filter, ChevronLeft, ChevronRight, Star, MessageSquare, Navigation, BarChart3, Search, CreditCard, X } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-const API_BASE_URL = 'http://localhost:5000'
+const API_BASE_URL = 'https://gharbata.onrender.com'
 const FRONTEND_URL = 'http://localhost:5173'
 
 // Enhanced Refund Payment Callback Component with detailed debugging
@@ -465,7 +465,7 @@ const BookingDashboard = () => {
   const [formData, setFormData] = useState({})
   const [formErrors, setFormErrors] = useState({})
 
-  const API_BASE = 'http://localhost:5000/api/bookings'
+  const API_BASE = 'https://gharbata.onrender.com/api/bookings'
 
   // Enhanced callback detection for refund - similar to first code
   useEffect(() => {

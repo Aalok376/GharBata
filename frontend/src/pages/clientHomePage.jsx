@@ -221,7 +221,7 @@ const ClientPage = () => {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const profileResponse = await fetch('http://localhost:5000/api/clients/getClientProfile', {
+                const profileResponse = await fetch('https://gharbata.onrender.com/api/clients/getClientProfile', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
@@ -264,7 +264,7 @@ const ClientPage = () => {
 
     const handleLogout = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/auth/logoutuser', {
+            const response = await fetch('https://gharbata.onrender.com/api/auth/logoutuser', {
                 method: 'GET',
                 credentials: 'include',
             })

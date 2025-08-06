@@ -46,7 +46,7 @@ export default function ClientProfile() {
       const lname = user?.lname || ''
 
       try {
-        const statusResponse = await fetch('http://localhost:5000/api/clients/getClientprofilestatus', {
+        const statusResponse = await fetch('https://gharbata.onrender.com/api/clients/getClientprofilestatus', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -76,7 +76,7 @@ export default function ClientProfile() {
             profilePic: '',
           })
         } else {
-          const profileResponse = await fetch('http://localhost:5000/api/clients/getClientProfile', {
+          const profileResponse = await fetch('https://gharbata.onrender.com/api/clients/getClientProfile', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -133,8 +133,8 @@ export default function ClientProfile() {
       }
 
       const endpoint = forFirstTime
-        ? 'http://localhost:5000/api/clients/createClient'
-        : 'http://localhost:5000/api/clients/updateClient'
+        ? 'https://gharbata.onrender.com/api/clients/createClient'
+        : 'https://gharbata.onrender.com/api/clients/updateClient'
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -214,7 +214,7 @@ export default function ClientProfile() {
 
   const createConversations = async (receiverId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/chats/createConversations`, {
+      const response = await fetch(`https://gharbata.onrender.com/api/chats/createConversations`, {
         method: "POST",
         credentials:'include',
         headers: {

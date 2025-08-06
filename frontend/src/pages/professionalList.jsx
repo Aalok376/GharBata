@@ -25,7 +25,7 @@ const TechnicianDisplayPage = () => {
     const getTechnicians = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5000/api/technicians/filteredTechnicians?category=${encodeURIComponent(selectedService)}`, {
+          `https://gharbata.onrender.com/api/technicians/filteredTechnicians?category=${encodeURIComponent(selectedService)}`, {
           method: 'GET',
           credentials: 'include',
         }
@@ -80,7 +80,7 @@ const TechnicianDisplayPage = () => {
         try {
           // Try to fetch ratings from reviews endpoint first
           const reviewsResponse = await fetch(
-            `http://localhost:5000/api/bookings/${tech._id}/reviews`,
+            `https://gharbata.onrender.com/api/bookings/${tech._id}/reviews`,
             {
               method: 'GET',
               credentials: 'include',
@@ -106,7 +106,7 @@ const TechnicianDisplayPage = () => {
           // If reviews endpoint fails, try to fetch from ratings endpoint (if exists)
           try {
             const ratingsResponse = await fetch(
-              `http://localhost:5000/api/technicians/${tech._id}/ratings?service=${encodeURIComponent(selectedService)}`,
+              `https://gharbata.onrender.com/api/technicians/${tech._id}/ratings?service=${encodeURIComponent(selectedService)}`,
               {
                 method: 'GET',
                 credentials: 'include',
@@ -195,7 +195,7 @@ const TechnicianDisplayPage = () => {
 
   const createConversations = async (receiverId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/chats/createConversations`, {
+      const response = await fetch(`https://gharbata.onrender.com/api/chats/createConversations`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -270,7 +270,7 @@ const TechnicianDisplayPage = () => {
 
       // Use the same API endpoint we created for the reviews page
       const response = await fetch(
-        `http://localhost:5000/api/bookings/${technicianId}/reviews`,
+        `https://gharbata.onrender.com/api/bookings/${technicianId}/reviews`,
         {
           method: 'GET',
           credentials: 'include',
