@@ -87,12 +87,12 @@ export const login = async (req, res) => {
 
     // Set cookies and tokens
     const userId = user._id.toString()
-    res.cookie('UserId', userId, { httpOnly: true, secure: false, sameSite: 'Lax' })
+    res.cookie('UserId', userId, { httpOnly: true, secure: true, sameSite: 'Lax' })
 
     const AccessToken = jwt.sign({ id: user._id }, process.env.JWT_ACCESS_SECRET, { expiresIn: '45m' })
     res.cookie('accessToken', AccessToken, {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: 'Lax'
     })
 
@@ -102,7 +102,7 @@ export const login = async (req, res) => {
     res.cookie('refreshToken', RefreshToken, {
       httpOnly: true,
       maxAge: 7 * 86400 * 1000,
-      secure: false,
+      secure: true,
       sameSite: 'Lax'
     })
 

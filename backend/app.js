@@ -12,6 +12,7 @@ import { generateAccessToken, generateRefreshToken } from './utils/tokengenerato
 dotenv.config()
 
 const app = express()
+app.set('trust proxy', 1)
 
 app.use(cors({
   origin: 'http://localhost:5173',
@@ -27,8 +28,9 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // set to true if HTTPS
+    secure: true, // set to true if HTTPS
     httpOnly: true,
+    sameSite: 'None',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   }
 }))
@@ -67,7 +69,7 @@ app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'em
 
 // Google OAuth callback
 app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login', session: false }),
+  passport.authenticate('google', { failureRedirect: '/login', session: true }),
   async (req, res) => {
 
     const user = req.user
@@ -106,20 +108,20 @@ app.get('/auth/google/callback',
     await tokenStoree.save()
 
     const userId = user._id.toString()
-    res.cookie('UserId', userId, { httpOnly: true, secure: false, sameSite: 'Lax' })
+    res.cookie('UserId', userId, { httpOnly: true, secure: true, sameSite: 'None' })
 
     // Set tokens as httpOnly cookies
     res.cookie('accessToken', AccessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax',
+      sameSite: 'None',
       maxAge: 30 * 60 * 1000, // 30 minutes
     })
 
     res.cookie('refreshToken', RefreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax',
+      sameSite: 'None',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     })
 
