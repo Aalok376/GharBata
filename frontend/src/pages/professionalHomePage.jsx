@@ -34,7 +34,7 @@ const ProfessionalPage = () => {
 
     // Navigation functions
     const navigateToJobs = () => navigate(`/professional/bookings/${technicianId}`)
-    const navigateToEarnings = () => navigate(`/professional/earnings/${technicianId}`)
+    const navigateToEarnings = () => navigate(`/technician/earnings/${technicianId}`)
     const navigateToReviews = () => navigate(`/professional/reviews/${technicianId}`)
 
     const Components = [
