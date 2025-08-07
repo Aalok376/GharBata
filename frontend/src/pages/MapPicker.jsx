@@ -81,7 +81,7 @@ export default function MapPickerModal() {
   // Function to get place name from coordinates
   const getLocationName = async (lat, lng) => {
     try {
-      const url = `https://gharbata.onrender.com/reverse-geocode?lat=${lat}&lon=${lng}`
+      const url = `http://localhost:5000/reverse-geocode?lat=${lat}&lon=${lng}`
       const response = await fetch(url)
       const data = await response.json()
       return data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`

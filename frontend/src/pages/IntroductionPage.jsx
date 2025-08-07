@@ -81,7 +81,7 @@ const HomePageFunc = () => {
 
         try {
             // Replace with your actual API endpoint
-            const response = await fetch('https://gharbata.onrender.com/api/auth/contact', {
+            const response = await fetch('http://localhost:5000/api/auth/contact', {
                 method: 'POST',
                 credentials:'include',
                 headers: {

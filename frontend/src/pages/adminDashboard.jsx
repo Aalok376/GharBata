@@ -32,7 +32,7 @@ import {
 } from 'lucide-react'
 
 // Move constants outside component to prevent recreation
-const API_BASE_URL = 'https://gharbata.onrender.com/api'
+const API_BASE_URL = 'http://localhost:5000/api'
 
 const STATUS_COLORS = {
   pending: 'bg-yellow-100 text-yellow-800',

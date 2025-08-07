@@ -36,7 +36,7 @@ export default function TechnicianProfile() {
   // New function to fetch stats
   const fetchStats = async (technicianId) => {
     try {
-      const response = await fetch(`https://gharbata.onrender.com/api/bookings/stats/overview?technician_id=${technicianId}`, {
+      const response = await fetch(`http://localhost:5000/api/bookings/stats/overview?technician_id=${technicianId}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -164,7 +164,7 @@ export default function TechnicianProfile() {
       const lname = user?.lname || ''
 
       try {
-        const statusResponse = await fetch('https://gharbata.onrender.com/api/clients/getClientprofilestatus', {
+        const statusResponse = await fetch('http://localhost:5000/api/clients/getClientprofilestatus', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -196,7 +196,7 @@ export default function TechnicianProfile() {
           setProfile(prof)
           setEditedProfile(prof)
         } else {
-          const profileResponse = await fetch('https://gharbata.onrender.com/api/technicians/getTechnicians', {
+          const profileResponse = await fetch('http://localhost:5000/api/technicians/getTechnicians', {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -372,8 +372,8 @@ export default function TechnicianProfile() {
       if (selectedFile) formData.append('profilePic', selectedFile)
 
       const endpoint = forFirstTime
-        ? 'https://gharbata.onrender.com/api/technicians/createTechnicians'
-        : 'https://gharbata.onrender.com/api/technicians/updateTechnicians'
+        ? 'http://localhost:5000/api/technicians/createTechnicians'
+        : 'http://localhost:5000/api/technicians/updateTechnicians'
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -452,7 +452,7 @@ export default function TechnicianProfile() {
 
   const createConversations = async (receiverId) => {
     try {
-        const response = await fetch(`https://gharbata.onrender.com/api/chats/createConversations`, {
+        const response = await fetch(`http://localhost:5000/api/chats/createConversations`, {
             method: "POST",
             credentials:'include',
             headers: {

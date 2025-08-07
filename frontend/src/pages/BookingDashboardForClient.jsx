@@ -24,7 +24,7 @@ const ClientBookingDashboard = () => {
   })
   const [formData, setFormData] = useState({})
 
-  const API_BASE = 'https://gharbata.onrender.com/api/bookings'
+  const API_BASE = 'http://localhost:5000/api/bookings'
 
   const fetchBookings = async (page = 1) => {
     setLoading(true)

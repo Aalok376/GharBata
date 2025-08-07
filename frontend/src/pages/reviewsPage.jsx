@@ -24,7 +24,7 @@ const TechnicianReviewsPage = () => {
     const Components = [
         { id: `/professional/dashboard`, icon: '📊', text: 'Dashboard' },
         { id: `/professional/bookings/${technicianId}`, icon: '💼', text: 'Jobs' },
-        { id: `/professional/earnings/${technicianId}`, icon: '💰', text: 'Earnings' },
+        { id: `/technician/earnings/${technicianId}`, icon: '💰', text: 'Earnings' },
         { id: `/professional/reviews/${technicianId}`, icon: '⭐', text: 'Reviews' },
         { id: `/dashboard/chats/${userId}`, icon: '📱', text: 'Messages' },
         { id: '/logout', icon: '⚙️', text: 'Logout' },
@@ -43,7 +43,7 @@ const TechnicianReviewsPage = () => {
                 setError(null)
 
                 // Fetch technician reviews and profile data
-                const response = await fetch(`https://gharbata.onrender.com/api/bookings/${technicianId}/reviews`, {
+                const response = await fetch(`http://localhost:5000/api/bookings/${technicianId}/reviews`, {
                     method: 'GET',
                     credentials: 'include',
                     headers: {
@@ -72,7 +72,7 @@ const TechnicianReviewsPage = () => {
                     setSelectedService('all') // Start with all services
                 }
 
-                const profileResponse = await fetch('https://gharbata.onrender.com/api/technicians/getTechnicians', {
+                const profileResponse = await fetch('http://localhost:5000/api/technicians/getTechnicians', {
                     method: 'POST',
                     credentials: 'include',
                     headers: {
@@ -110,7 +110,7 @@ const TechnicianReviewsPage = () => {
 
     const handleLogout = async () => {
         try {
-            const response = await fetch('https://gharbata.onrender.com/api/auth/logoutuser', {
+            const response = await fetch('http://localhost:5000/api/auth/logoutuser', {
                 method: 'GET',
                 credentials: 'include',
             })
